@@ -1,0 +1,26 @@
+{
+  "name": "Pravardhan Store - Fresh Local Grocery Delivery",
+  "short_name": "Pravardhan Store",
+  "description": "Fresh farm vegetables, fruits, dairy, atta, dal, and everyday essentials delivered to your doorstep.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0F172A",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "food", "lifestyle"]
+}
