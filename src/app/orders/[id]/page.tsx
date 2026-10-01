@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const metadata = {
-  title: 'Track Order | Pravardhan Store',
+  title: 'Track Order | Pravdhan Store',
   description: 'Live delivery status and milestones for your grocery order.',
 };
 

@@ -7,7 +7,7 @@ import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { Footer } from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'Pravardhan Store | Fast Local Grocery & Daily Essentials Delivery',
+  title: 'Pravdhan Store | Fast Local Grocery & Daily Essentials Delivery',
   description:
     'Order fresh fruits, vegetables, dairy, atta, dal, and everyday grocery items from your trusted local store. Same-day & scheduled delivery in Lucknow.',
   keywords: [

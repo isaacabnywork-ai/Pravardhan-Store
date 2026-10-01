@@ -47,7 +47,7 @@ export function ProductDetailClient({ product, relatedProducts }: ProductDetailC
       try {
         await navigator.share({
           title: product.name,
-          text: `Check out ${product.name} on Pravardhan Store`,
+          text: `Check out ${product.name} on Pravdhan Store`,
           url: window.location.href,
         });
       } catch {

@@ -5,7 +5,7 @@ import { StoreService } from '@/services/storeService';
 import { ChevronRight } from 'lucide-react';
 
 export const metadata = {
-  title: 'All Grocery Categories | Pravardhan Store',
+  title: 'All Grocery Categories | Pravdhan Store',
   description: 'Browse all grocery categories: fresh fruits, vegetables, dairy, atta, dal, spices, snacks, and household essentials.',
 };
 

@@ -84,7 +84,7 @@ export function OrderTracker({ order }: OrderTrackerProps) {
             Status: {order.orderStatus}
           </span>
           <h1 className="text-base sm:text-lg font-black text-[#0F172A]">
-            Thank you for ordering with Pravardhan Store
+            Thank you for ordering with Pravdhan Store
           </h1>
           <p className="text-xs text-[#64748B] mt-0.5">
             Scheduled Slot: <b>{order.deliverySlot?.label}</b> • Local Store Delivery

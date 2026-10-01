@@ -56,7 +56,7 @@ export function Footer() {
               <div className="w-7 h-7 rounded-lg bg-[#2563EB] flex items-center justify-center text-white">
                 <Store className="w-4 h-4" />
               </div>
-              <span className="font-black text-base text-white">Pravardhan Store</span>
+              <span className="font-black text-base text-white">Pravdhan Store</span>
             </div>
             <p className="text-[#64748B] leading-relaxed mb-2 text-[11px]">
               Local grocery delivery service. Farm-fresh fruits, vegetables, dairy, atta, dal, and daily essentials.
@@ -105,7 +105,7 @@ export function Footer() {
         </div>
 
         <div className="pt-4 border-t border-slate-800 text-center text-[11px] text-[#64748B] flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>&copy; {new Date().getFullYear()} Pravardhan Store. All rights reserved. Normal Local Grocery Delivery.</span>
+          <span>&copy; {new Date().getFullYear()} Pravdhan Store. All rights reserved. Normal Local Grocery Delivery.</span>
           <span>Prices inclusive of all taxes. Fast & secure checkout.</span>
         </div>
       </div>

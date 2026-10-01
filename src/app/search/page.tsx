@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { SearchClient } from '@/components/search/SearchClient';
 
 export const metadata = {
-  title: 'Search Groceries | Pravardhan Store',
+  title: 'Search Groceries | Pravdhan Store',
   description: 'Search fresh vegetables, fruits, dairy, atta, dal, and everyday grocery items from your local store.',
 };
 

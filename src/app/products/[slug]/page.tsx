@@ -10,10 +10,10 @@ interface Props {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const product = await StoreService.getProductBySlug(slug);
-  if (!product) return { title: 'Product Not Found | Pravardhan Store' };
+  if (!product) return { title: 'Product Not Found | Pravdhan Store' };
 
   return {
-    title: `${product.name} (${product.weight}) - Buy Online at ₹${product.price} | Pravardhan Store`,
+    title: `${product.name} (${product.weight}) - Buy Online at ₹${product.price} | Pravdhan Store`,
     description: `Order ${product.name} at ₹${product.price} (MRP ₹${product.mrp}). Fresh local grocery delivery with same-day and scheduled slots in Lucknow.`,
     openGraph: {
       title: product.name,

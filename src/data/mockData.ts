@@ -1,9 +1,9 @@
 import { Category, Product, Banner, DeliverySlot, Address, Coupon, StoreSettings } from '@/types';
 
 export const STORE_SETTINGS: StoreSettings = {
-  storeName: 'Pravardhan Store',
+  storeName: 'Pravdhan Store',
   storePhone: '+91 98765 43210',
-  storeEmail: 'care@pravardhanstore.in',
+  storeEmail: 'care@pravdhanstore.in',
   storeAddress: 'Shop 12-14, Sector 4 Market, Gomti Nagar, Lucknow - 226010',
   minOrderValue: 149,
   deliveryCharge: 35,

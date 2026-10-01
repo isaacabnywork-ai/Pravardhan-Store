@@ -1,6 +1,6 @@
 {
-  "appId": "in.pravardhanstore.app",
-  "appName": "Pravardhan Store",
+  "appId": "in.pravdhanstore.app",
+  "appName": "Pravdhan Store",
   "webDir": "out",
   "bundledWebRuntime": false,
   "server": {

@@ -1,4 +1,4 @@
-# 🛒 Pravardhan Store — Modern Local Grocery E-Commerce Platform
+# 🛒 Pravdhan Store — Modern Local Grocery E-Commerce Platform
 
 A production-quality, high-performance grocery web application engineered for real neighborhood grocery stores. Features the visual polish, high information density, and fluid UX of modern Indian quick-commerce applications, tailored specifically for **normal local delivery** with scheduled delivery slots and same-day delivery.
 

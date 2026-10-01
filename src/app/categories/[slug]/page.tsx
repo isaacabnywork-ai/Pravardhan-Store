@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props) {
   const category = await StoreService.getCategoryBySlug(slug);
   if (!category) return { title: 'Category Not Found' };
   return {
-    title: `${category.name} | Order Online from Pravardhan Store`,
+    title: `${category.name} | Order Online from Pravdhan Store`,
     description: `Shop fresh ${category.name} online with scheduled delivery slots and genuine prices. Local store delivery in Lucknow.`,
   };
 }

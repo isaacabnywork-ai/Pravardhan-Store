@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pravardhanstore-v1';
+const CACHE_NAME = 'pravdhanstore-v1';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',

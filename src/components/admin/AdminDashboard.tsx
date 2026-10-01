@@ -145,7 +145,7 @@ export function AdminDashboard() {
                 Store Partner Admin
               </span>
               <h1 className="text-sm sm:text-base font-black text-white leading-tight">
-                Pravardhan Store Operations
+                Pravdhan Store Operations
               </h1>
             </div>
           </div>

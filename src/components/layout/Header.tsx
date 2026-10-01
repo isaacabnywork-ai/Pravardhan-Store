@@ -30,7 +30,7 @@ export function Header() {
         <div className="hidden md:block bg-[#0F172A] text-slate-300 text-xs py-1.5 px-4 font-medium">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <span className="text-slate-200">
-              Pravardhan Store • Same-Day & Scheduled Grocery Delivery in Lucknow
+              Pravdhan Store • Same-Day & Scheduled Grocery Delivery in Lucknow
             </span>
             <div className="flex items-center gap-4 text-xs">
               <span>Customer Care: +91 98765 43210</span>
@@ -47,7 +47,7 @@ export function Header() {
             {/* Left: Brand Identity (Pure Text Only - No Logo/Icon) */}
             <Link href="/" className="shrink-0 flex items-center">
               <span className="font-black text-base sm:text-xl text-[#0F172A] tracking-tight whitespace-nowrap">
-                Pravardhan <span className="text-[#2563EB]">Store</span>
+                Pravdhan <span className="text-[#2563EB]">Store</span>
               </span>
             </Link>
 

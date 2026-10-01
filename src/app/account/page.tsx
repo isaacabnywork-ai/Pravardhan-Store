@@ -47,7 +47,7 @@ export default function AccountPage() {
       setUserProfile({
         name: 'Abhinav Sharma',
         phone: phoneInput,
-        email: `${phoneInput}@pravardhanstore.in`,
+        email: `${phoneInput}@pravdhanstore.in`,
       });
       setShowOtpModal(false);
       setOtpSent(false);
@@ -67,7 +67,7 @@ export default function AccountPage() {
             </div>
             <div>
               <h1 className="text-sm sm:text-base font-bold text-[#0F172A]">
-                {isLoggedIn ? userProfile.name : 'Welcome to Pravardhan Store'}
+                {isLoggedIn ? userProfile.name : 'Welcome to Pravdhan Store'}
               </h1>
               <p className="text-xs text-[#64748B]">
                 {isLoggedIn ? `+91 ${userProfile.phone}` : 'Log in to track orders & save addresses'}
