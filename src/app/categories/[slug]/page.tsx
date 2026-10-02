@@ -32,20 +32,23 @@ export default async function CategoryPage({ params }: Props) {
   return (
     <div className="w-full pb-8">
       {/* Category Hero / Breadcrumb */}
-      <div className="bg-[#0F172A] text-white py-3.5 sm:py-5 border-b border-slate-800">
+      <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-900 text-white py-4 sm:py-6 border-b border-emerald-900/50 shadow-xs">
         <div className="max-w-7xl mx-auto px-3.5 sm:px-6">
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-1">
-            <Link href="/" className="hover:underline">Home</Link>
-            <ChevronRight className="w-3 h-3" />
-            <Link href="/categories" className="hover:underline">Categories</Link>
-            <ChevronRight className="w-3 h-3" />
-            <span className="text-white font-semibold">{category.name}</span>
+          <div className="flex items-center gap-1.5 text-xs text-emerald-200/70 mb-2">
+            <Link href="/" className="hover:text-emerald-200 transition-colors">Home</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <Link href="/categories" className="hover:text-emerald-200 transition-colors">Categories</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-white font-bold">{category.name}</span>
           </div>
 
           <div>
-            <h1 className="text-lg sm:text-xl font-black tracking-tight">{category.name}</h1>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Fresh & handpicked daily • Morning & evening delivery slots
+            <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full mb-1.5 border border-emerald-400/30">
+              Farm Fresh & Handpicked
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight">{category.name}</h1>
+            <p className="text-xs sm:text-sm text-emerald-100/80 mt-1">
+              Guaranteed freshness from Lucknow local mandis • Morning & evening scheduled delivery slots
             </p>
           </div>
         </div>

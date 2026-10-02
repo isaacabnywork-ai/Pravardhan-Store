@@ -29,33 +29,35 @@ export default async function HomePage() {
       <BannerCarousel banners={banners} />
 
       {/* 3. Delivery Information Strip */}
-      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 my-2">
-        <div className="bg-white border border-[#E2E8F0] rounded-xl p-3 sm:p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-blue-50 text-[#2563EB] rounded-lg shrink-0">
-              <Truck className="w-4 h-4" />
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 my-3">
+        <div className="bg-gradient-to-r from-emerald-50/90 via-white to-green-50/90 border border-emerald-100 rounded-2xl p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Truck className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs sm:text-sm font-bold text-[#0F172A]">
-                  Normal Local Grocery Delivery
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-black text-slate-900">
+                  Scheduled Neighborhood Delivery
                 </span>
-                <span className="text-[10px] font-bold bg-blue-100 text-[#2563EB] px-1.5 py-0.5 rounded">
-                  Scheduled
+                <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200/80 px-2 py-0.5 rounded-full">
+                  FREE OVER ₹499
                 </span>
               </div>
-              <p className="text-[11px] text-[#64748B]">
-                Choose delivery slots: <b>Today 4 PM – 6 PM</b> or <b>Tomorrow Morning</b>. Free delivery over ₹499!
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Select your preferred delivery slot at checkout: <b className="text-slate-800 font-bold">Today 4 PM – 6 PM</b> or <b className="text-slate-800 font-bold">Tomorrow Morning</b>.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-semibold text-[#0F172A]">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#16A34A]" /> Genuine Mandi Quality
+          <div className="flex items-center gap-4 text-xs font-bold text-slate-800">
+            <span className="flex items-center gap-1.5 bg-white/90 border border-emerald-100 px-3 py-1.5 rounded-xl shadow-xs">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 stroke-[2.2]" />
+              <span>Genuine Mandi Fresh</span>
             </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-[#2563EB]" /> Scheduled Slots
+            <span className="flex items-center gap-1.5 bg-white/90 border border-emerald-100 px-3 py-1.5 rounded-xl shadow-xs">
+              <Clock className="w-4 h-4 text-emerald-600 stroke-[2.2]" />
+              <span>Timely Slots</span>
             </span>
           </div>
         </div>

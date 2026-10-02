@@ -12,7 +12,9 @@ import {
   Check,
   RotateCcw,
   ArrowLeft,
-  MapPin
+  MapPin,
+  Sparkles,
+  ShoppingBag
 } from 'lucide-react';
 import { Order, OrderStatus } from '@/types';
 import { useCart } from '@/context/CartContext';
@@ -23,11 +25,11 @@ interface OrderTrackerProps {
 }
 
 const ORDER_STEPS: { status: OrderStatus; label: string; desc: string }[] = [
-  { status: 'Order Placed', label: 'Order Placed', desc: 'We received your order' },
-  { status: 'Confirmed', label: 'Order Confirmed', desc: 'Store accepted the items' },
-  { status: 'Packing', label: 'Packing at Store', desc: 'Freshly packed & checked' },
+  { status: 'Order Placed', label: 'Order Placed', desc: 'We received your grocery order' },
+  { status: 'Confirmed', label: 'Order Confirmed', desc: 'Store accepted your items' },
+  { status: 'Packing', label: 'Packing at Store', desc: 'Freshly packed & quality checked' },
   { status: 'Out for Delivery', label: 'Out for Delivery', desc: 'Delivery partner is on the way' },
-  { status: 'Delivered', label: 'Delivered', desc: 'Arrived at your doorstep' },
+  { status: 'Delivered', label: 'Delivered', desc: 'Handed over at your doorstep' },
 ];
 
 export function OrderTracker({ order }: OrderTrackerProps) {
@@ -62,75 +64,75 @@ export function OrderTracker({ order }: OrderTrackerProps) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6">
+    <div className="max-w-3xl mx-auto px-3.5 sm:px-6 py-4 sm:py-8">
       {/* Top Bar */}
-      <div className="flex items-center justify-between mb-3.5">
+      <div className="flex items-center justify-between mb-4">
         <Link
           href="/orders"
-          className="flex items-center gap-1.5 text-xs font-bold text-[#2563EB] hover:underline"
+          className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
           <span>All Orders</span>
         </Link>
-        <span className="text-xs font-bold text-[#64748B]">
-          ID: {order.orderNumber}
+        <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+          {order.orderNumber}
         </span>
       </div>
 
       {/* Order Status Banner */}
-      <div className="bg-white border border-[#E2E8F0] rounded-xl p-4 mb-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+      <div className="bg-gradient-to-r from-emerald-50 via-white to-green-50 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 mb-5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
         <div>
-          <span className="text-[10px] font-black uppercase tracking-wider text-[#2563EB] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">
+          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 border border-emerald-200/80 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
             Status: {order.orderStatus}
           </span>
-          <h1 className="text-base sm:text-lg font-black text-[#0F172A]">
-            Thank you for ordering with Pravdhan Store
+          <h1 className="text-base sm:text-xl font-black text-slate-900 tracking-tight">
+            Thank you for shopping with Pravdhan Store
           </h1>
-          <p className="text-xs text-[#64748B] mt-0.5">
-            Scheduled Slot: <b>{order.deliverySlot?.label}</b> • Local Store Delivery
+          <p className="text-xs text-slate-500 mt-1">
+            Slot: <b className="text-slate-800 font-bold">{order.deliverySlot?.label}</b> • Scheduled Neighborhood Delivery
           </p>
         </div>
 
         <button
           onClick={handleOrderAgain}
           disabled={reordering}
-          className="shrink-0 px-3.5 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5"
+          className="shrink-0 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5"
         >
           <RotateCcw className="w-3.5 h-3.5" />
-          <span>{reordering ? 'Adding...' : 'Order Again'}</span>
+          <span>{reordering ? 'Adding items...' : 'Order Again'}</span>
         </button>
       </div>
 
       {/* Visual Timeline Progress */}
-      <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 mb-4 shadow-xs">
-        <h2 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-3.5 flex items-center gap-1.5">
-          <Clock className="w-4 h-4 text-[#2563EB]" /> Delivery Milestones
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 mb-5 shadow-xs">
+        <h2 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-5 flex items-center gap-2">
+          <Clock className="w-4 h-4 text-emerald-600" /> Delivery Progress
         </h2>
 
-        <div className="relative pl-6 sm:pl-7 space-y-5">
+        <div className="relative pl-6 sm:pl-8 space-y-6">
           {/* Vertical Connecting Line */}
-          <div className="absolute left-[10px] sm:left-[14px] top-2 bottom-2 w-0.5 bg-[#E2E8F0]" />
+          <div className="absolute left-[11px] sm:left-[15px] top-2 bottom-2 w-0.5 bg-slate-200" />
 
           {ORDER_STEPS.map((step, idx) => {
             const isCompleted = idx < currentStep;
             const isCurrent = idx === currentStep;
 
             return (
-              <div key={step.status} className="relative flex items-start gap-3">
+              <div key={step.status} className="relative flex items-start gap-3.5">
                 {/* Milestone Node */}
                 <div
-                  className={`relative z-10 w-5 h-5 rounded-full flex items-center justify-center -ml-[21px] sm:-ml-[25px] border-2 transition-all ${
+                  className={`relative z-10 w-6 h-6 rounded-full flex items-center justify-center -ml-[23px] sm:-ml-[27px] border-2 transition-all ${
                     isCompleted
-                      ? 'bg-[#2563EB] border-[#2563EB] text-white'
+                      ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
                       : isCurrent
-                      ? 'bg-white border-[#2563EB] text-[#2563EB] ring-2 ring-blue-100'
-                      : 'bg-white border-[#E2E8F0] text-[#E2E8F0]'
+                      ? 'bg-white border-emerald-600 text-emerald-600 ring-4 ring-emerald-100 shadow-xs'
+                      : 'bg-white border-slate-300 text-slate-300'
                   }`}
                 >
                   {isCompleted ? (
-                    <Check className="w-3 h-3 stroke-[3]" />
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
                   ) : (
-                    <div className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-[#2563EB]' : 'bg-transparent'}`} />
+                    <div className={`w-2 h-2 rounded-full ${isCurrent ? 'bg-emerald-600' : 'bg-transparent'}`} />
                   )}
                 </div>
 
@@ -140,21 +142,21 @@ export function OrderTracker({ order }: OrderTrackerProps) {
                     <span
                       className={`text-xs font-bold ${
                         isCurrent
-                          ? 'text-[#2563EB] font-black'
+                          ? 'text-emerald-700 font-black'
                           : isCompleted
-                          ? 'text-[#0F172A]'
-                          : 'text-[#64748B]'
+                          ? 'text-slate-900'
+                          : 'text-slate-400'
                       }`}
                     >
                       {step.label}
                     </span>
                     {isCurrent && (
-                      <span className="text-[9px] bg-blue-100 text-[#2563EB] font-black px-1.5 py-0.5 rounded">
-                        Current
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-black px-2 py-0.5 rounded-full">
+                        In Progress
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[#64748B] mt-0.5">{step.desc}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{step.desc}</p>
                 </div>
               </div>
             );
@@ -163,25 +165,25 @@ export function OrderTracker({ order }: OrderTrackerProps) {
       </div>
 
       {/* Items in this Order */}
-      <div className="bg-white rounded-xl border border-[#E2E8F0] p-4 mb-4 shadow-xs">
-        <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider mb-2.5">
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 mb-5 shadow-xs">
+        <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-3">
           Items Ordered ({order.items?.length || 0})
         </h3>
         <div className="divide-y divide-slate-100">
           {order.items?.map((item) => (
-            <div key={item.id} className="py-2 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2.5">
-                <div className="relative w-10 h-10 rounded-lg bg-[#F8FAFC] overflow-hidden border border-[#E2E8F0] shrink-0">
-                  <Image src={item.image} alt={item.productName} fill sizes="40px" className="object-cover" />
+            <div key={item.id} className="py-2.5 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-3">
+                <div className="relative w-12 h-12 rounded-xl bg-slate-50 overflow-hidden border border-slate-200 shrink-0">
+                  <Image src={item.image} alt={item.productName} fill sizes="48px" className="object-cover" />
                 </div>
                 <div>
-                  <span className="font-bold text-[#0F172A] block">{item.productName}</span>
-                  <span className="text-[#64748B] text-[10px]">
+                  <span className="font-bold text-slate-900 block">{item.productName}</span>
+                  <span className="text-slate-500 text-[11px]">
                     {item.weight} × {item.quantity}
                   </span>
                 </div>
               </div>
-              <span className="font-black text-[#0F172A]">
+              <span className="font-black text-slate-900">
                 ₹{item.price * item.quantity}
               </span>
             </div>
@@ -189,47 +191,52 @@ export function OrderTracker({ order }: OrderTrackerProps) {
         </div>
 
         {/* Bill summary */}
-        <div className="pt-2.5 border-t border-[#E2E8F0] space-y-1 text-xs text-[#64748B]">
+        <div className="pt-3 border-t border-slate-200 space-y-1.5 text-xs text-slate-600">
           <div className="flex justify-between">
             <span>Subtotal</span>
             <span>₹{order.subtotal}</span>
           </div>
           {order.discount > 0 && (
-            <div className="flex justify-between text-[#16A34A] font-semibold">
+            <div className="flex justify-between text-emerald-600 font-semibold">
               <span>Savings</span>
               <span>- ₹{order.discount}</span>
             </div>
           )}
           {order.couponDiscount > 0 && (
-            <div className="flex justify-between text-[#16A34A] font-semibold">
+            <div className="flex justify-between text-emerald-600 font-semibold">
               <span>Coupon</span>
               <span>- ₹{order.couponDiscount}</span>
             </div>
           )}
           <div className="flex justify-between">
             <span>Delivery Fee</span>
-            <span>{order.deliveryFee === 0 ? 'FREE' : `₹${order.deliveryFee}`}</span>
+            <span>{order.deliveryFee === 0 ? <span className="text-emerald-600 font-bold">FREE</span> : `₹${order.deliveryFee}`}</span>
           </div>
-          <div className="pt-2 border-t border-[#E2E8F0] flex justify-between font-black text-sm text-[#0F172A]">
+          <div className="pt-2.5 border-t border-slate-200 flex justify-between font-black text-sm text-slate-900">
             <span>Total Paid</span>
-            <span>₹{order.total}</span>
+            <span className="font-black text-base text-slate-900">₹{order.total}</span>
           </div>
         </div>
       </div>
 
       {/* Delivery Address */}
-      <div className="bg-white rounded-xl border border-[#E2E8F0] p-3.5 shadow-xs text-xs">
-        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block mb-1">
-          Delivery Address
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs text-xs">
+        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-2">
+          Delivery Destination
         </span>
-        <div className="flex items-start gap-2 text-[#0F172A]">
-          <MapPin className="w-3.5 h-3.5 text-[#2563EB] shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 text-slate-900">
+          <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 shrink-0 mt-0.5">
+            <MapPin className="w-4 h-4" />
+          </div>
           <div>
-            <span className="font-bold">{order.address?.name}</span> ({order.address?.label})
-            <p className="text-[#64748B] mt-0.5">
+            <span className="font-black text-slate-900">{order.address?.name}</span>
+            <span className="ml-2 text-[10px] bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded">
+              {order.address?.label}
+            </span>
+            <p className="text-slate-600 mt-1 leading-snug">
               {order.address?.houseFlat}, {order.address?.street}, {order.address?.area}, {order.address?.city} - {order.address?.pincode}
             </p>
-            <p className="text-[#64748B] mt-0.5">Mobile: {order.address?.phone}</p>
+            <p className="text-slate-500 text-[11px] mt-1 font-medium">Contact: +91 {order.address?.phone}</p>
           </div>
         </div>
       </div>

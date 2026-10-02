@@ -12,45 +12,50 @@ export default function WishlistPage() {
   return (
     <div className="max-w-7xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6">
       {/* Top Header */}
-      <div className="flex items-center gap-2.5 mb-4">
+      <div className="flex items-center gap-3 mb-6">
         <Link
           href="/account"
-          className="p-1.5 rounded-lg bg-white border border-[#E2E8F0] text-[#0F172A] hover:bg-slate-50"
+          className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-xs"
           aria-label="Back to Account"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
-          <h1 className="text-base sm:text-xl font-black text-[#0F172A]">
-            My Wishlist ({wishlistProducts.length})
-          </h1>
-          <p className="text-xs text-[#64748B]">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
+              My Wishlist
+            </h1>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-100">
+              {wishlistProducts.length} items
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">
             Saved grocery favorites for quick reordering
           </p>
         </div>
       </div>
 
       {wishlistProducts.length === 0 ? (
-        <div className="max-w-md mx-auto py-16 px-4 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-red-50 text-[#DC2626] flex items-center justify-center mx-auto mb-2.5 border border-red-100">
-            <Heart className="w-7 h-7" />
+        <div className="max-w-md mx-auto py-20 px-4 text-center bg-white rounded-3xl border border-slate-100 shadow-sm my-6">
+          <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mx-auto mb-4 border border-rose-100 shadow-inner">
+            <Heart className="w-8 h-8" />
           </div>
-          <h2 className="text-base font-bold text-[#0F172A] mb-1">
+          <h2 className="text-lg font-bold text-slate-900 mb-1.5">
             Your wishlist is empty
           </h2>
-          <p className="text-xs text-[#64748B] mb-4">
-            Click the heart icon on any product to save it here for fast reordering.
+          <p className="text-xs text-slate-500 mb-6 max-w-xs mx-auto">
+            Click the heart icon on any product to save it here for fast repeat grocery ordering.
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs rounded-xl shadow-xs"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/20 active:scale-[0.98] transition-all"
           >
             <span>Explore Groceries</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-4">
           {wishlistProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

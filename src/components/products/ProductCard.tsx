@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, Plus, Minus, Clock } from 'lucide-react';
+import { Heart, Plus, Minus } from 'lucide-react';
 import { Product, ProductVariant } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -55,16 +55,16 @@ export function ProductCard({ product, selectedVariant }: ProductCardProps) {
   };
 
   return (
-    <div className="group relative bg-white border border-[#E2E8F0] rounded-xl p-2.5 sm:p-3 flex flex-col justify-between hover:border-blue-300 transition-all duration-150">
+    <div className="group relative bg-white border border-slate-200/90 hover:border-emerald-400 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between transition-all duration-200 hover:shadow-lg hover:shadow-emerald-950/5">
       {/* Top Image + Badges */}
-      <div className="relative w-full aspect-square rounded-lg bg-[#F8FAFC] overflow-hidden mb-2">
+      <div className="relative w-full aspect-square rounded-xl bg-slate-50/80 overflow-hidden mb-2">
         <Link href={`/products/${product.slug}`} className="block w-full h-full">
           <Image
             src={product.image}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 48vw, (max-width: 1024px) 25vw, 18vw"
-            className="object-cover group-hover:scale-102 transition-transform duration-200"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
         </Link>
@@ -73,26 +73,26 @@ export function ProductCard({ product, selectedVariant }: ProductCardProps) {
         <button
           onClick={handleWishlist}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-          className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-white/90 text-[#64748B] hover:text-[#DC2626] transition-colors z-10 shadow-xs"
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 backdrop-blur-xs text-slate-400 hover:text-rose-500 transition-all z-10 shadow-xs hover:scale-110 active:scale-90"
         >
           <Heart
             className={`w-3.5 h-3.5 transition-colors ${
-              isWishlisted ? 'fill-[#DC2626] text-[#DC2626]' : 'text-[#64748B]'
+              isWishlisted ? 'fill-rose-500 text-rose-500' : 'text-slate-400'
             }`}
           />
         </button>
 
         {/* Discount Badge */}
         {variant?.discount > 0 && (
-          <span className="absolute top-1.5 left-1.5 bg-[#2563EB] text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded tracking-tight">
+          <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full tracking-tight shadow-xs">
             {variant.discount}% OFF
           </span>
         )}
 
         {/* Out of Stock Overlay */}
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-            <span className="text-[11px] font-bold text-[#64748B] bg-slate-100 px-2 py-0.5 rounded">
+          <div className="absolute inset-0 bg-white/85 backdrop-blur-xs flex items-center justify-center p-2">
+            <span className="text-[10px] sm:text-[11px] font-black text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-full uppercase tracking-wider">
               Out of Stock
             </span>
           </div>
@@ -102,11 +102,13 @@ export function ProductCard({ product, selectedVariant }: ProductCardProps) {
       {/* Product Information */}
       <div className="flex-1 flex flex-col">
         {/* Weight & Low Stock */}
-        <div className="flex items-center justify-between text-[11px] text-[#64748B] font-medium mb-1">
-          <span>{variant?.weight || product.weight}</span>
+        <div className="flex items-center justify-between text-[11px] font-semibold mb-1">
+          <span className="text-slate-500 bg-slate-100/90 px-1.5 py-0.5 rounded text-[10px]">
+            {variant?.weight || product.weight}
+          </span>
           {isLowStock && (
-            <span className="text-[10px] font-bold text-[#F59E0B]">
-              {stock} left
+            <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+              Only {stock} left
             </span>
           )}
         </div>
@@ -114,7 +116,7 @@ export function ProductCard({ product, selectedVariant }: ProductCardProps) {
         {/* Product Name */}
         <Link
           href={`/products/${product.slug}`}
-          className="font-bold text-xs sm:text-sm text-[#0F172A] leading-snug line-clamp-2 hover:text-[#2563EB] transition-colors mb-2"
+          className="font-bold text-xs sm:text-sm text-slate-900 leading-snug line-clamp-2 hover:text-emerald-700 transition-colors mb-2"
           title={product.name}
         >
           {product.name}
@@ -122,49 +124,50 @@ export function ProductCard({ product, selectedVariant }: ProductCardProps) {
       </div>
 
       {/* Bottom Row: Price & Add Button */}
-      <div className="pt-2 mt-auto flex items-center justify-between gap-1 border-t border-[#E2E8F0]">
+      <div className="pt-2 mt-auto flex items-center justify-between gap-1.5 border-t border-slate-100">
         <div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-sm sm:text-base font-black text-[#0F172A]">
+            <span className="text-sm sm:text-base font-black text-slate-900">
               ₹{variant?.price || product.price}
             </span>
             {variant?.mrp && variant.mrp > variant.price && (
-              <span className="text-[11px] text-[#64748B] line-through">
+              <span className="text-[10px] sm:text-[11px] text-slate-400 line-through">
                 ₹{variant.mrp}
               </span>
             )}
           </div>
         </div>
 
-        {/* Add Button with Inline Transition */}
+        {/* Add Button with Smooth Transition */}
         <div>
           {isOutOfStock ? (
-            <span className="text-[10px] font-bold text-[#64748B] bg-slate-100 px-2.5 py-1 rounded-lg">
+            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">
               Sold Out
             </span>
           ) : quantity === 0 ? (
             <button
               onClick={handleAdd}
-              className="px-3.5 py-1 bg-white hover:bg-blue-50 text-[#2563EB] border border-[#2563EB] font-black text-xs rounded-lg transition-all active:scale-95"
+              className="px-3 sm:px-3.5 py-1 sm:py-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-600 font-black text-xs rounded-xl transition-all shadow-xs active:scale-95 flex items-center gap-1"
             >
-              ADD
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span>ADD</span>
             </button>
           ) : (
-            <div className="flex items-center bg-[#2563EB] text-white rounded-lg overflow-hidden shadow-xs">
+            <div className="flex items-center bg-emerald-600 text-white rounded-xl overflow-hidden shadow-xs ring-1 ring-emerald-700">
               <button
                 onClick={handleDecrement}
-                className="p-1 hover:bg-[#1D4ED8] transition-colors active:scale-90"
+                className="p-1 sm:p-1.5 hover:bg-emerald-700 transition-colors active:scale-90"
                 aria-label="Decrease quantity"
               >
                 <Minus className="w-3.5 h-3.5 stroke-[3]" />
               </button>
-              <span className="px-1.5 text-xs font-black min-w-[18px] text-center">
+              <span className="px-1.5 text-xs font-black min-w-[20px] text-center">
                 {quantity}
               </span>
               <button
                 onClick={handleIncrement}
                 disabled={quantity >= stock}
-                className="p-1 hover:bg-[#1D4ED8] disabled:opacity-40 transition-colors active:scale-90"
+                className="p-1 sm:p-1.5 hover:bg-emerald-700 disabled:opacity-40 transition-colors active:scale-90"
                 aria-label="Increase quantity"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[3]" />

@@ -109,19 +109,19 @@ export default function OrdersPage() {
 
   if (orders.length === 0) {
     return (
-      <div className="max-w-md mx-auto px-4 py-16 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center mx-auto mb-2.5">
-          <PackageCheck className="w-7 h-7" />
+      <div className="max-w-md mx-auto px-4 py-20 text-center bg-white rounded-3xl border border-slate-100 shadow-xs my-8">
+        <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 border border-emerald-100 shadow-inner">
+          <PackageCheck className="w-8 h-8" />
         </div>
-        <h2 className="text-base font-bold text-[#0F172A] mb-1">
+        <h2 className="text-lg font-bold text-slate-900 mb-1.5">
           No orders yet
         </h2>
-        <p className="text-xs text-[#64748B] mb-4">
-          Browse daily groceries and schedule your first delivery.
+        <p className="text-xs text-slate-500 mb-6 max-w-xs mx-auto">
+          Browse fresh groceries, farm veggies, dairy and schedule your first doorstep delivery.
         </p>
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2563EB] text-white font-bold text-xs rounded-xl"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/20 active:scale-[0.98] transition-all"
         >
           <span>Start Shopping</span>
           <ArrowRight className="w-4 h-4" />
@@ -131,38 +131,38 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6">
-      <div className="mb-4">
-        <h1 className="text-lg sm:text-xl font-black text-[#0F172A]">
-          Order History
+    <div className="max-w-4xl mx-auto px-3.5 sm:px-6 py-4 sm:py-8">
+      <div className="mb-5">
+        <h1 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          My Order History
         </h1>
-        <p className="text-xs text-[#64748B]">
-          Track active orders and reorder in 1 click
+        <p className="text-xs text-slate-500 mt-0.5">
+          Track active deliveries and reorder your grocery staples in 1 click
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {orders.map((order) => (
           <div
             key={order.id}
-            className="bg-white rounded-xl border border-[#E2E8F0] p-3.5 sm:p-4 shadow-xs hover:border-blue-200 transition-colors"
+            className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all"
           >
             {/* Order Header */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#E2E8F0] text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 text-xs">
               <div>
-                <span className="font-bold text-[#0F172A]">Order #{order.orderNumber}</span>
-                <span className="text-[#64748B] block text-[11px]">
+                <span className="font-black text-slate-900">Order #{order.orderNumber}</span>
+                <span className="text-slate-500 block text-[11px] mt-0.5">
                   {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
               <div>
                 <span
-                  className={`font-bold text-[10px] px-2 py-0.5 rounded uppercase tracking-wider ${
+                  className={`font-black text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider ${
                     order.orderStatus === 'Delivered'
-                      ? 'bg-green-100 text-[#16A34A]'
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200/80'
                       : order.orderStatus === 'Cancelled'
-                      ? 'bg-red-100 text-[#DC2626]'
-                      : 'bg-blue-100 text-[#2563EB]'
+                      ? 'bg-rose-100 text-rose-700 border border-rose-200/80'
+                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
                   }`}
                 >
                   {order.orderStatus}
@@ -171,55 +171,55 @@ export default function OrdersPage() {
             </div>
 
             {/* Items Preview */}
-            <div className="py-2.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <div className="py-3.5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar">
                 {order.items.slice(0, 4).map((it) => (
                   <div
                     key={it.id}
-                    className="relative w-11 h-11 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] overflow-hidden shrink-0"
+                    className="relative w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 overflow-hidden shrink-0"
                     title={it.productName}
                   >
-                    <Image src={it.image} alt="" fill sizes="44px" className="object-cover" />
+                    <Image src={it.image} alt="" fill sizes="48px" className="object-cover" />
                   </div>
                 ))}
                 {order.items.length > 4 && (
-                  <div className="w-11 h-11 rounded-lg bg-slate-100 text-[#64748B] flex items-center justify-center font-bold text-xs shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200">
                     +{order.items.length - 4}
                   </div>
                 )}
               </div>
 
               <div className="text-right shrink-0">
-                <div className="text-xs text-[#64748B]">
+                <div className="text-xs text-slate-500 font-medium">
                   {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
                 </div>
-                <div className="text-sm font-black text-[#0F172A]">
+                <div className="text-base font-black text-slate-900 mt-0.5">
                   ₹{order.total}
                 </div>
               </div>
             </div>
 
             {/* Delivery Slot info */}
-            <div className="text-[11px] text-[#64748B] flex items-center gap-1 font-medium">
-              <Clock className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
-              <span>Slot: {order.deliverySlot?.label}</span>
+            <div className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+              <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>Slot: <b className="text-slate-700 font-bold">{order.deliverySlot?.label}</b></span>
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-3 pt-2.5 border-t border-[#E2E8F0] flex items-center justify-between gap-2">
+            <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2.5">
               <Link
                 href={`/orders/${order.id}`}
-                className="px-3 py-1.5 bg-[#F8FAFC] hover:bg-slate-100 border border-[#E2E8F0] text-[#0F172A] font-bold text-xs rounded-lg transition-colors flex items-center gap-1"
+                className="px-3.5 py-2 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-xs"
               >
-                <span>Track Order</span>
-                <ChevronRight className="w-3 h-3" />
+                <span>Track Details</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </Link>
 
               <button
                 onClick={() => handleOrderAgain(order)}
-                className="px-3.5 py-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs rounded-lg shadow-xs transition-all active:scale-95 flex items-center gap-1"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5"
               >
-                <RotateCcw className="w-3 h-3" />
+                <RotateCcw className="w-3.5 h-3.5" />
                 <span>Order Again</span>
               </button>
             </div>

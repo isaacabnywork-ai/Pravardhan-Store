@@ -2,15 +2,19 @@
 
 @layer base {
   :root {
-    --primary-navy: #0F172A;
-    --brand-blue: #2563EB;
-    --brand-blue-hover: #1D4ED8;
-    --secondary-blue: #3B82F6;
+    --primary-green: #16A34A;
+    --primary-green-hover: #15803D;
+    --primary-green-light: #DCFCE7;
+    --primary-green-bg: #F0FDF4;
+    --secondary-amber: #F59E0B;
+    --secondary-orange: #EA580C;
     --bg-page: #F8FAFC;
     --bg-card: #FFFFFF;
     --text-primary: #0F172A;
     --text-secondary: #64748B;
+    --text-muted: #94A3B8;
     --border-color: #E2E8F0;
+    --border-subtle: #F1F5F9;
     --color-success: #16A34A;
     --color-warning: #F59E0B;
     --color-error: #DC2626;
@@ -25,11 +29,11 @@
     background-color: var(--bg-page);
     color: var(--text-primary);
     -webkit-tap-highlight-color: transparent;
-    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   }
 }
 
-/* Custom Utilities for Commerce Experience */
+/* Custom Utilities for Grocery Commerce Experience */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -38,7 +42,7 @@
   scrollbar-width: none;
 }
 
-/* Mobile safe areas for Capacitor & modern phones */
+/* Mobile safe areas for modern phones */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0.75rem);
 }
@@ -48,8 +52,17 @@
 
 /* Touch active styles */
 .touch-press:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
   transition: transform 0.08s ease;
+}
+
+/* Smooth grocery card hover */
+.grocery-card {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.grocery-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(22, 163, 74, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
 }
 
 /* Text Clamping */
@@ -66,3 +79,4 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+

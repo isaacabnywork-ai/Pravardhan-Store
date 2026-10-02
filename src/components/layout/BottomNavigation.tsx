@@ -20,7 +20,7 @@ export function BottomNavigation() {
   ];
 
   return (
-    <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E2E8F0] px-2 py-1 pb-safe">
+    <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 px-2 py-1 pb-safe shadow-lg">
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const isActive = item.exact
@@ -33,23 +33,33 @@ export function BottomNavigation() {
             <Link
               key={item.label}
               href={item.href}
-              className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-lg transition-colors ${
-                isActive ? 'text-[#2563EB] font-black' : 'text-[#64748B]'
+              className={`relative flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all duration-150 ${
+                isActive
+                  ? 'text-emerald-700 font-extrabold'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <div className="relative">
+              <div
+                className={`relative p-1 rounded-xl transition-all ${
+                  isActive ? 'bg-emerald-50 text-emerald-600 scale-105' : ''
+                }`}
+              >
                 <Icon
                   className={`w-4 h-4 transition-transform ${
-                    isActive ? 'scale-110 stroke-[2.5]' : 'stroke-[1.8]'
+                    isActive ? 'stroke-[2.5]' : 'stroke-[1.8]'
                   }`}
                 />
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className="absolute -top-1 -right-2 bg-[#2563EB] text-white text-[9px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1.5 bg-emerald-600 text-white text-[9px] font-black min-w-[15px] h-[15px] px-0.5 rounded-full flex items-center justify-center ring-2 ring-white">
                     {item.badge}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] mt-0.5 tracking-tight font-semibold">
+              <span
+                className={`text-[10px] mt-0.5 tracking-tight ${
+                  isActive ? 'font-black text-emerald-800' : 'font-semibold text-slate-500'
+                }`}
+              >
                 {item.label}
               </span>
             </Link>

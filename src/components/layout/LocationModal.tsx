@@ -50,14 +50,14 @@ export function LocationModal() {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 transition-opacity animate-in fade-in">
       <div className="w-full max-w-lg bg-white rounded-t-2xl sm:rounded-2xl p-5 shadow-xl max-h-[85vh] overflow-y-auto no-scrollbar border border-[#E2E8F0]">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-blue-50 text-[#2563EB] rounded-lg">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
               <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-[#0F172A] text-base">Select Delivery Location</h3>
-              <p className="text-xs text-[#64748B]">Scheduled grocery delivery to your doorstep</p>
+              <h3 className="font-bold text-slate-900 text-base">Select Delivery Location</h3>
+              <p className="text-xs text-slate-500">Scheduled fresh grocery delivery to your doorstep</p>
             </div>
           </div>
           <button
@@ -65,7 +65,7 @@ export function LocationModal() {
               setIsLocationModalOpen(false);
               setShowAddForm(false);
             }}
-            className="p-1.5 text-[#64748B] hover:text-[#0F172A] rounded-lg hover:bg-slate-100 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -79,16 +79,16 @@ export function LocationModal() {
               onClick={() => {
                 alert('GPS location detected: Sector 6, Vrindavan Yojna, Lucknow (226029)');
               }}
-              className="w-full flex items-center gap-3 p-3 bg-blue-50/50 border border-blue-200 rounded-xl text-[#0F172A] text-left hover:bg-blue-50 transition-colors"
+              className="w-full flex items-center gap-3 p-3 bg-emerald-50/60 border border-emerald-200/80 rounded-xl text-slate-900 text-left hover:bg-emerald-50 transition-colors shadow-sm"
             >
-              <Navigation className="w-4 h-4 text-[#2563EB] shrink-0" />
+              <Navigation className="w-4 h-4 text-emerald-600 shrink-0" />
               <div>
-                <span className="text-xs font-bold block text-[#2563EB]">Use Current Location</span>
-                <span className="text-[11px] text-[#64748B]">Detect via GPS / Network</span>
+                <span className="text-xs font-bold block text-emerald-700">Use Current Location</span>
+                <span className="text-[11px] text-slate-500">Detect via GPS / Network</span>
               </div>
             </button>
 
-            <div className="text-xs font-semibold text-[#64748B] uppercase tracking-wider pt-2">
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-2">
               Saved Addresses
             </div>
 
@@ -98,14 +98,14 @@ export function LocationModal() {
                 <div
                   key={addr.id}
                   onClick={() => handleSelect(addr)}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start justify-between ${
+                  className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start justify-between ${
                     isSelected
-                      ? 'border-[#2563EB] bg-blue-50/40 ring-1 ring-[#2563EB]'
-                      : 'border-[#E2E8F0] hover:border-slate-300 bg-white'
+                      ? 'border-emerald-500 bg-emerald-50/40 ring-1 ring-emerald-500 shadow-sm'
+                      : 'border-slate-200 hover:border-emerald-200 bg-white hover:bg-slate-50/50'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 p-1.5 rounded-lg bg-slate-100 text-[#0F172A]">
+                    <div className={`mt-0.5 p-2 rounded-lg ${isSelected ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
                       {addr.label === 'Home' ? (
                         <Home className="w-4 h-4" />
                       ) : (
@@ -114,21 +114,21 @@ export function LocationModal() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#0F172A]">{addr.label}</span>
+                        <span className="text-xs font-bold text-slate-900">{addr.label}</span>
                         {addr.isDefault && (
-                          <span className="text-[10px] bg-slate-100 text-[#64748B] px-1.5 py-0.5 rounded font-medium">
+                          <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">
                             Default
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-[#64748B] mt-1 line-clamp-2">
+                      <p className="text-xs text-slate-600 mt-1 line-clamp-2">
                         {addr.houseFlat}, {addr.street}, {addr.area}, {addr.city} - {addr.pincode}
                       </p>
-                      <p className="text-[11px] text-[#64748B] mt-0.5">Phone: {addr.phone}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Phone: {addr.phone}</p>
                     </div>
                   </div>
                   {isSelected && (
-                    <div className="p-1 bg-[#2563EB] text-white rounded-full">
+                    <div className="p-1 bg-emerald-600 text-white rounded-full shadow-sm">
                       <Check className="w-3.5 h-3.5 stroke-[3]" />
                     </div>
                   )}
@@ -138,7 +138,7 @@ export function LocationModal() {
 
             <button
               onClick={() => setShowAddForm(true)}
-              className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-[#2563EB] text-[#2563EB] font-bold rounded-xl text-xs hover:bg-blue-50 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2.5 border border-dashed border-emerald-500 text-emerald-700 font-bold rounded-xl text-xs hover:bg-emerald-50/60 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add New Address
@@ -148,11 +148,11 @@ export function LocationModal() {
           /* Add Address Form */
           <form onSubmit={handleCreateAddress} className="mt-4 space-y-3">
             <div className="flex items-center justify-between pb-2">
-              <span className="text-xs font-bold text-[#0F172A]">Add New Delivery Address</span>
+              <span className="text-xs font-bold text-slate-900">Add New Delivery Address</span>
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                className="text-xs text-[#2563EB] font-medium hover:underline"
+                className="text-xs text-emerald-600 font-semibold hover:underline"
               >
                 Back to saved
               </button>
@@ -160,18 +160,18 @@ export function LocationModal() {
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-[#64748B] block mb-1">Your Name</label>
+                <label className="text-xs text-slate-500 block mb-1 font-medium">Your Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Abhinav Sharma"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full text-xs p-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:outline-[#2563EB]"
+                  className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                 />
               </div>
               <div>
-                <label className="text-xs text-[#64748B] block mb-1">Mobile Number</label>
+                <label className="text-xs text-slate-500 block mb-1 font-medium">Mobile Number</label>
                 <input
                   type="tel"
                   required
@@ -179,49 +179,49 @@ export function LocationModal() {
                   placeholder="10 digit number"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full text-xs p-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:outline-[#2563EB]"
+                  className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs text-[#64748B] block mb-1">House / Flat / Building No.</label>
+              <label className="text-xs text-slate-500 block mb-1 font-medium">House / Flat / Building No.</label>
               <input
                 type="text"
                 required
                 placeholder="e.g. Flat 903, Tower C"
                 value={formData.houseFlat}
                 onChange={(e) => setFormData({ ...formData, houseFlat: e.target.value })}
-                className="w-full text-xs p-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:outline-[#2563EB]"
+                className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
               />
             </div>
 
             <div>
-              <label className="text-xs text-[#64748B] block mb-1">Street / Apartment / Society</label>
+              <label className="text-xs text-slate-500 block mb-1 font-medium">Street / Apartment / Society</label>
               <input
                 type="text"
                 required
                 placeholder="e.g. Suraj Apartment, Shaheed Path"
                 value={formData.street}
                 onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                className="w-full text-xs p-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:outline-[#2563EB]"
+                className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-[#64748B] block mb-1">Area / Sector</label>
+                <label className="text-xs text-slate-500 block mb-1 font-medium">Area / Sector</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Vrindavan Yojna"
                   value={formData.area}
                   onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                  className="w-full text-xs p-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:outline-[#2563EB]"
+                  className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                 />
               </div>
               <div>
-                <label className="text-xs text-[#64748B] block mb-1">Pincode</label>
+                <label className="text-xs text-slate-500 block mb-1 font-medium">Pincode</label>
                 <input
                   type="text"
                   required
@@ -229,13 +229,13 @@ export function LocationModal() {
                   placeholder="e.g. 226029"
                   value={formData.pincode}
                   onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                  className="w-full text-xs p-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg focus:outline-[#2563EB]"
+                  className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all"
                 />
               </div>
             </div>
 
             <div className="pt-1">
-              <label className="text-xs text-[#64748B] block mb-1">Address Label</label>
+              <label className="text-xs text-slate-500 block mb-1 font-medium">Address Label</label>
               <div className="flex gap-2">
                 {(['Home', 'Work', 'Other'] as const).map((lbl) => (
                   <button
@@ -244,8 +244,8 @@ export function LocationModal() {
                     onClick={() => setFormData({ ...formData, label: lbl })}
                     className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
                       formData.label === lbl
-                        ? 'bg-[#0F172A] text-white border-[#0F172A]'
-                        : 'border-[#E2E8F0] text-[#0F172A] hover:bg-slate-50'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                        : 'border-slate-200 text-slate-700 hover:bg-slate-50'
                     }`}
                   >
                     {lbl}
@@ -256,7 +256,7 @@ export function LocationModal() {
 
             <button
               type="submit"
-              className="w-full mt-3 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold rounded-xl text-xs transition-colors"
+              className="w-full mt-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-colors shadow-md shadow-emerald-600/20 active:scale-[0.98]"
             >
               Save Address & Deliver Here
             </button>

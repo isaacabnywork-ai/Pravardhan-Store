@@ -16,31 +16,31 @@ export function FloatingCartBar() {
   }
 
   return (
-    <div className="fixed bottom-14 sm:bottom-4 left-0 right-0 z-40 px-3.5 sm:px-6 pointer-events-none animate-in slide-in-from-bottom-3 duration-200">
+    <div className="fixed bottom-14 sm:bottom-5 left-0 right-0 z-40 px-3.5 sm:px-6 pointer-events-none animate-in slide-in-from-bottom-3 duration-200">
       <div className="max-w-md sm:max-w-lg mx-auto pointer-events-auto">
         <Link
           href="/cart"
-          className="flex items-center justify-between bg-[#0F172A] hover:bg-[#1E293B] text-white p-2.5 sm:p-3 rounded-xl shadow-lg border border-slate-700 transition-all active:scale-98"
+          className="flex items-center justify-between bg-slate-900/95 backdrop-blur-md hover:bg-slate-900 text-white p-2.5 sm:p-3 rounded-2xl shadow-xl shadow-emerald-950/20 border border-emerald-900/40 transition-all active:scale-98 group"
         >
           {/* Left: Item summary */}
-          <div className="flex items-center gap-2.5">
-            <div className="relative w-8 h-8 rounded-lg bg-[#2563EB] flex items-center justify-center text-white">
-              <ShoppingBag className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <div className="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-green-500 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
+              <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
             </div>
             <div>
-              <div className="text-[11px] text-slate-300 font-semibold leading-tight">
-                {itemCount} {itemCount === 1 ? 'item' : 'items'} in cart
+              <div className="text-[11px] text-emerald-200 font-semibold leading-tight">
+                {itemCount} {itemCount === 1 ? 'grocery item' : 'grocery items'} in cart
               </div>
-              <div className="text-xs sm:text-sm font-black text-white">
+              <div className="text-sm font-black text-white">
                 ₹{subtotal}
               </div>
             </div>
           </div>
 
           {/* Right: View Cart Action */}
-          <div className="flex items-center gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-extrabold text-xs px-3.5 py-1.5 rounded-lg transition-colors">
+          <div className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-4 py-2 rounded-xl transition-all shadow-sm">
             <span>View Cart</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5 stroke-[2.5] group-hover:translate-x-0.5 transition-transform" />
           </div>
         </Link>
       </div>
