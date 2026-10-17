@@ -1,75 +1,88 @@
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  icon: string;
-  image: string;
-  itemCount?: number;
-  subcategories?: Subcategory[];
-}
+export type AppMode = 'customer' | 'admin' | 'delivery';
 
-export interface Subcategory {
-  id: string;
-  categoryId: string;
-  name: string;
-  slug: string;
-  image?: string;
-}
+export type CustomerPage = 
+  | 'home'
+  | 'categories'
+  | 'category'
+  | 'product'
+  | 'search'
+  | 'cart'
+  | 'checkout'
+  | 'order-confirmation'
+  | 'order-tracking'
+  | 'orders'
+  | 'wishlist'
+  | 'offers'
+  | 'account';
+
+export type AdminPage =
+  | 'dashboard'
+  | 'products'
+  | 'inventory'
+  | 'orders'
+  | 'promotions'
+  | 'customers'
+  | 'settings';
+
+export type OrderStatus =
+  | 'PLACED'
+  | 'CONFIRMED'
+  | 'PREPARING'
+  | 'READY'
+  | 'OUT FOR DELIVERY'
+  | 'DELIVERED'
+  | 'CANCELLED';
 
 export interface ProductVariant {
   id: string;
-  productId: string;
-  name: string;
-  sku: string;
+  weight: string;
   price: number;
   mrp: number;
-  discount: number;
-  weight: string;
-  unit: string;
+  discountPercent: number;
   stock: number;
-  lowStockThreshold: number;
-  image?: string;
+  sku: string;
+  isDefault?: boolean;
 }
 
 export interface Product {
   id: string;
   name: string;
-  hindiName?: string;
-  slug: string;
-  sku: string;
   brand: string;
-  categoryId: string;
-  categoryName: string;
-  subcategoryId?: string;
-  subcategoryName?: string;
+  category: string;
+  subCategory?: string;
   description: string;
-  shortDescription?: string;
-  image: string;
   images: string[];
-  variants: ProductVariant[];
-  badge?: string;
   rating: number;
-  reviewCount: number;
-  isAvailable: boolean;
-  featured?: boolean;
-  bestseller?: boolean;
+  ratingCount: number;
+  isVeg: boolean;
   tags?: string[];
-  unit: string;
-  price: number;
-  mrp: number;
-  discount: number;
-  weight: string;
-  details?: {
-    countryOfOrigin?: string;
-    shelfLife?: string;
-    storageInstructions?: string;
-    manufacturer?: string;
-    nutritionFacts?: Record<string, string>;
+  variants: ProductVariant[];
+  storageInfo?: string;
+  shelfLife?: string;
+  origin?: string;
+  nutrition?: {
+    calories: string;
+    protein: string;
+    carbs: string;
+    fat: string;
   };
+  featured?: boolean;
+  status: 'active' | 'draft' | 'archived';
+  createdAt: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+  itemCount: number;
+  subCategories: string[];
 }
 
 export interface CartItem {
-  id: string;
+  productId: string;
+  variantId: string;
   product: Product;
   variant: ProductVariant;
   quantity: number;
@@ -79,95 +92,73 @@ export interface Address {
   id: string;
   name: string;
   phone: string;
-  houseFlat: string;
+  type: 'home' | 'work' | 'other';
+  houseNo: string;
   street: string;
   area: string;
   city: string;
-  state: string;
   pincode: string;
-  landmark?: string;
-  label: 'Home' | 'Work' | 'Other';
   isDefault: boolean;
 }
 
 export interface DeliverySlot {
   id: string;
-  day: 'Today' | 'Tomorrow' | string;
   date: string;
-  startTime: string;
-  endTime: string;
-  label: string;
-  isAvailable: boolean;
-  fee: number;
+  time: string;
+  available: boolean;
+  badge?: 'Fast' | 'Standard' | 'Eco';
 }
 
-export interface Coupon {
+export interface Promotion {
+  id: string;
   code: string;
-  discountType: 'percentage' | 'fixed';
+  title: string;
+  description: string;
+  discountType: 'percent' | 'flat';
   discountValue: number;
   minOrderValue: number;
   maxDiscount?: number;
-  description: string;
+  validUntil: string;
+  category?: string;
 }
-
-export interface OrderItem {
-  id: string;
-  productId: string;
-  variantId: string;
-  productName: string;
-  variantName: string;
-  weight: string;
-  price: number;
-  mrp: number;
-  quantity: number;
-  image: string;
-  subtotal: number;
-}
-
-export type OrderStatus = 'Order Placed' | 'Confirmed' | 'Packing' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
 
 export interface Order {
   id: string;
   orderNumber: string;
-  customerId: string;
-  customerName: string;
-  customerPhone: string;
-  items: OrderItem[];
+  createdAt: string;
+  status: OrderStatus;
+  items: CartItem[];
   address: Address;
   deliverySlot: DeliverySlot;
+  paymentMethod: string;
+  paymentStatus: 'PAID' | 'PENDING' | 'CASH_ON_DELIVERY';
   subtotal: number;
-  discount: number;
+  savings: number;
   couponDiscount: number;
+  couponCode?: string;
   deliveryFee: number;
-  tax: number;
   total: number;
-  paymentMethod: 'UPI' | 'Card' | 'NetBanking' | 'COD';
-  paymentStatus: 'Pending' | 'Paid' | 'Failed';
-  orderStatus: OrderStatus;
-  createdAt: string;
   estimatedDelivery: string;
+  deliveryPartner?: {
+    name: string;
+    phone: string;
+    vehicleNo: string;
+  };
+  timeline: {
+    status: OrderStatus;
+    label: string;
+    time: string;
+    completed: boolean;
+    current: boolean;
+  }[];
 }
 
-export interface Banner {
+export interface Customer {
   id: string;
-  title: string;
-  subtitle: string;
-  image: string;
-  ctaText: string;
-  ctaLink: string;
-  bgColor?: string;
-}
-
-export interface StoreSettings {
-  storeName: string;
-  storePhone: string;
-  storeEmail: string;
-  storeAddress: string;
-  minOrderValue: number;
-  deliveryCharge: number;
-  freeDeliveryThreshold: number;
-  serviceablePincodes: string[];
-  sameDayDeliveryEnabled: boolean;
-  codEnabled: boolean;
-  onlinePaymentEnabled: boolean;
+  name: string;
+  phone: string;
+  email: string;
+  totalOrders: number;
+  totalSpend: number;
+  joinedDate: string;
 }
