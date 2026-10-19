@@ -15,6 +15,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/lib/context/StoreContext';
 import { useCart } from '@/lib/context/CartContext';
 import { formatPrice } from '@/lib/utils';
@@ -38,7 +39,7 @@ export default function DealsPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-0">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-10">
@@ -142,6 +143,7 @@ export default function DealsPage() {
 
       <Footer />
       <CartDrawer />
+      <MobileBottomNav />
     </div>
   );
 }

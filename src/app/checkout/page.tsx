@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useCart } from '@/lib/context/CartContext';
 import { useStore } from '@/lib/context/StoreContext';
@@ -232,7 +233,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-0">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8">
@@ -773,6 +774,7 @@ export default function CheckoutPage() {
         onClose={() => setIsAuthModalOpen(false)}
       />
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 }

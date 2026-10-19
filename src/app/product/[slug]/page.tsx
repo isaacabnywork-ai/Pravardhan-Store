@@ -21,6 +21,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/lib/context/StoreContext';
 import { useCart } from '@/lib/context/CartContext';
 import { ProductVariant } from '@/types';
@@ -66,7 +67,7 @@ export default function ProductDetailPage({
     .slice(0, 4);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-24 md:pb-0">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-10">
@@ -352,10 +353,69 @@ export default function ProductDetailPage({
             </div>
           </section>
         )}
+        {/* Mobile Sticky Add-to-Cart Action Bar */}
+        <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 sm:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-base font-black text-slate-900">
+                  {formatPrice(selectedVariant.price)}
+                </span>
+                {selectedVariant.mrp > selectedVariant.price && (
+                  <span className="text-xs text-slate-400 line-through">
+                    {formatPrice(selectedVariant.mrp)}
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] text-emerald-700 font-bold block">
+                {selectedVariant.title} ({selectedVariant.unit})
+              </span>
+            </div>
+
+            <div className="flex-1 max-w-[180px]">
+              {selectedVariant.stock <= 0 ? (
+                <button
+                  disabled
+                  className="w-full py-2.5 bg-slate-200 text-slate-400 text-xs font-bold rounded-xl"
+                >
+                  Out of Stock
+                </button>
+              ) : quantityInCart > 0 ? (
+                <div className="w-full flex items-center justify-between border-2 border-emerald-700 rounded-xl overflow-hidden bg-white shadow-xs">
+                  <button
+                    onClick={() => updateQuantity(selectedVariant.id, quantityInCart - 1)}
+                    className="w-8 h-8 flex items-center justify-center text-emerald-800 hover:bg-emerald-50 active:bg-emerald-100"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="w-8 text-center text-xs font-black text-emerald-950">
+                    {quantityInCart}
+                  </span>
+                  <button
+                    onClick={() => updateQuantity(selectedVariant.id, quantityInCart + 1)}
+                    disabled={quantityInCart >= selectedVariant.stock}
+                    className="w-8 h-8 flex items-center justify-center text-emerald-800 hover:bg-emerald-50 active:bg-emerald-100 disabled:opacity-40"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => addToCart(product, selectedVariant, 1)}
+                  className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-emerald-700/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Add to Cart</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </main>
 
       <Footer />
       <CartDrawer />
+      <MobileBottomNav />
     </div>
   );
 }

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useStore } from '@/lib/context/StoreContext';
 import { Address } from '@/types';
@@ -61,7 +62,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-0">
       <Navbar />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-8">
@@ -337,6 +338,7 @@ export default function AccountPage() {
       </main>
 
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 }

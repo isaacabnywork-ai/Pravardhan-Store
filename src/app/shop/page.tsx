@@ -16,6 +16,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/lib/context/StoreContext';
 import { formatPrice } from '@/lib/utils';
 
@@ -126,7 +127,7 @@ function ShopContent() {
   const activeCategoryObj = categories.find((c) => c.slug === selectedCategory);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-0">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
@@ -428,6 +429,7 @@ function ShopContent() {
 
       <Footer />
       <CartDrawer />
+      <MobileBottomNav />
     </div>
   );
 }

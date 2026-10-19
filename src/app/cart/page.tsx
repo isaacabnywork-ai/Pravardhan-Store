@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useCart } from '@/lib/context/CartContext';
 import { useStore } from '@/lib/context/StoreContext';
 import { formatPrice } from '@/lib/utils';
@@ -54,7 +55,7 @@ export default function CartPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-0">
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8">
@@ -297,6 +298,7 @@ export default function CartPage() {
       </main>
 
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 }
