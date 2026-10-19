@@ -4,20 +4,16 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  MapPin,
-  Calendar,
   CreditCard,
   CheckCircle2,
   Clock,
-  ArrowRight,
   ShieldCheck,
   Plus,
   QrCode,
   Banknote,
   AlertCircle,
-  Truck,
-  Check,
   ChevronRight,
+  HeartHandshake,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -25,7 +21,7 @@ import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useCart } from '@/lib/context/CartContext';
 import { useStore } from '@/lib/context/StoreContext';
-import { Address, DeliverySlot, PaymentMethod, Order } from '@/types';
+import { PaymentMethod, Order } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { AuthModal } from '@/components/auth/AuthModal';
 
@@ -40,6 +36,9 @@ export default function CheckoutPage() {
     appliedCoupon,
     couponDiscount,
     deliveryCharge,
+    deliveryTip,
+    setDeliveryTip,
+    handlingFee,
     grandTotal,
     isMinimumOrderMet,
     amountNeededForMinOrder,
@@ -151,6 +150,8 @@ export default function CheckoutPage() {
         couponCode: appliedCoupon?.code,
         couponDiscount,
         deliveryCharge,
+        deliveryTip,
+        handlingFee,
         grandTotal,
         paymentMethod,
         paymentStatus: paymentMethod === 'COD' ? 'PENDING' : 'PAID',
@@ -706,11 +707,49 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* Delivery Partner Tip Selector */}
+              <div className="pt-3 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <HeartHandshake className="w-4 h-4 text-amber-600" />
+                    <span>Delivery Partner Tip</span>
+                  </span>
+                  {deliveryTip > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setDeliveryTip(0)}
+                      className="text-[11px] font-bold text-rose-600 hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-1.5">
+                  {[10, 20, 30, 50].map((tipVal) => {
+                    const isSelected = deliveryTip === tipVal;
+                    return (
+                      <button
+                        key={tipVal}
+                        type="button"
+                        onClick={() => setDeliveryTip(isSelected ? 0 : tipVal)}
+                        className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                          isSelected
+                            ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-xs'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        ₹{tipVal}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Price Details */}
               <div className="pt-3 border-t border-slate-200 text-xs space-y-2">
                 <div className="flex justify-between text-slate-600">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(subtotal)}</span>
+                  <span>Items MRP Total</span>
+                  <span className="line-through">{formatPrice(totalMrp)}</span>
                 </div>
                 {productSavings > 0 && (
                   <div className="flex justify-between text-emerald-700 font-medium">
@@ -730,6 +769,18 @@ export default function CheckoutPage() {
                     {deliveryCharge === 0 ? 'FREE' : formatPrice(deliveryCharge)}
                   </span>
                 </div>
+                {handlingFee > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Handling Charge</span>
+                    <span>{formatPrice(handlingFee)}</span>
+                  </div>
+                )}
+                {deliveryTip > 0 && (
+                  <div className="flex justify-between text-amber-800 font-bold">
+                    <span>Delivery Partner Tip</span>
+                    <span>+{formatPrice(deliveryTip)}</span>
+                  </div>
+                )}
                 <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline text-slate-900">
                   <span className="font-bold text-sm">Total Payable</span>
                   <span className="text-xl font-black text-emerald-800">

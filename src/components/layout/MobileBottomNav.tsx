@@ -12,16 +12,14 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 import { useCart } from '@/lib/context/CartContext';
-import { useAuth } from '@/lib/context/AuthContext';
 import { formatPrice } from '@/lib/utils';
 
 export function MobileBottomNav() {
   const pathname = usePathname();
   const { totalItemsCount, grandTotal, setIsCartDrawerOpen } = useCart();
-  const { role } = useAuth();
 
-  // Don't render on admin pages
-  if (pathname.startsWith('/admin')) {
+  // Don't render on admin pages or product detail pages (which have dedicated bottom action bar)
+  if (pathname.startsWith('/admin') || pathname.startsWith('/product/')) {
     return null;
   }
 

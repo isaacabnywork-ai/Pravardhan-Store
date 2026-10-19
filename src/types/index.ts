@@ -178,6 +178,8 @@ export interface Order {
   couponCode?: string;
   couponDiscount: number;
   deliveryCharge: number;
+  deliveryTip?: number;
+  handlingFee?: number;
   grandTotal: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;

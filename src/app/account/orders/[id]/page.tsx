@@ -331,6 +331,18 @@ export default function OrderTrackingPage({
                 {order.deliveryCharge === 0 ? 'FREE' : formatPrice(order.deliveryCharge)}
               </span>
             </div>
+            {Boolean(order.handlingFee && order.handlingFee > 0) && (
+              <div className="flex justify-between text-slate-600">
+                <span>Handling Charge</span>
+                <span>{formatPrice(order.handlingFee!)}</span>
+              </div>
+            )}
+            {Boolean(order.deliveryTip && order.deliveryTip > 0) && (
+              <div className="flex justify-between text-amber-800 font-bold">
+                <span>Delivery Partner Tip</span>
+                <span>+{formatPrice(order.deliveryTip!)}</span>
+              </div>
+            )}
             <div className="pt-2 border-t border-slate-200 flex justify-between font-black text-sm text-slate-900">
               <span>Grand Total</span>
               <span className="text-base text-emerald-800">{formatPrice(order.grandTotal)}</span>

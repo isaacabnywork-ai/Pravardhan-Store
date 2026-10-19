@@ -13,6 +13,9 @@ interface CartContextType {
   productSavings: number; // totalMrp - subtotal
   couponDiscount: number;
   deliveryCharge: number;
+  deliveryTip: number;
+  setDeliveryTip: (tip: number) => void;
+  handlingFee: number;
   grandTotal: number;
   isMinimumOrderMet: boolean;
   amountNeededForMinOrder: number;
@@ -30,11 +33,13 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = 'pravdhan_cart_v1';
 const COUPON_STORAGE_KEY = 'pravdhan_coupon_v1';
+const TIP_STORAGE_KEY = 'pravdhan_tip_v1';
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { storeSettings, promotions } = useStore();
   const [items, setItems] = useState<CartItem[]>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<Promotion | null>(null);
+  const [deliveryTip, setDeliveryTipState] = useState<number>(0);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -45,6 +50,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       const savedCoupon = localStorage.getItem(COUPON_STORAGE_KEY);
       if (savedCoupon) setAppliedCoupon(JSON.parse(savedCoupon));
+
+      const savedTip = localStorage.getItem(TIP_STORAGE_KEY);
+      if (savedTip) setDeliveryTipState(Number(savedTip));
     } catch {
       // ignore
     }
@@ -68,6 +76,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       } else {
         localStorage.removeItem(COUPON_STORAGE_KEY);
       }
+    } catch {
+      // ignore
+    }
+  };
+
+  const setDeliveryTip = (tip: number) => {
+    setDeliveryTipState(tip);
+    try {
+      localStorage.setItem(TIP_STORAGE_KEY, tip.toString());
     } catch {
       // ignore
     }
@@ -97,7 +114,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       };
       saveItems([...items, newItem]);
     }
-    setIsCartDrawerOpen(true);
   };
 
   const updateQuantity = (variantId: string, quantity: number) => {
@@ -121,6 +137,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = () => {
     saveItems([]);
     saveCoupon(null);
+    setDeliveryTip(0);
   };
 
   const totalItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -129,10 +146,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const productSavings = Math.max(0, totalMrp - subtotal);
 
   // Delivery charge calculation
-  const deliveryCharge =
-    subtotal >= storeSettings.freeDeliveryThreshold
-      ? storeSettings.defaultDeliveryCharge
-      : storeSettings.defaultDeliveryCharge;
+  const deliveryCharge = storeSettings.defaultDeliveryCharge;
+  const handlingFee = items.length > 0 ? 2 : 0; // standard nominal quick commerce handling fee
 
   // Coupon calculation
   let couponDiscount = 0;
@@ -148,7 +163,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     couponDiscount = Math.min(subtotal, Math.round(couponDiscount));
   }
 
-  const grandTotal = Math.max(0, subtotal - couponDiscount + deliveryCharge);
+  const grandTotal = Math.max(
+    0,
+    subtotal - couponDiscount + deliveryCharge + deliveryTip + handlingFee
+  );
 
   const isMinimumOrderMet = subtotal >= storeSettings.minimumOrderValue;
   const amountNeededForMinOrder = Math.max(0, storeSettings.minimumOrderValue - subtotal);
@@ -171,7 +189,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     saveCoupon(found);
     return {
       success: true,
-      message: `Coupon '${found.code}' applied successfully! Saved ₹${
+      message: `Coupon '${found.code}' applied! Saved ₹${
         found.discountType === 'FLAT' ? found.discountValue : `${found.discountValue}%`
       }`,
     };
@@ -192,6 +210,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         productSavings,
         couponDiscount,
         deliveryCharge,
+        deliveryTip,
+        setDeliveryTip,
+        handlingFee,
         grandTotal,
         isMinimumOrderMet,
         amountNeededForMinOrder,

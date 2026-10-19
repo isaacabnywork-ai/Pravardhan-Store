@@ -13,9 +13,10 @@ import {
   Plus,
   Minus,
   ShoppingBag,
-  ArrowRight,
+  ArrowLeft,
   ChevronRight,
   AlertTriangle,
+  Zap,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -34,7 +35,14 @@ export default function ProductDetailPage({
 }) {
   const resolvedParams = use(params);
   const { products, categories, storeSettings } = useStore();
-  const { items, addToCart, updateQuantity } = useCart();
+  const {
+    items,
+    addToCart,
+    updateQuantity,
+    totalItemsCount,
+    grandTotal,
+    setIsCartDrawerOpen,
+  } = useCart();
 
   const product = products.find((p) => p.slug === resolvedParams.slug);
 
@@ -71,33 +79,42 @@ export default function ProductDetailPage({
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-10">
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-xs text-slate-500">
-          <Link href="/" className="hover:text-emerald-700">Home</Link>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <Link href="/shop" className="hover:text-emerald-700">Shop</Link>
-          {category && (
-            <>
-              <ChevronRight className="w-3.5 h-3.5" />
-              <Link href={`/shop?category=${category.slug}`} className="hover:text-emerald-700">
-                {category.name}
-              </Link>
-            </>
-          )}
-          {subcategory && (
-            <>
-              <ChevronRight className="w-3.5 h-3.5" />
-              <Link
-                href={`/shop?category=${category?.slug}&sub=${subcategory.slug}`}
-                className="hover:text-emerald-700"
-              >
-                {subcategory.name}
-              </Link>
-            </>
-          )}
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-slate-800 font-semibold truncate max-w-xs">{product.name}</span>
-        </nav>
+        {/* Breadcrumb & Mobile Back Navigation */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/shop"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-white border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs md:hidden"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-slate-600" />
+            <span>Back to Store</span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-1.5 text-xs text-slate-500">
+            <Link href="/" className="hover:text-emerald-700">Home</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <Link href="/shop" className="hover:text-emerald-700">Shop</Link>
+            {category && (
+              <>
+                <ChevronRight className="w-3.5 h-3.5" />
+                <Link href={`/shop?category=${category.slug}`} className="hover:text-emerald-700">
+                  {category.name}
+                </Link>
+              </>
+            )}
+            {subcategory && (
+              <>
+                <ChevronRight className="w-3.5 h-3.5" />
+                <Link
+                  href={`/shop?category=${category?.slug}&sub=${subcategory.slug}`}
+                  className="hover:text-emerald-700"
+                >
+                  {subcategory.name}
+                </Link>
+              </>
+            )}
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-slate-800 font-semibold truncate max-w-xs">{product.name}</span>
+          </nav>
+        </div>
 
         {/* Product Showcase Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-xs">
@@ -145,10 +162,15 @@ export default function ProductDetailPage({
           {/* Right: Product Info & Actions */}
           <div className="flex flex-col justify-between space-y-6">
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md">
-                  {product.brand}
-                </span>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-lg uppercase tracking-wider shadow-2xs">
+                    <Zap className="w-3 h-3 fill-slate-950" /> 12 MINS
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-md">
+                    {product.brand}
+                  </span>
+                </div>
                 <span className="text-xs text-slate-400 font-mono">
                   SKU: {selectedVariant.sku}
                 </span>
@@ -354,10 +376,10 @@ export default function ProductDetailPage({
           </section>
         )}
         {/* Mobile Sticky Add-to-Cart Action Bar */}
-        <div className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 sm:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
+        <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 p-3 sm:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="flex items-baseline gap-1.5">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-1.5 truncate">
                 <span className="text-base font-black text-slate-900">
                   {formatPrice(selectedVariant.price)}
                 </span>
@@ -367,45 +389,59 @@ export default function ProductDetailPage({
                   </span>
                 )}
               </div>
-              <span className="text-[10px] text-emerald-700 font-bold block">
+              <span className="text-[10px] text-emerald-800 font-bold block truncate">
                 {selectedVariant.title} ({selectedVariant.unit})
               </span>
             </div>
 
-            <div className="flex-1 max-w-[180px]">
-              {selectedVariant.stock <= 0 ? (
-                <button
-                  disabled
-                  className="w-full py-2.5 bg-slate-200 text-slate-400 text-xs font-bold rounded-xl"
-                >
-                  Out of Stock
-                </button>
-              ) : quantityInCart > 0 ? (
-                <div className="w-full flex items-center justify-between border-2 border-emerald-700 rounded-xl overflow-hidden bg-white shadow-xs">
-                  <button
-                    onClick={() => updateQuantity(selectedVariant.id, quantityInCart - 1)}
-                    className="w-8 h-8 flex items-center justify-center text-emerald-800 hover:bg-emerald-50 active:bg-emerald-100"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="w-8 text-center text-xs font-black text-emerald-950">
-                    {quantityInCart}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Stepper / ADD button with zero layout shift (Fixed width 78px) */}
+              <div className="w-[78px] h-8 flex items-center justify-center">
+                {selectedVariant.stock <= 0 ? (
+                  <span className="w-full text-center text-[10px] font-bold text-slate-400 bg-slate-100 py-1.5 rounded-xl border border-slate-200">
+                    Out
                   </span>
+                ) : quantityInCart > 0 ? (
+                  <div className="w-full h-full flex items-center justify-between bg-emerald-700 text-white rounded-xl shadow-xs overflow-hidden border border-emerald-700">
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(selectedVariant.id, quantityInCart - 1)}
+                      className="w-6 h-full flex items-center justify-center hover:bg-emerald-800 active:bg-emerald-900 transition-colors"
+                    >
+                      <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    </button>
+                    <span className="text-xs font-black select-none">
+                      {quantityInCart}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateQuantity(selectedVariant.id, quantityInCart + 1)}
+                      disabled={quantityInCart >= selectedVariant.stock}
+                      className="w-6 h-full flex items-center justify-center hover:bg-emerald-800 active:bg-emerald-900 disabled:opacity-40 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={() => updateQuantity(selectedVariant.id, quantityInCart + 1)}
-                    disabled={quantityInCart >= selectedVariant.stock}
-                    className="w-8 h-8 flex items-center justify-center text-emerald-800 hover:bg-emerald-50 active:bg-emerald-100 disabled:opacity-40"
+                    type="button"
+                    onClick={() => addToCart(product, selectedVariant, 1)}
+                    className="w-full h-full bg-emerald-50 hover:bg-emerald-700 text-emerald-800 hover:text-white border border-emerald-600 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all shadow-2xs active:scale-95 flex items-center justify-center"
                   >
-                    <Plus className="w-4 h-4" />
+                    ADD
                   </button>
-                </div>
-              ) : (
+                )}
+              </div>
+
+              {/* View Cart button if cart has items */}
+              {totalItemsCount > 0 && (
                 <button
-                  onClick={() => addToCart(product, selectedVariant, 1)}
-                  className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-emerald-700/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                  type="button"
+                  onClick={() => setIsCartDrawerOpen(true)}
+                  className="h-8 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
                 >
-                  <ShoppingBag className="w-4 h-4" />
-                  <span>Add to Cart</span>
+                  <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Cart • {formatPrice(grandTotal)}</span>
                 </button>
               )}
             </div>
