@@ -1,0 +1,362 @@
+'use client';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  Product,
+  Category,
+  Order,
+  InventoryHistory,
+  Promotion,
+  DeliverySlot,
+  StoreSettings,
+  OrderStatus,
+  ProductVariant,
+} from '@/types';
+import {
+  INITIAL_CATEGORIES,
+  INITIAL_PRODUCTS,
+  INITIAL_DELIVERY_SLOTS,
+  INITIAL_PROMOTIONS,
+  INITIAL_STORE_SETTINGS,
+  INITIAL_ORDERS,
+  INITIAL_INVENTORY_HISTORY,
+} from '@/lib/data/mock-data';
+
+interface StoreContextType {
+  products: Product[];
+  categories: Category[];
+  orders: Order[];
+  inventoryHistory: InventoryHistory[];
+  promotions: Promotion[];
+  deliverySlots: DeliverySlot[];
+  storeSettings: StoreSettings;
+  updateProduct: (product: Product) => void;
+  addProduct: (product: Omit<Product, 'id'>) => Product;
+  adjustStock: (variantId: string, quantityChange: number, reason: string, updatedBy: string) => void;
+  updateOrderStatus: (orderId: string, status: OrderStatus, note?: string) => void;
+  assignDeliveryStaff: (orderId: string, staffId: string, staffName: string) => void;
+  createOrder: (order: Order) => void;
+  updateStoreSettings: (settings: Partial<StoreSettings>) => void;
+  addPromotion: (promo: Omit<Promotion, 'id' | 'usageCount'>) => void;
+  togglePromotionStatus: (id: string) => void;
+  getProductById: (id: string) => Product | undefined;
+  getProductBySlug: (slug: string) => Product | undefined;
+}
+
+const StoreContext = createContext<StoreContextType | undefined>(undefined);
+
+const PRODUCTS_KEY = 'pravdhan_products_v1';
+const ORDERS_KEY = 'pravdhan_orders_v1';
+const INVENTORY_HIST_KEY = 'pravdhan_inv_hist_v1';
+const PROMOS_KEY = 'pravdhan_promos_v1';
+const SETTINGS_KEY = 'pravdhan_settings_v1';
+
+export function StoreProvider({ children }: { children: React.ReactNode }) {
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
+  const [inventoryHistory, setInventoryHistory] = useState<InventoryHistory[]>(INITIAL_INVENTORY_HISTORY);
+  const [promotions, setPromotions] = useState<Promotion[]>(INITIAL_PROMOTIONS);
+  const [deliverySlots] = useState<DeliverySlot[]>(INITIAL_DELIVERY_SLOTS);
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(INITIAL_STORE_SETTINGS);
+
+  useEffect(() => {
+    try {
+      const p = localStorage.getItem(PRODUCTS_KEY);
+      if (p) setProducts(JSON.parse(p));
+
+      const o = localStorage.getItem(ORDERS_KEY);
+      if (o) setOrders(JSON.parse(o));
+
+      const inv = localStorage.getItem(INVENTORY_HIST_KEY);
+      if (inv) setInventoryHistory(JSON.parse(inv));
+
+      const pr = localStorage.getItem(PROMOS_KEY);
+      if (pr) setPromotions(JSON.parse(pr));
+
+      const s = localStorage.getItem(SETTINGS_KEY);
+      if (s) setStoreSettings(JSON.parse(s));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const saveProducts = (newProds: Product[]) => {
+    setProducts(newProds);
+    try {
+      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(newProds));
+    } catch {
+      // ignore
+    }
+  };
+
+  const saveOrders = (newOrders: Order[]) => {
+    setOrders(newOrders);
+    try {
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(newOrders));
+    } catch {
+      // ignore
+    }
+  };
+
+  const saveInventoryHistory = (newHist: InventoryHistory[]) => {
+    setInventoryHistory(newHist);
+    try {
+      localStorage.setItem(INVENTORY_HIST_KEY, JSON.stringify(newHist));
+    } catch {
+      // ignore
+    }
+  };
+
+  const savePromotions = (newPromos: Promotion[]) => {
+    setPromotions(newPromos);
+    try {
+      localStorage.setItem(PROMOS_KEY, JSON.stringify(newPromos));
+    } catch {
+      // ignore
+    }
+  };
+
+  const updateStoreSettings = (newSettings: Partial<StoreSettings>) => {
+    const updated = { ...storeSettings, ...newSettings };
+    setStoreSettings(updated);
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+  };
+
+  const updateProduct = (updated: Product) => {
+    const updatedList = products.map((p) => (p.id === updated.id ? updated : p));
+    saveProducts(updatedList);
+  };
+
+  const addProduct = (prodData: Omit<Product, 'id'>): Product => {
+    const newProduct: Product = {
+      ...prodData,
+      id: `prod-${Date.now()}`,
+    };
+    const updated = [newProduct, ...products];
+    saveProducts(updated);
+    return newProduct;
+  };
+
+  const adjustStock = (variantId: string, quantityChange: number, reason: string, updatedBy: string) => {
+    let targetProduct: Product | undefined;
+    let targetVariant: ProductVariant | undefined;
+
+    const newProducts = products.map((prod) => {
+      const hasVariant = prod.variants.some((v) => v.id === variantId);
+      if (!hasVariant) return prod;
+
+      targetProduct = prod;
+      const updatedVariants = prod.variants.map((v) => {
+        if (v.id === variantId) {
+          targetVariant = v;
+          const newStock = Math.max(0, v.stock + quantityChange);
+          return { ...v, stock: newStock };
+        }
+        return v;
+      });
+
+      return { ...prod, variants: updatedVariants };
+    });
+
+    if (targetProduct && targetVariant) {
+      const prev = targetVariant.stock;
+      const next = Math.max(0, prev + quantityChange);
+
+      const historyEntry: InventoryHistory = {
+        id: `inv-hist-${Date.now()}`,
+        variantId,
+        productId: targetProduct.id,
+        productName: targetProduct.name,
+        variantTitle: targetVariant.title,
+        sku: targetVariant.sku,
+        changeType: quantityChange > 0 ? 'STOCK_RECEIVED' : 'STOCK_ADJUSTMENT',
+        quantityChange,
+        previousStock: prev,
+        newStock: next,
+        reason,
+        updatedBy,
+        createdAt: new Date().toISOString(),
+      };
+
+      saveProducts(newProducts);
+      saveInventoryHistory([historyEntry, ...inventoryHistory]);
+    }
+  };
+
+  const updateOrderStatus = (orderId: string, status: OrderStatus, note?: string) => {
+    const statusLabels: Record<OrderStatus, string> = {
+      ORDER_PLACED: 'Order Placed',
+      ORDER_CONFIRMED: 'Order Confirmed',
+      BEING_PREPARED: 'Being Prepared',
+      READY_FOR_DELIVERY: 'Ready for Delivery',
+      OUT_FOR_DELIVERY: 'Out for Delivery',
+      DELIVERED: 'Delivered',
+      CANCELLED: 'Cancelled',
+      REFUNDED: 'Refunded',
+    };
+
+    const newOrders = orders.map((ord) => {
+      if (ord.id !== orderId) return ord;
+
+      const newTimestamp = new Date().toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }) + ', Today';
+
+      // Mark the matching status as completed and update note
+      let matched = false;
+      const updatedHistory = ord.statusHistory.map((item) => {
+        if (item.status === status) {
+          matched = true;
+          return {
+            ...item,
+            completed: true,
+            timestamp: newTimestamp,
+            note: note || item.note,
+          };
+        }
+        return item;
+      });
+
+      if (!matched) {
+        updatedHistory.push({
+          status,
+          label: statusLabels[status],
+          timestamp: newTimestamp,
+          note,
+          completed: true,
+        });
+      }
+
+      return {
+        ...ord,
+        orderStatus: status,
+        statusHistory: updatedHistory,
+        updatedAt: new Date().toISOString(),
+      };
+    });
+
+    saveOrders(newOrders);
+  };
+
+  const assignDeliveryStaff = (orderId: string, staffId: string, staffName: string) => {
+    const updated = orders.map((o) =>
+      o.id === orderId
+        ? {
+            ...o,
+            deliveryStaffId: staffId,
+            deliveryStaffName: staffName,
+            updatedAt: new Date().toISOString(),
+          }
+        : o
+    );
+    saveOrders(updated);
+  };
+
+  const createOrder = (newOrder: Order) => {
+    // 1. Deduct stock for each variant purchased
+    let currentProds = [...products];
+    const newHistoryEntries: InventoryHistory[] = [];
+
+    newOrder.items.forEach((item) => {
+      currentProds = currentProds.map((prod) => {
+        if (prod.id !== item.productId) return prod;
+        const updatedVariants = prod.variants.map((v) => {
+          if (v.id === item.variantId) {
+            const prev = v.stock;
+            const next = Math.max(0, prev - item.quantity);
+
+            newHistoryEntries.push({
+              id: `inv-${Date.now()}-${item.variantId}`,
+              variantId: item.variantId,
+              productId: prod.id,
+              productName: prod.name,
+              variantTitle: v.title,
+              sku: v.sku,
+              changeType: 'ORDER_RESERVED',
+              quantityChange: -item.quantity,
+              previousStock: prev,
+              newStock: next,
+              reason: `Customer Order #${newOrder.orderNumber}`,
+              updatedBy: 'System Auto-Order',
+              createdAt: new Date().toISOString(),
+            });
+
+            return {
+              ...v,
+              stock: next,
+              reservedStock: v.reservedStock + item.quantity,
+            };
+          }
+          return v;
+        });
+        return { ...prod, variants: updatedVariants };
+      });
+    });
+
+    saveProducts(currentProds);
+    if (newHistoryEntries.length > 0) {
+      saveInventoryHistory([...newHistoryEntries, ...inventoryHistory]);
+    }
+
+    // 2. Add to orders
+    saveOrders([newOrder, ...orders]);
+  };
+
+  const addPromotion = (promo: Omit<Promotion, 'id' | 'usageCount'>) => {
+    const newPromo: Promotion = {
+      ...promo,
+      id: `promo-${Date.now()}`,
+      usageCount: 0,
+    };
+    savePromotions([newPromo, ...promotions]);
+  };
+
+  const togglePromotionStatus = (id: string) => {
+    const updated = promotions.map((p) => (p.id === id ? { ...p, isActive: !p.isActive } : p));
+    savePromotions(updated);
+  };
+
+  const getProductById = (id: string) => products.find((p) => p.id === id);
+  const getProductBySlug = (slug: string) => products.find((p) => p.slug === slug);
+
+  return (
+    <StoreContext.Provider
+      value={{
+        products,
+        categories,
+        orders,
+        inventoryHistory,
+        promotions,
+        deliverySlots,
+        storeSettings,
+        updateProduct,
+        addProduct,
+        adjustStock,
+        updateOrderStatus,
+        assignDeliveryStaff,
+        createOrder,
+        updateStoreSettings,
+        addPromotion,
+        togglePromotionStatus,
+        getProductById,
+        getProductBySlug,
+      }}
+    >
+      {children}
+    </StoreContext.Provider>
+  );
+}
+
+export function useStore() {
+  const context = useContext(StoreContext);
+  if (!context) {
+    throw new Error('useStore must be used within a StoreProvider');
+  }
+  return context;
+}

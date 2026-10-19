@@ -9,8 +9,30 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        brand: {
+          50: "#f0fdf4",
+          100: "#dcfce7",
+          200: "#bbf7d0",
+          300: "#86efac",
+          400: "#4ade80",
+          500: "#22c55e",
+          600: "#16a34a",
+          700: "#15803d",
+          800: "#166534",
+          900: "#14532d",
+          950: "#052e16",
+        },
+        retail: {
+          dark: "#0f3d2e",
+          green: "#0c5a3d",
+          lightGreen: "#e8f5e9",
+          amber: "#d97706",
+          lightAmber: "#fffbeb",
+          cream: "#fbfaf8",
+        },
+      },
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", "system-ui", "-apple-system", "sans-serif"],
       },
     },
   },
