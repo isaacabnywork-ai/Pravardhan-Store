@@ -139,7 +139,6 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Rotis stay soft and fluffy for 6+ hours',
     ],
     images: [
-      'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
       'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80',
     ],
     variants: [
@@ -153,7 +152,7 @@ export const INITIAL_PRODUCTS: Product[] = [
         price: 58,
         stock: 45,
         reservedStock: 2,
-        image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
+        image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80',
       },
       {
         id: 'var-atta-5kg',
@@ -165,7 +164,7 @@ export const INITIAL_PRODUCTS: Product[] = [
         price: 259,
         stock: 32,
         reservedStock: 3,
-        image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
+        image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80',
       },
       {
         id: 'var-atta-10kg',
@@ -177,7 +176,7 @@ export const INITIAL_PRODUCTS: Product[] = [
         price: 489,
         stock: 18,
         reservedStock: 1,
-        image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
+        image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=800&q=80',
       },
     ],
     isFeatured: true,
@@ -199,7 +198,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Aged long grain aromatic Basmati rice perfect for daily dal-chawal, khichdi, fried rice, and aromatic pulao.',
     features: ['Naturally Aged 2 Years', 'Slender and Fluffy Grains', 'Pleasing Natural Aroma', 'Non-sticky Texture'],
     images: [
-      'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=800&q=80',
     ],
     variants: [
       {
@@ -212,6 +211,7 @@ export const INITIAL_PRODUCTS: Product[] = [
         price: 105,
         stock: 40,
         reservedStock: 0,
+        image: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=800&q=80',
       },
       {
         id: 'var-rice-5kg',
@@ -223,6 +223,7 @@ export const INITIAL_PRODUCTS: Product[] = [
         price: 475,
         stock: 25,
         reservedStock: 2,
+        image: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=800&q=80',
       },
     ],
     isFeatured: true,
@@ -244,7 +245,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       '100% unpolished Arhar/Toor Dal that does not undergo artificial water or oil polishing. Rich in natural dietary proteins and fiber.',
     features: ['Unpolished, No Artificial Polish', 'High Natural Protein Content', 'Rich Hearty Flavor', 'Quick Cooking'],
     images: [
-      'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1585994192701-f1a505c8574a?auto=format&fit=crop&w=800&q=80',
     ],
     variants: [
       {
@@ -257,6 +258,7 @@ export const INITIAL_PRODUCTS: Product[] = [
         price: 94,
         stock: 35,
         reservedStock: 0,
+        image: 'https://images.unsplash.com/photo-1585994192701-f1a505c8574a?auto=format&fit=crop&w=800&q=80',
       },
       {
         id: 'var-toor-1kg',
@@ -268,6 +270,7 @@ export const INITIAL_PRODUCTS: Product[] = [
         price: 179,
         stock: 50,
         reservedStock: 4,
+        image: 'https://images.unsplash.com/photo-1585994192701-f1a505c8574a?auto=format&fit=crop&w=800&q=80',
       },
     ],
     isPopular: true,
@@ -288,7 +291,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Light, healthy refined sunflower oil enriched with Vitamins A & D. Ideal for Indian cooking, sautéing, and deep frying.',
     features: ['Enriched with Vitamins A and D', 'Low Absorption Technology', 'Light on the Stomach'],
     images: [
-      'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1620706857370-e1b9770e8bb1?auto=format&fit=crop&w=800&q=80',
     ],
     variants: [
       {

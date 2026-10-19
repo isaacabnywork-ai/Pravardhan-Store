@@ -31,37 +31,37 @@ export function ProductCard({ product }: ProductCardProps) {
   const isOutOfStock = selectedVariant.stock <= 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 hover:border-emerald-500/60 hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+    <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 hover:border-emerald-500/80 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition-all duration-200 flex flex-col justify-between overflow-hidden group shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
       {/* Product Image Section */}
-      <div className="relative p-2.5 sm:p-3 bg-gradient-to-b from-slate-50/80 to-slate-100/40 flex items-center justify-center aspect-square">
+      <div className="relative p-2 sm:p-3 bg-gradient-to-b from-slate-50/90 to-slate-100/50 flex items-center justify-center aspect-square overflow-hidden">
         {/* Discount Badge */}
         {discount > 0 && (
-          <span className="absolute top-2 left-2 bg-emerald-700 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-xs tracking-wider z-10">
+          <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-xs tracking-wider z-10">
             {discount}% OFF
           </span>
         )}
 
         {/* Delivery Time Tag (Blinkit/Zepto quick-commerce style) */}
-        <span className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-xs border border-slate-200/80 text-slate-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md shadow-2xs z-10 flex items-center gap-1">
-          <Clock className="w-2.5 h-2.5 text-emerald-600" />
+        <span className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-md border border-slate-200/90 text-slate-900 text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-2xs z-10 flex items-center gap-1">
+          <Clock className="w-2.5 h-2.5 text-emerald-600 stroke-[2.5]" />
           <span>12 MINS</span>
         </span>
 
         {/* Organic Badge */}
         {product.isOrganic && (
-          <span className="absolute top-2 right-2 bg-amber-100 text-amber-950 text-[8px] sm:text-[9px] font-black px-1 py-0.5 rounded z-10">
+          <span className="absolute top-2 right-2 bg-amber-100 border border-amber-200 text-amber-950 text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded z-10">
             🌱 Organic
           </span>
         )}
 
         <Link
           href={`/product/${product.slug}`}
-          className="w-full h-full flex items-center justify-center"
+          className="w-full h-full flex items-center justify-center p-1"
         >
           <img
             src={selectedVariant.image || product.images[0]}
             alt={product.name}
-            className="w-full h-full object-contain max-h-28 sm:max-h-36 group-hover:scale-105 transition-transform duration-200"
+            className="w-full h-full object-contain group-hover:scale-108 transition-transform duration-300 drop-shadow-2xs"
             loading="lazy"
           />
         </Link>

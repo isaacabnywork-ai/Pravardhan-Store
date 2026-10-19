@@ -45,7 +45,7 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
-const PRODUCTS_KEY = 'pravdhan_products_v1';
+const PRODUCTS_KEY = 'pravdhan_products_v2';
 const ORDERS_KEY = 'pravdhan_orders_v1';
 const INVENTORY_HIST_KEY = 'pravdhan_inv_hist_v1';
 const PROMOS_KEY = 'pravdhan_promos_v1';

@@ -148,7 +148,7 @@ export function Navbar() {
             </div>
 
             {/* Desktop Center: Full Search Bar with animated placeholder */}
-            <div className="hidden md:block flex-1 max-w-xl mx-2">
+            <div className="hidden md:block flex-1 max-w-xl lg:max-w-2xl mx-2 sm:mx-4">
               <form onSubmit={handleSearchSubmit} className="relative">
                 <input
                   type="text"
@@ -215,12 +215,13 @@ export function Navbar() {
               {/* Role Switcher Pill */}
               <button
                 onClick={() => setIsRoleModalOpen(true)}
-                className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 px-2 sm:px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-colors"
-                title="Switch persona"
+                className="hidden lg:flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/90 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all shadow-2xs"
+                title="Switch persona for testing"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="hidden sm:inline">Role:</span>
-                <span className="underline">{roleLabels[role]}</span>
+                <span className="text-slate-400 font-medium">Role:</span>
+                <span className="font-bold text-slate-900">{roleLabels[role]}</span>
+                <ChevronDown className="w-3 h-3 text-slate-400" />
               </button>
 
               {/* Admin desk link if staff */}
@@ -343,10 +344,10 @@ export function Navbar() {
                 <Link
                   key={cat.id}
                   href={`/shop?category=${cat.slug}`}
-                  className={`px-3 py-1 rounded-xl transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold ${
                     isSelected
-                      ? 'bg-emerald-800 text-white shadow-xs'
-                      : 'bg-slate-50 text-slate-600 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/60'
+                      ? 'bg-emerald-700 text-white shadow-xs'
+                      : 'bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-900 border border-slate-200/70 hover:border-emerald-300'
                   }`}
                 >
                   <span>{cat.name}</span>

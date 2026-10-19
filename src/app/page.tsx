@@ -22,6 +22,56 @@ import { ProductCard } from '@/components/products/ProductCard';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/lib/context/StoreContext';
 
+const CATEGORY_THEMES: Record<string, {
+  bg: string;
+  border: string;
+  text: string;
+  shortName: string;
+}> = {
+  'cat-groceries': {
+    bg: 'bg-amber-100/70 group-hover:bg-amber-100',
+    border: 'border-amber-200/90',
+    text: 'text-amber-950',
+    shortName: 'Groceries',
+  },
+  'cat-fruits-veg': {
+    bg: 'bg-emerald-100/70 group-hover:bg-emerald-100',
+    border: 'border-emerald-200/90',
+    text: 'text-emerald-950',
+    shortName: 'Vegetables',
+  },
+  'cat-dairy': {
+    bg: 'bg-sky-100/70 group-hover:bg-sky-100',
+    border: 'border-sky-200/90',
+    text: 'text-sky-950',
+    shortName: 'Dairy & Milk',
+  },
+  'cat-snacks': {
+    bg: 'bg-orange-100/70 group-hover:bg-orange-100',
+    border: 'border-orange-200/90',
+    text: 'text-orange-950',
+    shortName: 'Munchies',
+  },
+  'cat-beverages': {
+    bg: 'bg-yellow-100/70 group-hover:bg-yellow-100',
+    border: 'border-yellow-200/90',
+    text: 'text-yellow-950',
+    shortName: 'Tea & Coffee',
+  },
+  'cat-cleaning': {
+    bg: 'bg-cyan-100/70 group-hover:bg-cyan-100',
+    border: 'border-cyan-200/90',
+    text: 'text-cyan-950',
+    shortName: 'Cleaning',
+  },
+  'cat-personal-care': {
+    bg: 'bg-purple-100/70 group-hover:bg-purple-100',
+    border: 'border-purple-200/90',
+    text: 'text-purple-950',
+    shortName: 'Personal',
+  },
+};
+
 export default function HomePage() {
   const { products, categories, storeSettings } = useStore();
 
@@ -37,72 +87,77 @@ export default function HomePage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-6 space-y-5 sm:space-y-8">
+
         {/* ================= COMPACT APP PROMO BANNERS (Horizontal Snap Scroll) ================= */}
         <section className="relative">
-          <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1">
+          <div className="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1">
             {/* Banner 1: Seasonal Staples */}
-            <div className="snap-center flex-shrink-0 w-[88vw] sm:w-[480px] lg:w-1/2 rounded-2xl bg-gradient-to-r from-emerald-800 via-emerald-900 to-emerald-950 text-white p-4 sm:p-5 flex items-center justify-between shadow-md relative overflow-hidden">
-              <div className="relative z-10 max-w-[65%] space-y-1">
-                <span className="inline-block text-[9px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full">
-                  Harvest Fresh
+            <div className="snap-center flex-shrink-0 w-[90vw] sm:w-[500px] lg:w-[calc(50%-8px)] rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white p-5 sm:p-6 flex items-center justify-between shadow-[0_4px_20px_rgba(5,150,105,0.2)] relative overflow-hidden">
+              <div className="relative z-10 max-w-[62%] space-y-1.5">
+                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full shadow-2xs">
+                  ⚡ 12 MINS DELIVERY
                 </span>
-                <h2 className="text-sm sm:text-lg font-black leading-tight text-white">
+                <h2 className="text-base sm:text-xl font-black leading-tight text-white tracking-tight">
                   Staples & Atta at Wholesale Rates
                 </h2>
-                <p className="text-[10px] sm:text-xs text-emerald-100 line-clamp-1">
-                  Aashirvaad, Daawat & Tata Sampann up to 20% OFF
+                <p className="text-[11px] sm:text-xs text-emerald-100 font-medium line-clamp-1">
+                  Aashirvaad, Daawat & Tata Sampann up to 25% OFF
                 </p>
-                <Link
-                  href="/shop?category=groceries-staples"
-                  className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-amber-300 hover:text-white pt-1"
-                >
-                  Shop Staples <ArrowRight className="w-3 h-3" />
-                </Link>
+                <div className="pt-2">
+                  <Link
+                    href="/shop?category=groceries-staples"
+                    className="inline-flex items-center gap-1.5 text-xs font-black bg-amber-400 hover:bg-amber-300 text-slate-950 px-3.5 py-1.5 rounded-xl shadow-xs transition-colors"
+                  >
+                    Shop Staples <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
 
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-white/10 flex-shrink-0 p-1">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-white/15 backdrop-blur-xs flex-shrink-0 p-1.5 shadow-inner border border-white/20">
                 <img
-                  src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=300&q=80"
-                  alt=""
-                  className="w-full h-full object-cover rounded-lg"
+                  src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=400&q=80"
+                  alt="Daily Staples"
+                  className="w-full h-full object-cover rounded-xl"
                 />
               </div>
             </div>
 
             {/* Banner 2: First Order Promo */}
-            <div className="snap-center flex-shrink-0 w-[88vw] sm:w-[480px] lg:w-1/2 rounded-2xl bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 text-white p-4 sm:p-5 flex items-center justify-between shadow-md relative overflow-hidden">
-              <div className="relative z-10 max-w-[65%] space-y-1">
-                <span className="inline-block text-[9px] font-black uppercase tracking-wider bg-slate-950/40 text-amber-200 px-2 py-0.5 rounded-full">
-                  Code: WELCOME100
+            <div className="snap-center flex-shrink-0 w-[90vw] sm:w-[500px] lg:w-[calc(50%-8px)] rounded-3xl bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800 text-white p-5 sm:p-6 flex items-center justify-between shadow-[0_4px_20px_rgba(109,40,217,0.2)] relative overflow-hidden">
+              <div className="relative z-10 max-w-[62%] space-y-1.5">
+                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-300 text-slate-950 px-2.5 py-0.5 rounded-full shadow-2xs">
+                  🎟️ COUPON: WELCOME100
                 </span>
-                <h2 className="text-sm sm:text-lg font-black leading-tight text-white">
+                <h2 className="text-base sm:text-xl font-black leading-tight text-white tracking-tight">
                   Flat ₹100 OFF on First Order
                 </h2>
-                <p className="text-[10px] sm:text-xs text-amber-100 line-clamp-1">
-                  Applicable on orders above ₹499
+                <p className="text-[11px] sm:text-xs text-purple-100 font-medium line-clamp-1">
+                  Valid on all orders above ₹499
                 </p>
-                <Link
-                  href="/deals"
-                  className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-white underline pt-1"
-                >
-                  Apply Coupon <ArrowRight className="w-3 h-3" />
-                </Link>
+                <div className="pt-2">
+                  <Link
+                    href="/deals"
+                    className="inline-flex items-center gap-1.5 text-xs font-black bg-white hover:bg-purple-50 text-purple-950 px-3.5 py-1.5 rounded-xl shadow-xs transition-colors"
+                  >
+                    Claim Discount <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
 
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-white/10 flex-shrink-0 p-1">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-white/15 backdrop-blur-xs flex-shrink-0 p-1.5 shadow-inner border border-white/20">
                 <img
-                  src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=300&q=80"
-                  alt=""
-                  className="w-full h-full object-cover rounded-lg"
+                  src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=400&q=80"
+                  alt="Fresh Deals"
+                  className="w-full h-full object-cover rounded-xl"
                 />
               </div>
             </div>
           </div>
         </section>
 
-        {/* ================= APP CATEGORY ROUNDELS (Visual Circular Icons) ================= */}
-        <section className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between mb-3">
+        {/* ================= APP CATEGORY ROUNDELS (Visual Circular Squircles) ================= */}
+        <section className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider">
               Explore Categories
             </h2>
@@ -110,29 +165,38 @@ export default function HomePage() {
               href="/shop"
               className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
             >
-              All <ChevronRight className="w-3 h-3" />
+              View All <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3 text-center">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/shop?category=${cat.slug}`}
-                className="flex flex-col items-center group active:scale-95 transition-transform"
-              >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-50 border border-emerald-100/80 p-1 flex items-center justify-center overflow-hidden mb-1.5 group-hover:border-emerald-500 shadow-xs">
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    className="w-full h-full object-cover rounded-xl"
-                  />
-                </div>
-                <span className="text-[10px] sm:text-xs font-bold text-slate-800 line-clamp-1 leading-tight group-hover:text-emerald-700">
-                  {cat.name.split(' ')[0]}
-                </span>
-              </Link>
-            ))}
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2.5 sm:gap-3.5 text-center">
+            {categories.map((cat) => {
+              const theme = CATEGORY_THEMES[cat.id] || {
+                bg: 'bg-slate-100',
+                border: 'border-slate-200',
+                text: 'text-slate-900',
+                shortName: cat.name.split(' ')[0],
+              };
+
+              return (
+                <Link
+                  key={cat.id}
+                  href={`/shop?category=${cat.slug}`}
+                  className="flex flex-col items-center group active:scale-95 transition-transform"
+                >
+                  <div className={`w-14 h-14 sm:w-18 sm:h-18 rounded-2xl sm:rounded-3xl ${theme.bg} border ${theme.border} p-1.5 flex flex-col items-center justify-center relative overflow-hidden mb-1.5 group-hover:shadow-md transition-all shadow-xs`}>
+                    <img
+                      src={cat.image}
+                      alt={cat.name}
+                      className="w-full h-full object-cover rounded-xl sm:rounded-2xl group-hover:scale-108 transition-transform duration-300"
+                    />
+                  </div>
+                  <span className={`text-[11px] sm:text-xs font-black line-clamp-1 leading-tight group-hover:text-emerald-700 ${theme.text}`}>
+                    {theme.shortName}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
@@ -158,7 +222,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3.5">
             {featuredStaples.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -208,7 +272,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3.5">
             {freshProduce.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -237,7 +301,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3.5">
             {dairyProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -266,7 +330,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3.5">
             {householdClean.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
