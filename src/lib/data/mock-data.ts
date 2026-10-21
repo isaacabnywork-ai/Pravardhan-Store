@@ -834,7 +834,18 @@ export const INITIAL_PRODUCTS: Product[] = [
 ];
 
 export const INITIAL_DELIVERY_SLOTS: DeliverySlot[] = [
-  // Today's Slots (Same-Day Delivery)
+  // Express Instant & Scheduled Slots
+  {
+    id: 'slot-express-now',
+    dateType: 'TODAY',
+    dateLabel: '⚡ Instant Express (Sector 14 Hub)',
+    dateString: new Date().toISOString().split('T')[0],
+    timeSlot: '⚡ 12–15 Mins Express Delivery',
+    isAvailable: true,
+    capacity: 60,
+    bookedCount: 19,
+  },
+  // Today's Scheduled Slots (Same-Day Delivery)
   {
     id: 'slot-today-1',
     dateType: 'TODAY',

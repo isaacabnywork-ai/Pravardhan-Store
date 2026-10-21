@@ -16,11 +16,13 @@ import {
   FileText,
 } from 'lucide-react';
 import { useStore } from '@/lib/context/StoreContext';
+import { useAuth } from '@/lib/context/AuthContext';
 
 type PolicyType = 'privacy' | 'terms' | 'returns' | null;
 
 export function Footer() {
   const { storeSettings, categories } = useStore();
+  const { role } = useAuth();
   const [activePolicy, setActivePolicy] = useState<PolicyType>(null);
 
   return (
@@ -174,38 +176,64 @@ export function Footer() {
           </ul>
         </div>
 
-        {/* Operational Roles & System */}
+        {/* 4th Column: Customer Trust & Guarantees (or Staff Desk if logged in as staff) */}
         <div>
-          <h4 className="font-bold text-white text-sm mb-3">Staff Operations Desk</h4>
-          <p className="text-xs text-slate-400 mb-3">
-            Pravdhan Store physical store management portals:
-          </p>
-          <ul className="space-y-1.5 text-xs">
-            <li>
-              <Link href="/admin/products" className="text-blue-400 hover:underline">
-                • Product Manager Portal
-              </Link>
-            </li>
-            <li>
-              <Link href="/admin/orders" className="text-purple-400 hover:underline">
-                • Order Fulfillment & Packing
-              </Link>
-            </li>
-            <li>
-              <Link href="/admin/delivery" className="text-amber-400 hover:underline">
-                • Delivery Staff Portal
-              </Link>
-            </li>
-            <li>
-              <Link href="/admin" className="text-rose-400 hover:underline">
-                • Super Admin Dashboard
-              </Link>
-            </li>
-          </ul>
+          {role !== 'CUSTOMER' ? (
+            <>
+              <h4 className="font-bold text-white text-sm mb-3">Staff Operations Desk</h4>
+              <p className="text-xs text-slate-400 mb-3">
+                Pravdhan Store physical store management portals:
+              </p>
+              <ul className="space-y-1.5 text-xs">
+                <li>
+                  <Link href="/admin/products" className="text-blue-400 hover:underline">
+                    • Product Manager Portal
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/admin/orders" className="text-purple-400 hover:underline">
+                    • Order Fulfillment & Packing
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/admin/delivery" className="text-amber-400 hover:underline">
+                    • Delivery Staff Portal
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/admin" className="text-rose-400 hover:underline">
+                    • Super Admin Dashboard
+                  </Link>
+                </li>
+              </ul>
+            </>
+          ) : (
+            <>
+              <h4 className="font-bold text-white text-sm mb-3">Why Pravdhan Store?</h4>
+              <ul className="space-y-2 text-xs text-slate-400">
+                <li className="flex items-start gap-2">
+                  <span className="text-amber-400 font-bold">⚡</span>
+                  <span><strong>12–15 Mins Express:</strong> Dispatched direct from Sector 14 hub</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">🌱</span>
+                  <span><strong>100% Owned Inventory:</strong> Triple-graded fresh produce</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 font-bold">💰</span>
+                  <span><strong>Wholesale Rates:</strong> Free delivery on all carts above ₹100</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-400 font-bold">🛡️</span>
+                  <span><strong>Doorstep Returns:</strong> 24-hr instant replacement guarantee</span>
+                </li>
+              </ul>
+            </>
+          )}
 
           <div className="mt-4 pt-3 border-t border-slate-800">
             <span className="text-[11px] text-slate-400 block mb-1">Supported Payments:</span>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-300 flex-wrap">
               <span className="bg-slate-800 px-2 py-0.5 rounded">UPI (GPay / PhonePe)</span>
               <span className="bg-slate-800 px-2 py-0.5 rounded">Cards</span>
               <span className="bg-slate-800 px-2 py-0.5 rounded">Cash on Delivery</span>

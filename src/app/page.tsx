@@ -30,7 +30,7 @@ const CATEGORY_THEMES: Record<string, {
     bg: 'bg-amber-100/70 group-hover:bg-amber-100',
     border: 'border-amber-200/90',
     text: 'text-amber-950',
-    shortName: 'Groceries',
+    shortName: 'Groceries & Staples',
   },
   'cat-fruits-veg': {
     bg: 'bg-emerald-100/70 group-hover:bg-emerald-100',
@@ -42,13 +42,13 @@ const CATEGORY_THEMES: Record<string, {
     bg: 'bg-sky-100/70 group-hover:bg-sky-100',
     border: 'border-sky-200/90',
     text: 'text-sky-950',
-    shortName: 'Dairy & Eggs',
+    shortName: 'Dairy & Breakfast',
   },
   'cat-snacks': {
     bg: 'bg-orange-100/70 group-hover:bg-orange-100',
     border: 'border-orange-200/90',
     text: 'text-orange-950',
-    shortName: 'Munchies',
+    shortName: 'Snacks & Munchies',
   },
   'cat-beverages': {
     bg: 'bg-yellow-100/70 group-hover:bg-yellow-100',
@@ -99,7 +99,7 @@ export default function HomePage() {
         <section className="relative">
           <div className="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1">
             {/* Banner 1: Seasonal Staples */}
-            <div className="snap-center flex-shrink-0 w-[90vw] sm:w-[500px] lg:w-[calc(50%-8px)] rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white p-5 sm:p-6 flex items-center justify-between shadow-[0_4px_20px_rgba(5,150,105,0.2)] relative overflow-hidden">
+            <div className="snap-center flex-shrink-0 w-[90vw] sm:w-[500px] lg:w-[calc(50%-8px)] min-h-[175px] rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white p-5 sm:p-6 flex items-center justify-between shadow-[0_4px_20px_rgba(5,150,105,0.2)] relative overflow-hidden">
               <div className="relative z-10 max-w-[62%] space-y-1.5">
                 <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full shadow-2xs">
                   ⚡ 12-15 MINS EXPRESS
@@ -130,7 +130,7 @@ export default function HomePage() {
             </div>
 
             {/* Banner 2: First Order Promo with Working Coupon Claim */}
-            <div className="snap-center flex-shrink-0 w-[90vw] sm:w-[500px] lg:w-[calc(50%-8px)] rounded-3xl bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800 text-white p-5 sm:p-6 flex items-center justify-between shadow-[0_4px_20px_rgba(109,40,217,0.2)] relative overflow-hidden">
+            <div className="snap-center flex-shrink-0 w-[90vw] sm:w-[500px] lg:w-[calc(50%-8px)] min-h-[175px] rounded-3xl bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800 text-white p-5 sm:p-6 flex items-center justify-between shadow-[0_4px_20px_rgba(109,40,217,0.2)] relative overflow-hidden">
               <div className="relative z-10 max-w-[62%] space-y-1.5">
                 <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-300 text-slate-950 px-2.5 py-0.5 rounded-full shadow-2xs">
                   🎟️ COUPON: WELCOME100
@@ -191,16 +191,17 @@ export default function HomePage() {
                 bg: 'bg-slate-100',
                 border: 'border-slate-200',
                 text: 'text-slate-900',
-                shortName: cat.name.split(' ')[0],
+                shortName: cat.name,
               };
+              const count = products.filter((p) => p.categoryId === cat.id).length;
 
               return (
                 <Link
                   key={cat.id}
                   href={`/shop?category=${cat.slug}`}
-                  className="flex flex-col items-center group active:scale-95 transition-transform"
+                  className="flex flex-col items-center group active:scale-95 transition-all p-1.5 rounded-2xl hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
-                  <div className={`w-14 h-14 sm:w-18 sm:h-18 rounded-2xl sm:rounded-3xl ${theme.bg} border ${theme.border} p-1.5 flex flex-col items-center justify-center relative overflow-hidden mb-1.5 group-hover:shadow-md transition-all shadow-xs`}>
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl ${theme.bg} border ${theme.border} p-1.5 flex flex-col items-center justify-center relative overflow-hidden mb-1.5 group-hover:shadow-md transition-all shadow-xs`}>
                     <img
                       src={cat.image}
                       alt={cat.name}
@@ -209,6 +210,9 @@ export default function HomePage() {
                   </div>
                   <span className={`text-[11px] sm:text-xs font-black line-clamp-1 leading-tight group-hover:text-emerald-700 ${theme.text}`}>
                     {theme.shortName}
+                  </span>
+                  <span className="text-[9px] text-slate-400 font-semibold mt-0.5">
+                    {count} {count === 1 ? 'item' : 'items'}
                   </span>
                 </Link>
               );
@@ -234,7 +238,7 @@ export default function HomePage() {
               href="/shop?category=groceries-staples"
               className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
             >
-              See all <ChevronRight className="w-3 h-3" />
+              See all ({featuredStaples.length}) <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
 
@@ -316,7 +320,7 @@ export default function HomePage() {
               href="/shop?category=dairy-breakfast"
               className="text-[11px] font-bold text-blue-700 hover:underline flex items-center gap-0.5"
             >
-              See all <ChevronRight className="w-3 h-3" />
+              See all ({dairyProducts.length}) <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
 
@@ -345,7 +349,7 @@ export default function HomePage() {
               href="/shop"
               className="text-[11px] font-bold text-purple-700 hover:underline flex items-center gap-0.5"
             >
-              See all <ChevronRight className="w-3 h-3" />
+              See all ({householdClean.length}) <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
 

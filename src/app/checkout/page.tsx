@@ -539,9 +539,15 @@ export default function CheckoutPage() {
                           </p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                        Available
-                      </span>
+                      {slot.id === 'slot-express-now' ? (
+                        <span className="text-[9px] font-black tracking-wider uppercase text-amber-950 bg-amber-400 px-2 py-0.5 rounded shadow-2xs flex-shrink-0">
+                          ⚡ FASTEST
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded flex-shrink-0">
+                          Available
+                        </span>
+                      )}
                     </button>
                   );
                 })}
