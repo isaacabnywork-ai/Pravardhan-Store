@@ -134,25 +134,17 @@ export function Navbar() {
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Left: Brand & Location */}
             <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-              {/* Brand Logo */}
-              <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0F5132] flex items-center justify-center text-white shadow-sm shadow-[#0F5132]/25 group-hover:scale-105 transition-transform">
-                  <Store className="w-5 h-5 sm:w-6 sm:h-6" />
-                </div>
-                <div className="hidden sm:block">
-                  <div className="flex items-center gap-1 leading-none">
-                    <span className="text-lg font-black tracking-tight text-gray-900">
-                      Pravdhan
-                    </span>
-                    <span className="text-lg font-black tracking-tight text-[#0F5132]">
-                      STORE
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-[#0F5132] font-extrabold uppercase tracking-wider flex items-center gap-1 mt-0.5">
-                    <Zap className="w-2.5 h-2.5 fill-amber-400 text-amber-500" />
-                    12 MINS DELIVERY
-                  </span>
-                </div>
+              {/* Brand Logo using Official Artwork */}
+              <Link
+                href="/"
+                className="flex items-center group flex-shrink-0"
+                aria-label="Pravdhan Store"
+              >
+                <img
+                  src="/images/logo.png"
+                  alt="Pravdhan Store"
+                  className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform group-hover:scale-102"
+                />
               </Link>
 
               {/* Delivery Selector High-Contrast Pill */}
@@ -264,81 +256,30 @@ export function Navbar() {
               )}
             </div>
 
-            {/* Right: User Profile and Cart */}
-            <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
-              {/* Staff Pill (only shown when staff role is active) */}
-              {role !== 'CUSTOMER' && (
-                <div className="hidden lg:flex items-center gap-2">
-                  <button
-                    onClick={() => setIsRoleModalOpen(true)}
-                    className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/90 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all shadow-2xs"
-                    title="Switch persona for testing"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-amber-700 font-medium">Staff:</span>
-                    <span className="font-bold">{roleLabels[role]}</span>
-                    <ChevronDown className="w-3 h-3 text-amber-600" />
-                  </button>
+            {/* Right: Staff Controls (only rendered when testing non-customer roles) */}
+            {role !== 'CUSTOMER' && (
+              <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsRoleModalOpen(true)}
+                  className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/90 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all shadow-2xs"
+                  title="Switch persona for testing"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-amber-700 font-medium">Staff:</span>
+                  <span className="font-bold">{roleLabels[role]}</span>
+                  <ChevronDown className="w-3 h-3 text-amber-600" />
+                </button>
 
-                  <Link
-                    href="/admin"
-                    className="flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white rounded-full text-xs font-bold hover:bg-gray-800 transition-colors shadow-2xs"
-                  >
-                    <LayoutDashboard className="w-3.5 h-3.5" />
-                    <span>Admin</span>
-                  </Link>
-                </div>
-              )}
-
-              {/* User Account / Profile Button */}
-              <button
-                type="button"
-                aria-label={user ? `Logged in as ${user.name}` : 'Login or Register'}
-                onClick={() => (user ? setIsUserMenuOpen(!isUserMenuOpen) : setIsAuthModalOpen(true))}
-                title={user ? `Logged in as ${user.name}` : 'Login / Register'}
-                className="h-9 px-3 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center gap-1.5 font-bold text-xs transition-colors focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none"
-              >
-                {user ? (
-                  <>
-                    <div className="w-6 h-6 rounded-full bg-[#0F5132] text-white flex items-center justify-center font-bold text-[11px]">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="hidden xl:inline text-gray-800 font-semibold max-w-[90px] truncate">
-                      {user.name.split(' ')[0]}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <UserIcon className="w-4 h-4 text-gray-600" />
-                    <span className="hidden sm:inline text-gray-700 font-bold text-xs">Login</span>
-                  </>
-                )}
-              </button>
-
-              {/* High-Converting Cart Trigger Button */}
-              <button
-                type="button"
-                aria-label={`Open shopping cart with ${totalItemsCount} ${
-                  totalItemsCount === 1 ? 'item' : 'items'
-                } totaling ${formatPrice(grandTotal)}`}
-                onClick={() => setIsCartDrawerOpen(true)}
-                className="flex items-center gap-2.5 bg-[#0F5132] hover:bg-[#054A29] text-white px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold shadow-sm shadow-[#0F5132]/25 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none"
-              >
-                <div className="relative">
-                  <ShoppingBag className="w-4 h-4" />
-                  {totalItemsCount > 0 && (
-                    <span className="absolute -top-1.5 -right-2 bg-amber-400 text-gray-950 text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-[#0F5132]">
-                      {totalItemsCount}
-                    </span>
-                  )}
-                </div>
-                <div className="hidden sm:block text-left">
-                  <span className="block text-[11px] leading-tight font-black">
-                    {totalItemsCount > 0 ? formatPrice(grandTotal) : 'My Cart'}
-                  </span>
-                </div>
-              </button>
-            </div>
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white rounded-full text-xs font-bold hover:bg-gray-800 transition-colors shadow-2xs"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <span>Admin</span>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile Full-Width Search Input (Visible only on mobile < md) */}

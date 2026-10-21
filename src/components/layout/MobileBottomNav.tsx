@@ -9,14 +9,10 @@ import {
   Percent,
   PackageCheck,
   User,
-  ShoppingBag,
 } from 'lucide-react';
-import { useCart } from '@/lib/context/CartContext';
-import { formatPrice } from '@/lib/utils';
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const { totalItemsCount, grandTotal, setIsCartDrawerOpen } = useCart();
 
   // Don't render on admin pages or product detail pages (which have dedicated bottom action bar)
   if (pathname.startsWith('/admin') || pathname.startsWith('/product/')) {
@@ -33,46 +29,6 @@ export function MobileBottomNav() {
 
   return (
     <>
-      {/* Floating Quick Cart Bar (App-style floating bar above bottom nav) */}
-      {totalItemsCount > 0 && pathname !== '/cart' && pathname !== '/checkout' && (
-        <div className="fixed bottom-16 inset-x-0 z-40 px-3 pb-1 md:hidden pointer-events-none animate-in slide-in-from-bottom-3 duration-200">
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label={`View cart with ${totalItemsCount} ${
-              totalItemsCount === 1 ? 'item' : 'items'
-            } totaling ${formatPrice(grandTotal)}`}
-            onClick={() => setIsCartDrawerOpen(true)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setIsCartDrawerOpen(true);
-              }
-            }}
-            className="pointer-events-auto bg-gradient-to-r from-[#0F5132] to-[#054A29] text-white p-3 rounded-2xl shadow-xl border border-emerald-700/60 flex items-center justify-between cursor-pointer active:scale-98 transition-transform focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black text-xs shadow-xs">
-                {totalItemsCount}
-              </div>
-              <div>
-                <p className="text-xs font-black leading-tight text-white">
-                  {formatPrice(grandTotal)}
-                </p>
-                <p className="text-[10px] text-emerald-100 font-medium">
-                  {totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'} in cart
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 bg-white text-gray-900 px-3 py-1.5 rounded-xl font-bold text-xs shadow-xs">
-              <ShoppingBag className="w-3.5 h-3.5 text-[#0F5132]" />
-              <span>View Cart</span>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Persistent Mobile Bottom Tab Bar */}
       <nav
         aria-label="Mobile Navigation"

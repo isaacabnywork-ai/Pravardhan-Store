@@ -77,12 +77,13 @@ export function Footer() {
         {/* Brand Details */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold">
-              <Store className="w-5 h-5" />
+            <div className="bg-white px-3 py-1.5 rounded-xl shadow-xs inline-flex items-center">
+              <img
+                src="/images/logo.png"
+                alt="Pravdhan Store"
+                className="h-7 sm:h-8 w-auto object-contain"
+              />
             </div>
-            <span className="text-lg font-black text-white">
-              Pravdhan <span className="text-emerald-400">STORE</span>
-            </span>
           </div>
           <p className="text-xs text-slate-400 leading-relaxed">
             {storeSettings.tagline}. Single-warehouse direct-to-customer retail model delivering unadulterated staples, farm-fresh fruits & vegetables, dairy, and household essentials.
