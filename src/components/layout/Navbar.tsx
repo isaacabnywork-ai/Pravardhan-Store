@@ -19,6 +19,14 @@ import {
   Zap,
   PackageCheck,
   Check,
+  ShoppingBasket,
+  Wheat,
+  Apple,
+  Milk,
+  Cookie,
+  Coffee,
+  Sparkles,
+  Smile,
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useCart } from '@/lib/context/CartContext';
@@ -28,6 +36,100 @@ import { formatPrice } from '@/lib/utils';
 import { RoleSwitcherModal } from './RoleSwitcherModal';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { SearchBar } from './SearchBar';
+
+interface CategoryNavItem {
+  id: string;
+  name: string;
+  fullName: string;
+  slug: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge: string | null;
+}
+
+const CATEGORY_NAV_ITEMS: CategoryNavItem[] = [
+  {
+    id: 'all',
+    name: 'All',
+    fullName: 'All Products',
+    slug: 'all',
+    href: '/shop',
+    icon: ShoppingBasket,
+    badge: null,
+  },
+  {
+    id: 'cat-groceries',
+    name: 'Staples',
+    fullName: 'Groceries & Staples',
+    slug: 'groceries-staples',
+    href: '/shop?category=groceries-staples',
+    icon: Wheat,
+    badge: null,
+  },
+  {
+    id: 'cat-fruits-veg',
+    name: 'Fruits & Veg',
+    fullName: 'Fruits & Vegetables',
+    slug: 'fruits-vegetables',
+    href: '/shop?category=fruits-vegetables',
+    icon: Apple,
+    badge: 'Fresh',
+  },
+  {
+    id: 'cat-dairy',
+    name: 'Dairy',
+    fullName: 'Dairy & Breakfast',
+    slug: 'dairy-breakfast',
+    href: '/shop?category=dairy-breakfast',
+    icon: Milk,
+    badge: null,
+  },
+  {
+    id: 'cat-snacks',
+    name: 'Snacks',
+    fullName: 'Snacks & Munchies',
+    slug: 'snacks-munchies',
+    href: '/shop?category=snacks-munchies',
+    icon: Cookie,
+    badge: null,
+  },
+  {
+    id: 'cat-beverages',
+    name: 'Beverages',
+    fullName: 'Beverages',
+    slug: 'beverages',
+    href: '/shop?category=beverages',
+    icon: Coffee,
+    badge: null,
+  },
+  {
+    id: 'cat-cleaning',
+    name: 'Cleaning',
+    fullName: 'Cleaning & Household',
+    slug: 'cleaning-household',
+    href: '/shop?category=cleaning-household',
+    icon: Sparkles,
+    badge: null,
+  },
+  {
+    id: 'cat-personal-care',
+    name: 'Personal Care',
+    fullName: 'Personal Care',
+    slug: 'personal-care',
+    href: '/shop?category=personal-care',
+    icon: Smile,
+    badge: null,
+  },
+  {
+    id: 'deals',
+    name: 'Deals',
+    fullName: 'Offers & Deals',
+    slug: 'deals',
+    href: '/deals',
+    icon: Percent,
+    badge: 'New',
+  },
+];
 
 export function Navbar() {
   const pathname = usePathname();
@@ -41,6 +143,30 @@ export function Navbar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [selectedZone, setSelectedZone] = useState('Sector 14 · Model Town');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setActiveCategory(params.get('category'));
+    }
+  }, [pathname]);
+
+  const isNavActive = (item: (typeof CATEGORY_NAV_ITEMS)[0]) => {
+    if (pathname === '/deals') {
+      return item.slug === 'deals';
+    }
+    if (pathname === '/shop') {
+      if (activeCategory) {
+        return item.slug === activeCategory;
+      }
+      return item.slug === 'all';
+    }
+    if (pathname === '/') {
+      return item.slug === 'all';
+    }
+    return false;
+  };
 
   const roleLabels: Record<Role, string> = {
     CUSTOMER: 'Customer',
@@ -207,44 +333,58 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Category Carousel / Horizontal Scrolling Pill Bar with Subtle Active State */}
-        <nav className="border-t border-gray-100 bg-white/95 backdrop-blur-md px-3 sm:px-4 py-1.5 overflow-x-auto no-scrollbar">
-          <div className="max-w-7xl mx-auto flex items-center gap-1.5 sm:gap-2 text-xs font-semibold whitespace-nowrap">
-            <Link
-              href="/shop"
-              className={`px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1 ${
-                pathname === '/shop'
-                  ? 'bg-[#0F5132] text-white shadow-xs font-bold'
-                  : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/70 hover:text-gray-900'
-              }`}
-            >
-              <span>All Items</span>
-            </Link>
+        {/* Category Bar below search bar — Styled with icon on top, name below, active underline bar, and crisp white background */}
+        <nav
+          aria-label="Product categories"
+          className="bg-white border-t border-b border-gray-100 shadow-2xs overflow-x-auto no-scrollbar"
+        >
+          <div className="max-w-7xl mx-auto flex items-center justify-start sm:justify-center gap-1 sm:gap-3 px-2 sm:px-4">
+            {CATEGORY_NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = isNavActive(item);
 
-            {categories.map((cat) => {
-              const isSelected = pathname.includes(cat.slug);
               return (
                 <Link
-                  key={cat.id}
-                  href={`/shop?category=${cat.slug}`}
-                  className={`px-3.5 py-1.5 rounded-full transition-all text-xs font-semibold ${
-                    isSelected
-                      ? 'bg-[#0F5132] text-white shadow-xs font-bold'
-                      : 'bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border border-gray-200/90 hover:border-gray-300'
-                  }`}
+                  key={item.id}
+                  href={item.href}
+                  className="flex flex-col items-center justify-center flex-shrink-0 px-2 sm:px-3 pt-2 pb-1 min-w-[58px] sm:min-w-[70px] group cursor-pointer transition-colors focus-visible:outline-none"
                 >
-                  <span>{cat.name}</span>
+                  {/* Icon Container with Optional Floating Badge */}
+                  <div className="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
+                    <Icon
+                      className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-all duration-200 ${
+                        isActive
+                          ? 'text-[#0F5132] stroke-[2.3] scale-105'
+                          : 'text-gray-500 group-hover:text-gray-900 group-hover:scale-105 stroke-[1.8]'
+                      }`}
+                    />
+                    {item.badge && (
+                      <span className="absolute -top-1 -right-2.5 bg-rose-500 text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-tight shadow-2xs leading-none">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Category Name */}
+                  <span
+                    className={`text-[10px] sm:text-[11px] font-semibold mt-0.5 tracking-tight whitespace-nowrap transition-colors ${
+                      isActive
+                        ? 'text-[#0F5132] font-black'
+                        : 'text-gray-600 group-hover:text-gray-950'
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+
+                  {/* Active Indicator Underline Bar */}
+                  <span
+                    className={`h-[3px] w-6 sm:w-8 rounded-full transition-all duration-200 mt-1 ${
+                      isActive ? 'bg-[#0F5132]' : 'bg-transparent'
+                    }`}
+                  />
                 </Link>
               );
             })}
-
-            <Link
-              href="/deals"
-              className="ml-auto text-amber-900 hover:text-amber-950 font-bold flex items-center gap-1 px-3 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-full flex-shrink-0 transition-colors"
-            >
-              <Percent className="w-3.5 h-3.5 text-amber-700" />
-              <span>Offers & Deals</span>
-            </Link>
           </div>
         </nav>
       </header>
