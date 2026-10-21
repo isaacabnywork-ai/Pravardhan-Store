@@ -42,7 +42,9 @@ export default function ProductDetailPage({
     updateQuantity,
   } = useCart();
 
-  const product = products.find((p) => p.slug === resolvedParams.slug);
+  const product = products.find(
+    (p) => p.slug === resolvedParams.slug || p.id === resolvedParams.slug
+  );
 
   if (!product) {
     notFound();

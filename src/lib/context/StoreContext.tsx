@@ -66,7 +66,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (p) setProducts(JSON.parse(p));
 
       const o = localStorage.getItem(ORDERS_KEY);
-      if (o) setOrders(JSON.parse(o));
+      if (o) {
+        const loaded: Order[] = JSON.parse(o);
+        const existingIds = new Set(loaded.map((item) => item.id));
+        const merged = [...loaded, ...INITIAL_ORDERS.filter((item) => !existingIds.has(item.id))];
+        setOrders(merged);
+      }
 
       const inv = localStorage.getItem(INVENTORY_HIST_KEY);
       if (inv) setInventoryHistory(JSON.parse(inv));
