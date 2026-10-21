@@ -259,27 +259,51 @@ export default function HomePage() {
         </section>
 
         {/* ================= STORE GUARANTEE APP RIBBON ================= */}
-        <section className="bg-gradient-to-r from-[#0F5132] via-[#0D442B] to-[#111827] rounded-2xl p-4 sm:p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs border border-[#0F5132]/40">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center flex-shrink-0 border border-amber-400/30">
-              <ShieldCheck className="w-5 h-5 text-amber-400" />
+        <section className="bg-gradient-to-br from-[#0F5132] via-[#0C3E26] to-[#0A2E1D] rounded-2xl p-3.5 sm:p-5 text-white shadow-xs border border-emerald-600/30 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/30">
+                <ShieldCheck className="w-5 h-5 text-amber-400" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h3 className="text-xs sm:text-sm font-bold text-white leading-tight">
+                    Sector 14 Fulfillment Hub
+                  </h3>
+                  <span className="text-[9px] sm:text-[10px] bg-emerald-700/90 text-emerald-100 font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                    100% Owned
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-200/90 mt-0.5">
+                  Direct from local dark store to your doorstep
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-bold leading-tight text-white flex items-center gap-2">
-                <span>Sector 14 Direct Fulfillment Hub</span>
-                <span className="text-[10px] bg-emerald-700/80 text-emerald-100 font-bold px-2 py-0.5 rounded-full">100% Owned Inventory</span>
-              </p>
-              <p className="text-xs text-gray-200/90 mt-0.5">
-                ⚡ 12–15 Min Express Delivery &nbsp;•&nbsp; 📅 2-Hour Scheduled Slots &nbsp;•&nbsp; ₹0 Delivery Fee
-              </p>
+
+            <Link
+              href="/shop"
+              className="shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 bg-amber-400 hover:bg-amber-300 text-gray-950 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs flex items-center gap-1 active:scale-95"
+            >
+              <span>Explore</span>
+              <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
+            </Link>
+          </div>
+
+          {/* Features 3-Pills Bar */}
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3 pt-1 border-t border-emerald-700/40 text-center">
+            <div className="bg-white/10 backdrop-blur-xs rounded-xl py-1.5 px-1">
+              <p className="text-[10px] sm:text-xs font-extrabold text-amber-300">⚡ 12–15 Mins</p>
+              <p className="text-[9px] text-emerald-200 hidden sm:block">Express Delivery</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-xs rounded-xl py-1.5 px-1">
+              <p className="text-[10px] sm:text-xs font-extrabold text-white">📅 2-Hr Slots</p>
+              <p className="text-[9px] text-emerald-200 hidden sm:block">Scheduled Choice</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-xs rounded-xl py-1.5 px-1">
+              <p className="text-[10px] sm:text-xs font-extrabold text-emerald-300">₹0 Delivery</p>
+              <p className="text-[9px] text-emerald-200 hidden sm:block">No Minimum Fee</p>
             </div>
           </div>
-          <Link
-            href="/shop"
-            className="self-start sm:self-center flex-shrink-0 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-gray-950 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs"
-          >
-            Explore Catalog
-          </Link>
         </section>
 
         {/* ================= SECTION 2: FARM FRESH VEGGIES & FRUITS ================= */}
