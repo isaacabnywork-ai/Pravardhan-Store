@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Star, Plus, Minus, AlertTriangle, Clock } from 'lucide-react';
+import { Star, Plus, Minus, AlertTriangle, Clock, Package } from 'lucide-react';
 import { Product, ProductVariant } from '@/types';
 import { formatPrice, calculateDiscountPercentage } from '@/lib/utils';
 import { useCart } from '@/lib/context/CartContext';
@@ -18,6 +18,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
     product.variants[0]
   );
+  const [imageError, setImageError] = useState(false);
 
   const cartItem = items.find((i) => i.variantId === selectedVariant.id);
   const quantityInCart = cartItem ? cartItem.quantity : 0;
@@ -30,8 +31,10 @@ export function ProductCard({ product }: ProductCardProps) {
   const isLowStock = selectedVariant.stock > 0 && selectedVariant.stock <= 5;
   const isOutOfStock = selectedVariant.stock <= 0;
 
+  const imageUrl = selectedVariant.image || product.images[0];
+
   return (
-    <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 hover:border-emerald-500/80 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition-all duration-200 flex flex-col justify-between overflow-hidden group shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
+    <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 hover:border-emerald-500/80 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] transition-all duration-200 flex flex-col justify-between overflow-hidden group shadow-[0_2px_8px_rgba(0,0,0,0.03)] h-full">
       {/* Product Image Section */}
       <div className="relative p-2 sm:p-3 bg-gradient-to-b from-slate-50/90 to-slate-100/50 flex items-center justify-center aspect-square overflow-hidden">
         {/* Discount Badge */}
@@ -58,63 +61,87 @@ export function ProductCard({ product }: ProductCardProps) {
           href={`/product/${product.slug}`}
           className="w-full h-full flex items-center justify-center p-1"
         >
-          <img
-            src={selectedVariant.image || product.images[0]}
-            alt={product.name}
-            className="w-full h-full object-contain group-hover:scale-108 transition-transform duration-300 drop-shadow-2xs"
-            loading="lazy"
-          />
+          {!imageError && imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={product.name}
+              onError={() => setImageError(true)}
+              className="w-full h-full object-contain group-hover:scale-108 transition-transform duration-300 drop-shadow-2xs"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100/80 rounded-xl p-2 text-center text-slate-400 group-hover:bg-slate-200/60 transition-colors">
+              <Package className="w-8 h-8 text-emerald-600/70 mb-1" />
+              <span className="text-[10px] font-bold text-slate-600 line-clamp-1">{product.brand}</span>
+              <span className="text-[9px] text-slate-400 font-medium">{selectedVariant.title}</span>
+            </div>
+          )}
         </Link>
       </div>
 
       {/* Product Details Section */}
       <div className="p-2.5 sm:p-3 flex-1 flex flex-col justify-between">
         <div>
-          {/* Brand & Rating */}
-          <div className="flex items-center justify-between text-[10px] mb-1">
-            <span className="text-slate-400 font-bold uppercase tracking-wider truncate max-w-[85px]">
+          {/* Brand & Rating (No artificial truncation, real review counts) */}
+          <div className="flex items-center justify-between text-[10px] mb-1 gap-1">
+            <span
+              className="text-slate-400 font-bold uppercase tracking-wider truncate flex-1 min-w-0"
+              title={product.brand}
+            >
               {product.brand}
             </span>
-            <div className="flex items-center gap-0.5 text-amber-900 font-extrabold text-[9px] bg-amber-50 px-1 py-0.2 rounded border border-amber-200/60">
-              <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-500" />
-              <span>{product.rating}</span>
-            </div>
+            {product.reviewCount > 0 ? (
+              <div className="flex items-center gap-0.5 text-amber-900 font-extrabold text-[9px] bg-amber-50 px-1 py-0.5 rounded border border-amber-200/60 flex-shrink-0">
+                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-500" />
+                <span>{product.rating}</span>
+              </div>
+            ) : (
+              <span className="text-[8px] font-black tracking-wider uppercase text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1 py-0.5 rounded flex-shrink-0">
+                NEW
+              </span>
+            )}
           </div>
 
-          {/* Product Name */}
+          {/* Product Name with guaranteed 2-line reserved height */}
           <Link
             href={`/product/${product.slug}`}
-            className="block font-bold text-slate-900 hover:text-emerald-700 text-xs line-clamp-2 leading-snug mb-1.5 transition-colors"
+            title={product.name}
+            className="block font-bold text-slate-900 hover:text-emerald-700 text-xs line-clamp-2 leading-snug mb-1.5 transition-colors h-8 sm:h-9"
           >
             {product.name}
           </Link>
 
-          {/* Variant Selector Pill toggle */}
-          {product.variants.length > 1 ? (
-            <div className="flex flex-wrap gap-1 mb-2">
-              {product.variants.map((v) => {
-                const isSelected = v.id === selectedVariant.id;
-                return (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setSelectedVariant(v)}
-                    className={`text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md font-bold border transition-all ${
-                      isSelected
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    {v.title}
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-[10px] text-slate-400 font-medium mb-2">
-              {selectedVariant.unit}
-            </p>
-          )}
+          {/* Variant Selector Row with uniform vertical spacing */}
+          <div className="min-h-[28px] flex items-center mb-2">
+            {product.variants.length > 1 ? (
+              <div className="flex flex-wrap gap-1">
+                {product.variants.map((v) => {
+                  const isSelected = v.id === selectedVariant.id;
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedVariant(v);
+                        setImageError(false);
+                      }}
+                      className={`text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md font-bold border transition-all ${
+                        isSelected
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {v.title}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-[10px] text-slate-400 font-medium">
+                {selectedVariant.unit}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Pricing & Zero-Layout-Shift ADD / Stepper Button */}
@@ -141,7 +168,7 @@ export function ProductCard({ product }: ProductCardProps) {
               </div>
             </div>
 
-            {/* Zero Layout Shift ADD Button & Stepper (Fixed Width 76px) */}
+            {/* Zero Layout Shift ADD Button & Stepper (Fixed Width 72-78px) */}
             <div className="w-[72px] sm:w-[78px] h-7 sm:h-8 flex-shrink-0 flex items-center justify-end">
               {isOutOfStock ? (
                 <span className="w-full text-center text-[9px] font-bold text-slate-400 bg-slate-100 py-1.5 rounded-xl border border-slate-200">

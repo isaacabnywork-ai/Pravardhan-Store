@@ -17,6 +17,7 @@ import {
   ChevronRight,
   AlertTriangle,
   Zap,
+  Package,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -56,6 +57,7 @@ export default function ProductDetailPage({
   const [selectedImage, setSelectedImage] = useState<string>(
     product.images[0]
   );
+  const [mainImageError, setMainImageError] = useState(false);
 
   const cartItem = items.find((i) => i.variantId === selectedVariant.id);
   const quantityInCart = cartItem ? cartItem.quantity : 0;
@@ -131,11 +133,20 @@ export default function ProductDetailPage({
                   🌱 100% Certified Organic
                 </span>
               )}
-              <img
-                src={selectedVariant.image || selectedImage}
-                alt={product.name}
-                className="w-full h-full object-contain max-h-[380px]"
-              />
+              {!mainImageError ? (
+                <img
+                  src={selectedVariant.image || selectedImage}
+                  alt={product.name}
+                  onError={() => setMainImageError(true)}
+                  className="w-full h-full object-contain max-h-[380px]"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-slate-400">
+                  <Package className="w-16 h-16 text-emerald-600 mb-2" />
+                  <p className="font-bold text-slate-700 text-sm">{product.name}</p>
+                  <p className="text-xs text-slate-400">{product.brand}</p>
+                </div>
+              )}
             </div>
 
             {/* Thumbnail Gallery */}

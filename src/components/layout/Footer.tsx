@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Store,
@@ -12,12 +12,16 @@ import {
   Clock,
   Phone,
   Mail,
-  CheckCircle,
+  X,
+  FileText,
 } from 'lucide-react';
 import { useStore } from '@/lib/context/StoreContext';
 
+type PolicyType = 'privacy' | 'terms' | 'returns' | null;
+
 export function Footer() {
   const { storeSettings, categories } = useStore();
+  const [activePolicy, setActivePolicy] = useState<PolicyType>(null);
 
   return (
     <footer className="bg-slate-900 text-slate-300 text-xs border-t border-slate-800 mt-16">
@@ -29,8 +33,8 @@ export function Footer() {
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-bold text-white text-sm">Same-Day Slots</p>
-              <p className="text-slate-400 text-xs">Choose 2-hour delivery window</p>
+              <p className="font-bold text-white text-sm">Express & Slots</p>
+              <p className="text-slate-400 text-xs">⚡ 12–15m or 2-hr slots</p>
             </div>
           </div>
 
@@ -50,7 +54,7 @@ export function Footer() {
             </div>
             <div>
               <p className="font-bold text-white text-sm">Doorstep Return</p>
-              <p className="text-slate-400 text-xs">No questions asked replacement</p>
+              <p className="text-slate-400 text-xs">24-hr instant replacement</p>
             </div>
           </div>
 
@@ -59,8 +63,8 @@ export function Footer() {
               <Headphones className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-bold text-white text-sm">Dedicated Care</p>
-              <p className="text-slate-400 text-xs">{storeSettings.supportPhone}</p>
+              <p className="font-bold text-white text-sm">Gurugram Care</p>
+              <p className="text-slate-400 text-xs">+91 124 456 7890</p>
             </div>
           </div>
         </div>
@@ -81,7 +85,7 @@ export function Footer() {
           <p className="text-xs text-slate-400 leading-relaxed">
             {storeSettings.tagline}. Single-warehouse direct-to-customer retail model delivering unadulterated staples, farm-fresh fruits & vegetables, dairy, and household essentials.
           </p>
-          <div className="pt-2 text-xs text-slate-400 space-y-1">
+          <div className="pt-2 text-xs text-slate-400 space-y-1.5">
             <p className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-emerald-400 flex-shrink-0" />
               <span>Hub 1: {storeSettings.serviceArea}, {storeSettings.city}</span>
@@ -92,7 +96,11 @@ export function Footer() {
             </p>
             <p className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span>{storeSettings.supportPhone}</span>
+              <span>+91 124 456 7890</span>
+            </p>
+            <p className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span>care@pravdhanstore.in</span>
             </p>
           </div>
         </div>
@@ -116,7 +124,7 @@ export function Footer() {
 
         {/* Customer Help & Account */}
         <div>
-          <h4 className="font-bold text-white text-sm mb-3">Customer Service</h4>
+          <h4 className="font-bold text-white text-sm mb-3">Customer Service & Policies</h4>
           <ul className="space-y-2 text-xs">
             <li>
               <Link href="/account/orders" className="hover:text-emerald-400 transition-colors">
@@ -134,19 +142,43 @@ export function Footer() {
               </Link>
             </li>
             <li>
-              <span className="text-slate-400">Minimum Order Value: ₹{storeSettings.minimumOrderValue}</span>
+              <button
+                type="button"
+                onClick={() => setActivePolicy('returns')}
+                className="text-left hover:text-emerald-400 transition-colors cursor-pointer"
+              >
+                Doorstep Return & Refund Policy
+              </button>
             </li>
             <li>
-              <span className="text-emerald-400 font-semibold">Standard Delivery: ₹{storeSettings.defaultDeliveryCharge}</span>
+              <button
+                type="button"
+                onClick={() => setActivePolicy('privacy')}
+                className="text-left hover:text-emerald-400 transition-colors cursor-pointer"
+              >
+                Privacy & Data Protection Policy
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => setActivePolicy('terms')}
+                className="text-left hover:text-emerald-400 transition-colors cursor-pointer"
+              >
+                Terms of Service & Delivery Norms
+              </button>
+            </li>
+            <li className="pt-2 border-t border-slate-800 text-slate-400">
+              <span>Minimum Order: ₹{storeSettings.minimumOrderValue} • Delivery: ₹0</span>
             </li>
           </ul>
         </div>
 
         {/* Operational Roles & System */}
         <div>
-          <h4 className="font-bold text-white text-sm mb-3">Staff & Admin Desk</h4>
+          <h4 className="font-bold text-white text-sm mb-3">Staff Operations Desk</h4>
           <p className="text-xs text-slate-400 mb-3">
-            Pravdhan Store includes complete multi-role portals for physical store operations:
+            Pravdhan Store physical store management portals:
           </p>
           <ul className="space-y-1.5 text-xs">
             <li>
@@ -186,13 +218,108 @@ export function Footer() {
       <div className="border-t border-slate-800/80 py-4 px-4 text-center text-slate-500 text-[11px]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
-            © {new Date().getFullYear()} {storeSettings.storeName}. All rights reserved. Registered Indian Local Retail Entity.
+            © {new Date().getFullYear()} {storeSettings.storeName}. All rights reserved. Registered Indian Local Retail Entity (Sector 14, Gurugram).
           </span>
           <span className="text-slate-400">
-            Engineered with Next.js App Router, TypeScript, and Tailwind CSS.
+            Helpline: +91 124 456 7890 • care@pravdhanstore.in
           </span>
         </div>
       </div>
+
+      {/* Policy Modal */}
+      {activePolicy && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm"
+          onClick={() => setActivePolicy(null)}
+        >
+          <div
+            className="bg-white text-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-emerald-700" />
+                <h3 className="font-black text-base">
+                  {activePolicy === 'returns' && 'Doorstep Return & Refund Policy'}
+                  {activePolicy === 'privacy' && 'Privacy & Data Protection Policy'}
+                  {activePolicy === 'terms' && 'Terms of Service & Delivery Norms'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setActivePolicy(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs leading-relaxed text-slate-600">
+              {activePolicy === 'returns' && (
+                <>
+                  <p className="font-bold text-slate-800">
+                    100% Hassle-Free Doorstep Replacement Guarantee:
+                  </p>
+                  <p>
+                    • <strong>Fresh Fruits & Vegetables:</strong> Any produce item can be checked at delivery. If you are unsatisfied with freshness, request an instant replacement or immediate refund credit within 24 hours of delivery.
+                  </p>
+                  <p>
+                    • <strong>Dairy & Perishables:</strong> Must be reported within 12 hours with batch details for immediate replacement.
+                  </p>
+                  <p>
+                    • <strong>Packaged Grocery & Household Goods:</strong> Eligible for return or exchange within 48 hours if sealed and undamaged.
+                  </p>
+                  <p>
+                    • <strong>Refund Processing:</strong> Refunds for online payments (UPI/Cards) reflect back into source account within 2–4 hours. COD refunds are issued as instant Pravdhan wallet balance or direct UPI payout.
+                  </p>
+                </>
+              )}
+
+              {activePolicy === 'privacy' && (
+                <>
+                  <p className="font-bold text-slate-800">
+                    Your Privacy & Data Security:
+                  </p>
+                  <p>
+                    • <strong>Contact Details:</strong> Your phone number and delivery addresses are utilized solely to fulfill orders, transmit live dispatch tracking, and notify you of delivery status.
+                  </p>
+                  <p>
+                    • <strong>Zero Third-Party Data Selling:</strong> We never sell, rent, or lease customer contact information to third-party telemarketers.
+                  </p>
+                  <p>
+                    • <strong>Payment Information:</strong> Pravdhan Store complies with RBI tokenization guidelines. We do not store full credit/debit card credentials on our servers.
+                  </p>
+                </>
+              )}
+
+              {activePolicy === 'terms' && (
+                <>
+                  <p className="font-bold text-slate-800">
+                    Pravdhan Store Terms & Delivery Guidelines:
+                  </p>
+                  <p>
+                    • <strong>Coverage Area:</strong> Instant delivery (12–15 minutes) is operational across Sector 14, Model Town, and immediate Zone 1 boundaries in Gurugram.
+                  </p>
+                  <p>
+                    • <strong>Order Minimum:</strong> The store maintains a ₹100 minimum order threshold to preserve free doorstep delivery for the local community.
+                  </p>
+                  <p>
+                    • <strong>Operating Hours:</strong> Our dispatch hub operates from 7:00 AM to 10:00 PM daily. Orders placed outside operating hours are dispatched in the first morning 7:00 AM slot.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="mt-6 pt-3 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setActivePolicy(null)}
+                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold"
+              >
+                Close Policy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </footer>
   );
 }

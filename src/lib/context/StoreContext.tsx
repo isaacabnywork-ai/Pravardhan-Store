@@ -45,11 +45,11 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
-const PRODUCTS_KEY = 'pravdhan_products_v2';
+const PRODUCTS_KEY = 'pravdhan_products_v3';
 const ORDERS_KEY = 'pravdhan_orders_v1';
 const INVENTORY_HIST_KEY = 'pravdhan_inv_hist_v1';
 const PROMOS_KEY = 'pravdhan_promos_v1';
-const SETTINGS_KEY = 'pravdhan_settings_v1';
+const SETTINGS_KEY = 'pravdhan_settings_v2';
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);

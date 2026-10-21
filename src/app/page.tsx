@@ -4,16 +4,13 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowRight,
-  Clock,
   Wheat,
   Apple,
   Milk,
   Cookie,
-  BadgePercent,
-  Sparkles,
   ChevronRight,
   ShieldCheck,
-  Percent,
+  Check,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -21,6 +18,7 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/lib/context/StoreContext';
+import { useCart } from '@/lib/context/CartContext';
 
 const CATEGORY_THEMES: Record<string, {
   bg: string;
@@ -38,13 +36,13 @@ const CATEGORY_THEMES: Record<string, {
     bg: 'bg-emerald-100/70 group-hover:bg-emerald-100',
     border: 'border-emerald-200/90',
     text: 'text-emerald-950',
-    shortName: 'Vegetables',
+    shortName: 'Fruits & Veg',
   },
   'cat-dairy': {
     bg: 'bg-sky-100/70 group-hover:bg-sky-100',
     border: 'border-sky-200/90',
     text: 'text-sky-950',
-    shortName: 'Dairy & Milk',
+    shortName: 'Dairy & Eggs',
   },
   'cat-snacks': {
     bg: 'bg-orange-100/70 group-hover:bg-orange-100',
@@ -56,7 +54,7 @@ const CATEGORY_THEMES: Record<string, {
     bg: 'bg-yellow-100/70 group-hover:bg-yellow-100',
     border: 'border-yellow-200/90',
     text: 'text-yellow-950',
-    shortName: 'Tea & Coffee',
+    shortName: 'Beverages',
   },
   'cat-cleaning': {
     bg: 'bg-cyan-100/70 group-hover:bg-cyan-100',
@@ -68,12 +66,14 @@ const CATEGORY_THEMES: Record<string, {
     bg: 'bg-purple-100/70 group-hover:bg-purple-100',
     border: 'border-purple-200/90',
     text: 'text-purple-950',
-    shortName: 'Personal',
+    shortName: 'Personal Care',
   },
 };
 
 export default function HomePage() {
-  const { products, categories, storeSettings } = useStore();
+  const { products, categories } = useStore();
+  const { applyCoupon, setIsCartDrawerOpen } = useCart();
+  const [couponClaimed, setCouponClaimed] = useState(false);
 
   const featuredStaples = products.filter((p) => p.categoryId === 'cat-groceries');
   const freshProduce = products.filter((p) => p.categoryId === 'cat-fruits-veg');
@@ -81,6 +81,13 @@ export default function HomePage() {
   const householdClean = products.filter(
     (p) => p.categoryId === 'cat-cleaning' || p.categoryId === 'cat-snacks'
   );
+
+  const handleClaimWelcomeCoupon = () => {
+    applyCoupon('WELCOME100');
+    setCouponClaimed(true);
+    setIsCartDrawerOpen(true);
+    setTimeout(() => setCouponClaimed(false), 3000);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-0">
@@ -95,7 +102,7 @@ export default function HomePage() {
             <div className="snap-center flex-shrink-0 w-[90vw] sm:w-[500px] lg:w-[calc(50%-8px)] rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white p-5 sm:p-6 flex items-center justify-between shadow-[0_4px_20px_rgba(5,150,105,0.2)] relative overflow-hidden">
               <div className="relative z-10 max-w-[62%] space-y-1.5">
                 <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full shadow-2xs">
-                  ⚡ 12 MINS DELIVERY
+                  ⚡ 12-15 MINS EXPRESS
                 </span>
                 <h2 className="text-base sm:text-xl font-black leading-tight text-white tracking-tight">
                   Staples & Atta at Wholesale Rates
@@ -122,7 +129,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Banner 2: First Order Promo */}
+            {/* Banner 2: First Order Promo with Working Coupon Claim */}
             <div className="snap-center flex-shrink-0 w-[90vw] sm:w-[500px] lg:w-[calc(50%-8px)] rounded-3xl bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800 text-white p-5 sm:p-6 flex items-center justify-between shadow-[0_4px_20px_rgba(109,40,217,0.2)] relative overflow-hidden">
               <div className="relative z-10 max-w-[62%] space-y-1.5">
                 <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-300 text-slate-950 px-2.5 py-0.5 rounded-full shadow-2xs">
@@ -132,22 +139,31 @@ export default function HomePage() {
                   Flat ₹100 OFF on First Order
                 </h2>
                 <p className="text-[11px] sm:text-xs text-purple-100 font-medium line-clamp-1">
-                  Valid on all orders above ₹499
+                  Valid on all orders above ₹499 • Gurugram Hub
                 </p>
                 <div className="pt-2">
-                  <Link
-                    href="/deals"
-                    className="inline-flex items-center gap-1.5 text-xs font-black bg-white hover:bg-purple-50 text-purple-950 px-3.5 py-1.5 rounded-xl shadow-xs transition-colors"
+                  <button
+                    type="button"
+                    onClick={handleClaimWelcomeCoupon}
+                    className="inline-flex items-center gap-1.5 text-xs font-black bg-white hover:bg-purple-50 text-purple-950 px-3.5 py-1.5 rounded-xl shadow-xs transition-colors cursor-pointer active:scale-95"
                   >
-                    Claim Discount <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                    {couponClaimed ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" /> Coupon Applied!
+                      </>
+                    ) : (
+                      <>
+                        Claim Discount <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
               <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-white/15 backdrop-blur-xs flex-shrink-0 p-1.5 shadow-inner border border-white/20">
                 <img
-                  src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=400&q=80"
-                  alt="Fresh Deals"
+                  src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80"
+                  alt="Grocery Cart Deals"
                   className="w-full h-full object-cover rounded-xl"
                 />
               </div>
@@ -211,7 +227,7 @@ export default function HomePage() {
                 <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
                   Atta, Rice, Dal & Cooking Oils
                 </h2>
-                <p className="text-[10px] text-slate-500">Essential grocery staples</p>
+                <p className="text-[10px] text-slate-500">Essential grocery staples • Unpolished & Pure</p>
               </div>
             </div>
             <Link
@@ -230,23 +246,26 @@ export default function HomePage() {
         </section>
 
         {/* ================= STORE GUARANTEE APP RIBBON ================= */}
-        <section className="bg-gradient-to-r from-emerald-900 to-teal-950 rounded-2xl p-3.5 text-white flex items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <ShieldCheck className="w-5 h-5 text-amber-400 flex-shrink-0" />
+        <section className="bg-gradient-to-r from-emerald-900 via-emerald-950 to-slate-950 rounded-2xl p-3.5 sm:p-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs border border-emerald-800/40">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center flex-shrink-0 border border-amber-400/30">
+              <ShieldCheck className="w-5 h-5 text-amber-400" />
+            </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold leading-tight truncate">
-                Physical Store Hub Advantage
+              <p className="text-xs sm:text-sm font-black leading-tight text-white flex items-center gap-2">
+                <span>Sector 14 Direct Fulfillment Hub</span>
+                <span className="text-[10px] bg-emerald-700/80 text-emerald-100 font-bold px-2 py-0.5 rounded-full">100% Owned Inventory</span>
               </p>
-              <p className="text-[10px] text-emerald-200">
-                100% owned inventory • ₹0 Delivery Fee • Sector 14 Hub
+              <p className="text-[11px] text-emerald-200/90 mt-0.5">
+                ⚡ 12–15 Min Express Delivery &nbsp;•&nbsp; 📅 2-Hour Scheduled Slots &nbsp;•&nbsp; ₹0 Delivery Fee
               </p>
             </div>
           </div>
           <Link
             href="/shop"
-            className="flex-shrink-0 px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-lg text-[10px] font-black uppercase tracking-wider"
+            className="self-start sm:self-center flex-shrink-0 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs"
           >
-            Order
+            Explore Catalog
           </Link>
         </section>
 
@@ -261,14 +280,14 @@ export default function HomePage() {
                 <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
                   Farm-Fresh Fruits & Vegetables
                 </h2>
-                <p className="text-[10px] text-slate-500">Graded & harvested at dawn</p>
+                <p className="text-[10px] text-slate-500">Graded & harvested at dawn • Crisp & Wax-Free</p>
               </div>
             </div>
             <Link
               href="/shop?category=fruits-vegetables"
               className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
             >
-              See all <ChevronRight className="w-3 h-3" />
+              See all ({freshProduce.length}) <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
 
@@ -290,7 +309,7 @@ export default function HomePage() {
                 <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
                   Amul Milk, Fresh Paneer & Dairy
                 </h2>
-                <p className="text-[10px] text-slate-500">Cold chain delivered daily</p>
+                <p className="text-[10px] text-slate-500">Cold chain delivered daily • Pure & chilled</p>
               </div>
             </div>
             <Link
