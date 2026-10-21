@@ -59,7 +59,8 @@ export function FloatingCart() {
   if (
     pathname.startsWith('/admin') ||
     pathname === '/checkout' ||
-    pathname === '/cart'
+    pathname === '/cart' ||
+    pathname.startsWith('/product/')
   ) {
     return null;
   }

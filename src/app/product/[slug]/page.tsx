@@ -20,11 +20,9 @@ import {
   ShieldCheck,
   Check,
 } from 'lucide-react';
-import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
-import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/lib/context/StoreContext';
 import { useCart } from '@/lib/context/CartContext';
 import { ProductVariant } from '@/types';
@@ -134,20 +132,19 @@ export default function ProductDetailPage({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F9FA] pb-28 md:pb-24 text-gray-900">
+    <div className="min-h-screen flex flex-col bg-[#F8F9FA] pb-24 text-gray-900">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(productStructuredData),
         }}
       />
-      <Navbar />
 
-      <main className="flex-1 max-w-3xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-6 space-y-3 sm:space-y-4">
-        {/* ================= 1. HERO IMAGE CONTAINER WITH FLOATING CONTROLS ================= */}
-        <div className="relative w-full aspect-square sm:aspect-[4/3] bg-white rounded-3xl overflow-hidden border border-gray-200/80 shadow-xs flex items-center justify-center">
+      <main className="flex-1 w-full max-w-3xl mx-auto">
+        {/* ================= 1. HERO IMAGE CONTAINER STARTING FLUSH FROM TOP ================= */}
+        <div className="relative w-full aspect-square sm:aspect-[4/3] bg-white overflow-hidden shadow-xs flex items-center justify-center rounded-b-3xl sm:rounded-3xl sm:mt-4 sm:border sm:border-gray-200/80">
           {/* Top Floating Action Bar */}
-          <div className="absolute top-3 inset-x-3 z-20 flex items-center justify-between pointer-events-auto">
+          <div className="absolute top-3 sm:top-4 inset-x-3 sm:inset-x-4 z-20 flex items-center justify-between pointer-events-auto">
             {/* Left: Back Button */}
             <button
               type="button"
@@ -234,210 +231,213 @@ export default function ProductDetailPage({
           </div>
         </div>
 
-        {/* ================= 2. KEY ATTRIBUTES ROW (SHELF LIFE / FLAVOUR / VIEW DETAILS) ================= */}
-        <div className="grid grid-cols-12 gap-2">
-          {/* Card 1: Shelf Life */}
-          <div className="col-span-5 bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-200/80 shadow-2xs">
-            <span className="text-[10px] sm:text-[11px] text-gray-500 font-medium block">
-              Shelf Life
-            </span>
-            <span className="text-xs sm:text-sm font-bold text-gray-900 block mt-0.5 truncate">
-              9 months
-            </span>
-          </div>
-
-          {/* Card 2: Flavour */}
-          <div className="col-span-4 bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-200/80 shadow-2xs">
-            <span className="text-[10px] sm:text-[11px] text-gray-500 font-medium block">
-              Flavour
-            </span>
-            <span className="text-xs sm:text-sm font-bold text-gray-900 block mt-0.5 truncate">
-              {product.categoryId === 'cat-snacks'
-                ? 'Chocolate'
-                : product.categoryId === 'cat-fruits-veg'
-                ? 'Farm Fresh'
-                : product.categoryId === 'cat-dairy'
-                ? 'Classic Pure'
-                : 'Premium'}
-            </span>
-          </div>
-
-          {/* Card 3: View details */}
-          <button
-            type="button"
-            onClick={() => {
-              document.getElementById('product-specs-section')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="col-span-3 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/70 rounded-2xl p-2 flex items-center justify-center text-center shadow-2xs transition-colors cursor-pointer group"
-          >
-            <span className="text-[11px] sm:text-xs font-bold text-[#0F5132] leading-tight group-hover:underline">
-              View details
-            </span>
-          </button>
-        </div>
-
-        {/* ================= 3. PRODUCT INFO CARD & VARIANT SELECTOR ================= */}
-        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-gray-200/80 shadow-xs space-y-3.5">
-          {/* Delivery Time & Star Rating Row */}
-          <div className="flex items-center gap-2 text-xs">
-            <div className="flex items-center gap-1 font-semibold text-gray-700">
-              <Clock className="w-3.5 h-3.5 text-gray-400 stroke-[2.2]" />
-              <span>17 mins</span>
-            </div>
-            <span className="text-gray-300">|</span>
-            <div className="flex items-center gap-1 text-amber-500 text-xs">
-              <span className="tracking-tighter">★★★★★</span>
-              <span className="text-gray-600 font-bold ml-0.5">
-                {product.reviewCount > 0 ? `${product.rating} (${product.reviewCount})` : '2.2 lac'}
+        {/* ================= LOWER CONTENT BODY ================= */}
+        <div className="px-3 sm:px-4 py-3 sm:py-4 space-y-3 sm:space-y-4">
+          {/* ================= 2. KEY ATTRIBUTES ROW (SHELF LIFE / FLAVOUR / VIEW DETAILS) ================= */}
+          <div className="grid grid-cols-12 gap-2">
+            {/* Card 1: Shelf Life */}
+            <div className="col-span-5 bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-200/80 shadow-2xs">
+              <span className="text-[10px] sm:text-[11px] text-gray-500 font-medium block">
+                Shelf Life
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-gray-900 block mt-0.5 truncate">
+                9 months
               </span>
             </div>
+
+            {/* Card 2: Flavour */}
+            <div className="col-span-4 bg-white rounded-2xl p-2.5 sm:p-3 border border-gray-200/80 shadow-2xs">
+              <span className="text-[10px] sm:text-[11px] text-gray-500 font-medium block">
+                Flavour
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-gray-900 block mt-0.5 truncate">
+                {product.categoryId === 'cat-snacks'
+                  ? 'Chocolate'
+                  : product.categoryId === 'cat-fruits-veg'
+                  ? 'Farm Fresh'
+                  : product.categoryId === 'cat-dairy'
+                  ? 'Classic Pure'
+                  : 'Premium'}
+              </span>
+            </div>
+
+            {/* Card 3: View details */}
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById('product-specs-section')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="col-span-3 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/70 rounded-2xl p-2 flex items-center justify-center text-center shadow-2xs transition-colors cursor-pointer group"
+            >
+              <span className="text-[11px] sm:text-xs font-bold text-[#0F5132] leading-tight group-hover:underline">
+                View details
+              </span>
+            </button>
           </div>
 
-          {/* Product Title */}
-          <h1 className="text-base sm:text-lg md:text-xl font-extrabold text-gray-900 leading-snug">
-            {product.name}
-          </h1>
+          {/* ================= 3. PRODUCT INFO CARD & VARIANT SELECTOR ================= */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-gray-200/80 shadow-xs space-y-3.5">
+            {/* Delivery Time & Star Rating Row */}
+            <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-1 font-semibold text-gray-700">
+                <Clock className="w-3.5 h-3.5 text-gray-400 stroke-[2.2]" />
+                <span>17 mins</span>
+              </div>
+              <span className="text-gray-300">|</span>
+              <div className="flex items-center gap-1 text-amber-500 text-xs">
+                <span className="tracking-tighter">★★★★★</span>
+                <span className="text-gray-600 font-bold ml-0.5">
+                  {product.reviewCount > 0 ? `${product.rating} (${product.reviewCount})` : '2.2 lac'}
+                </span>
+              </div>
+            </div>
 
-          {/* Variant Selector: "Select Unit" */}
-          <div className="pt-1">
-            <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-2.5">
-              Select Unit
-            </h2>
-            <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
-              {product.variants.map((v) => {
-                const isSelected = v.id === selectedVariant.id;
-                const vDiscount = calculateDiscountPercentage(v.mrp, v.price);
-                return (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedVariant(v);
-                      setMainImageError(false);
-                    }}
-                    className={`flex-1 min-w-[125px] sm:min-w-[145px] p-3 rounded-2xl text-left transition-all ${
-                      isSelected
-                        ? 'border-[1.5px] border-emerald-600 bg-emerald-50/50 shadow-xs'
-                        : 'border border-gray-200/90 bg-white hover:border-gray-300'
-                    }`}
-                  >
-                    <span className="block text-xs sm:text-sm font-bold text-gray-900">
-                      {v.title}
-                    </span>
-                    <div className="flex items-baseline gap-1 mt-1">
-                      <span className="text-sm sm:text-base font-extrabold text-gray-900">
-                        {formatPrice(v.price)}
+            {/* Product Title */}
+            <h1 className="text-base sm:text-lg md:text-xl font-extrabold text-gray-900 leading-snug">
+              {product.name}
+            </h1>
+
+            {/* Variant Selector: "Select Unit" */}
+            <div className="pt-1">
+              <h2 className="text-xs sm:text-sm font-bold text-gray-900 mb-2.5">
+                Select Unit
+              </h2>
+              <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+                {product.variants.map((v) => {
+                  const isSelected = v.id === selectedVariant.id;
+                  const vDiscount = calculateDiscountPercentage(v.mrp, v.price);
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedVariant(v);
+                        setMainImageError(false);
+                      }}
+                      className={`flex-1 min-w-[125px] sm:min-w-[145px] p-3 rounded-2xl text-left transition-all ${
+                        isSelected
+                          ? 'border-[1.5px] border-emerald-600 bg-emerald-50/50 shadow-xs'
+                          : 'border border-gray-200/90 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <span className="block text-xs sm:text-sm font-bold text-gray-900">
+                        {v.title}
                       </span>
-                      {v.mrp > v.price && (
-                        <span className="text-[11px] text-gray-400 line-through">
-                          MRP {formatPrice(v.mrp)}
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="text-sm sm:text-base font-extrabold text-gray-900">
+                          {formatPrice(v.price)}
+                        </span>
+                        {v.mrp > v.price && (
+                          <span className="text-[11px] text-gray-400 line-through">
+                            MRP {formatPrice(v.mrp)}
+                          </span>
+                        )}
+                      </div>
+                      {vDiscount > 0 ? (
+                        <span className="block text-[10px] sm:text-[11px] font-bold text-blue-600 mt-0.5">
+                          {vDiscount}% OFF on MRP
+                        </span>
+                      ) : (
+                        <span className="block text-[10px] text-gray-400 mt-0.5">
+                          Standard Pack
                         </span>
                       )}
-                    </div>
-                    {vDiscount > 0 ? (
-                      <span className="block text-[10px] sm:text-[11px] font-bold text-blue-600 mt-0.5">
-                        {vDiscount}% OFF on MRP
-                      </span>
-                    ) : (
-                      <span className="block text-[10px] text-gray-400 mt-0.5">
-                        Standard Pack
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* ================= 4. BRAND EXPLORE CARD ================= */}
-        <Link
-          href={`/shop?brand=${encodeURIComponent(product.brand)}`}
-          className="w-full bg-white hover:bg-gray-50/80 border border-gray-200/80 rounded-2xl p-3 flex items-center justify-between transition-all group shadow-2xs"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-200/70 overflow-hidden flex items-center justify-center flex-shrink-0 text-[#0F5132] font-black text-xs">
-              {product.brand.slice(0, 2).toUpperCase()}
+          {/* ================= 4. BRAND EXPLORE CARD ================= */}
+          <Link
+            href={`/shop?brand=${encodeURIComponent(product.brand)}`}
+            className="w-full bg-white hover:bg-gray-50/80 border border-gray-200/80 rounded-2xl p-3 flex items-center justify-between transition-all group shadow-2xs"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-200/70 overflow-hidden flex items-center justify-center flex-shrink-0 text-[#0F5132] font-black text-xs">
+                {product.brand.slice(0, 2).toUpperCase()}
+              </div>
+              <div>
+                <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
+                  {product.brand}
+                </p>
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  Explore all products
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
-                {product.brand}
-              </p>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                Explore all products
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
+            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
 
-        {/* ================= 5. REPLACEMENT GUARANTEE CARD ================= */}
-        <div className="w-full bg-white border border-gray-200/80 rounded-2xl p-3 flex items-center justify-between shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-700">
-              <RotateCcw className="w-5 h-5 text-gray-700" />
+          {/* ================= 5. REPLACEMENT GUARANTEE CARD ================= */}
+          <div className="w-full bg-white border border-gray-200/80 rounded-2xl p-3 flex items-center justify-between shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-700">
+                <RotateCcw className="w-5 h-5 text-gray-700" />
+              </div>
+              <div>
+                <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
+                  72 hours only replacement
+                </p>
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  Instant doorstep pickup & refund
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
-                72 hours only replacement
-              </p>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                Instant doorstep pickup & refund
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-        </div>
-
-        {/* ================= 6. SIMILAR PRODUCTS SHELF ================= */}
-        {similarProducts.length > 0 && (
-          <section className="pt-2">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3">
-              Similar products
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3.5">
-              {similarProducts.slice(0, 3).map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ================= 7. PRODUCT SPECIFICATIONS & DETAILS (ANCHORED) ================= */}
-        <section
-          id="product-specs-section"
-          className="bg-white rounded-3xl p-4 sm:p-6 border border-gray-200/80 shadow-xs space-y-4 pt-4"
-        >
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1.5">
-              Product Details
-            </h3>
-            <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-              {product.description}
-            </p>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
           </div>
 
-          {product.features && product.features.length > 0 && (
-            <div>
-              <h4 className="text-xs sm:text-sm font-bold text-gray-900 mb-2">
-                Key Highlights
-              </h4>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-700">
-                {product.features.map((feat, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                    <span>{feat}</span>
-                  </li>
+          {/* ================= 6. SIMILAR PRODUCTS SHELF ================= */}
+          {similarProducts.length > 0 && (
+            <section className="pt-2">
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3">
+                Similar products
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3.5">
+                {similarProducts.slice(0, 3).map((p) => (
+                  <ProductCard key={p.id} product={p} />
                 ))}
-              </ul>
-            </div>
+              </div>
+            </section>
           )}
 
-          <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-            <span>Fulfillment Hub: Sector 14, Gurugram</span>
-            <span>SKU: {selectedVariant.sku}</span>
-          </div>
-        </section>
+          {/* ================= 7. PRODUCT SPECIFICATIONS & DETAILS (ANCHORED) ================= */}
+          <section
+            id="product-specs-section"
+            className="bg-white rounded-3xl p-4 sm:p-6 border border-gray-200/80 shadow-xs space-y-4 pt-4"
+          >
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-1.5">
+                Product Details
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                {product.description}
+              </p>
+            </div>
+
+            {product.features && product.features.length > 0 && (
+              <div>
+                <h4 className="text-xs sm:text-sm font-bold text-gray-900 mb-2">
+                  Key Highlights
+                </h4>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-700">
+                  {product.features.map((feat, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+              <span>Fulfillment Hub: Sector 14, Gurugram</span>
+              <span>SKU: {selectedVariant.sku}</span>
+            </div>
+          </section>
+        </div>
       </main>
 
       {/* ================= 8. FIXED BOTTOM STICKY ACTION BAR ================= */}
@@ -507,7 +507,6 @@ export default function ProductDetailPage({
 
       <Footer />
       <CartDrawer />
-      <MobileBottomNav />
     </div>
   );
 }
