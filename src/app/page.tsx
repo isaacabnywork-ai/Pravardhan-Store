@@ -10,7 +10,6 @@ import {
   Cookie,
   ChevronRight,
   ShieldCheck,
-  Check,
   Percent,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
@@ -18,55 +17,56 @@ import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { HeroBannerCarousel } from '@/components/home/HeroBannerCarousel';
 import { useStore } from '@/lib/context/StoreContext';
 import { useCart } from '@/lib/context/CartContext';
 
 const CATEGORY_THEMES: Record<string, {
   bg: string;
-  border: string;
+  ring: string;
   text: string;
   shortName: string;
 }> = {
   'cat-groceries': {
-    bg: 'bg-amber-100/70 group-hover:bg-amber-100',
-    border: 'border-amber-200/90',
-    text: 'text-amber-950',
+    bg: 'bg-amber-50',
+    ring: 'border border-amber-200 ring-4 ring-amber-100/60',
+    text: 'text-gray-900 group-hover:text-[#0F5132]',
     shortName: 'Groceries & Staples',
   },
   'cat-fruits-veg': {
-    bg: 'bg-emerald-100/70 group-hover:bg-emerald-100',
-    border: 'border-emerald-200/90',
-    text: 'text-emerald-950',
+    bg: 'bg-emerald-50',
+    ring: 'border border-emerald-200 ring-4 ring-emerald-100/60',
+    text: 'text-gray-900 group-hover:text-[#0F5132]',
     shortName: 'Fruits & Veg',
   },
   'cat-dairy': {
-    bg: 'bg-sky-100/70 group-hover:bg-sky-100',
-    border: 'border-sky-200/90',
-    text: 'text-sky-950',
+    bg: 'bg-sky-50',
+    ring: 'border border-sky-200 ring-4 ring-sky-100/60',
+    text: 'text-gray-900 group-hover:text-[#0F5132]',
     shortName: 'Dairy & Breakfast',
   },
   'cat-snacks': {
-    bg: 'bg-orange-100/70 group-hover:bg-orange-100',
-    border: 'border-orange-200/90',
-    text: 'text-orange-950',
+    bg: 'bg-orange-50',
+    ring: 'border border-orange-200 ring-4 ring-orange-100/60',
+    text: 'text-gray-900 group-hover:text-[#0F5132]',
     shortName: 'Snacks & Munchies',
   },
   'cat-beverages': {
-    bg: 'bg-yellow-100/70 group-hover:bg-yellow-100',
-    border: 'border-yellow-200/90',
-    text: 'text-yellow-950',
+    bg: 'bg-yellow-50',
+    ring: 'border border-yellow-200 ring-4 ring-yellow-100/60',
+    text: 'text-gray-900 group-hover:text-[#0F5132]',
     shortName: 'Beverages',
   },
   'cat-cleaning': {
-    bg: 'bg-cyan-100/70 group-hover:bg-cyan-100',
-    border: 'border-cyan-200/90',
-    text: 'text-cyan-950',
+    bg: 'bg-teal-50',
+    ring: 'border border-teal-200 ring-4 ring-teal-100/60',
+    text: 'text-gray-900 group-hover:text-[#0F5132]',
     shortName: 'Cleaning',
   },
   'cat-personal-care': {
-    bg: 'bg-purple-100/70 group-hover:bg-purple-100',
-    border: 'border-purple-200/90',
-    text: 'text-purple-950',
+    bg: 'bg-purple-50',
+    ring: 'border border-purple-200 ring-4 ring-purple-100/60',
+    text: 'text-gray-900 group-hover:text-[#0F5132]',
     shortName: 'Personal Care',
   },
 };
@@ -100,107 +100,36 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col bg-[#F8F9FA] pb-20 md:pb-0">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-6 space-y-5 sm:space-y-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-6 space-y-6 sm:space-y-8">
 
-        {/* ================= COMPACT APP PROMO BANNERS (Horizontal Snap Scroll) ================= */}
-        <section className="relative">
-          <div className="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory py-1">
-            {/* Banner 1: Seasonal Staples */}
-            <div className="snap-center flex-shrink-0 w-[90vw] sm:w-[500px] lg:w-[calc(50%-8px)] min-h-[175px] rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white p-5 sm:p-6 flex items-center justify-between shadow-[0_4px_20px_rgba(5,150,105,0.2)] relative overflow-hidden">
-              <div className="relative z-10 max-w-[62%] space-y-1.5">
-                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full shadow-2xs">
-                  ⚡ 12-15 MINS EXPRESS
-                </span>
-                <h2 className="text-base sm:text-xl font-black leading-tight text-white tracking-tight">
-                  Staples & Atta at Wholesale Rates
-                </h2>
-                <p className="text-[11px] sm:text-xs text-emerald-100 font-medium line-clamp-1">
-                  Aashirvaad, Daawat & Tata Sampann up to 25% OFF
-                </p>
-                <div className="pt-2">
-                  <Link
-                    href="/shop?category=groceries-staples"
-                    className="inline-flex items-center gap-1.5 text-xs font-black bg-amber-400 hover:bg-amber-300 text-slate-950 px-3.5 py-1.5 rounded-xl shadow-xs transition-colors"
-                  >
-                    Shop Staples <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-white/15 backdrop-blur-xs flex-shrink-0 p-1.5 shadow-inner border border-white/20">
-                <img
-                  src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=400&q=80"
-                  alt="Daily Staples"
-                  className="w-full h-full object-cover rounded-xl"
-                />
-              </div>
-            </div>
-
-            {/* Banner 2: First Order Promo with Working Coupon Claim */}
-            <div className="snap-center flex-shrink-0 w-[90vw] sm:w-[500px] lg:w-[calc(50%-8px)] min-h-[175px] rounded-3xl bg-gradient-to-br from-violet-600 via-purple-700 to-indigo-800 text-white p-5 sm:p-6 flex items-center justify-between shadow-[0_4px_20px_rgba(109,40,217,0.2)] relative overflow-hidden">
-              <div className="relative z-10 max-w-[62%] space-y-1.5">
-                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-amber-300 text-slate-950 px-2.5 py-0.5 rounded-full shadow-2xs">
-                  🎟️ COUPON: WELCOME100
-                </span>
-                <h2 className="text-base sm:text-xl font-black leading-tight text-white tracking-tight">
-                  Flat ₹100 OFF on First Order
-                </h2>
-                <p className="text-[11px] sm:text-xs text-purple-100 font-medium line-clamp-1">
-                  Valid on all orders above ₹499 • Gurugram Hub
-                </p>
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={handleClaimWelcomeCoupon}
-                    className="inline-flex items-center gap-1.5 text-xs font-black bg-white hover:bg-purple-50 text-purple-950 px-3.5 py-1.5 rounded-xl shadow-xs transition-colors cursor-pointer active:scale-95"
-                  >
-                    {couponClaimed ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600" /> Coupon Applied!
-                      </>
-                    ) : (
-                      <>
-                        Claim Discount <ArrowRight className="w-3.5 h-3.5" />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-white/15 backdrop-blur-xs flex-shrink-0 p-1.5 shadow-inner border border-white/20">
-                <img
-                  src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80"
-                  alt="Grocery Cart Deals"
-                  className="w-full h-full object-cover rounded-xl"
-                />
-              </div>
-            </div>
-          </div>
+        {/* ================= HERO MULTI-SLIDE CAROUSEL ================= */}
+        <section>
+          <HeroBannerCarousel />
         </section>
 
-        {/* ================= APP CATEGORY ROUNDELS (Visual Circular Squircles) ================= */}
-        <section className="bg-white p-4 sm:p-6 rounded-3xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
+        {/* ================= APP CATEGORY ROUNDELS WITH PASTEL RINGS ================= */}
+        <section className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200/80 shadow-xs">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider">
+            <h2 className="text-xs sm:text-sm font-bold text-gray-900 uppercase tracking-wider">
               Explore Categories
             </h2>
             <Link
               href="/shop"
-              className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+              className="text-xs font-bold text-[#0F5132] hover:underline flex items-center gap-0.5"
             >
-              View All <ChevronRight className="w-3 h-3" />
+              View All <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2.5 sm:gap-3.5 text-center">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-3 sm:gap-4 text-center">
             {categories.map((cat) => {
               const theme = CATEGORY_THEMES[cat.id] || {
-                bg: 'bg-slate-100',
-                border: 'border-slate-200',
-                text: 'text-slate-900',
+                bg: 'bg-gray-50',
+                ring: 'border border-gray-200 ring-4 ring-gray-100',
+                text: 'text-gray-900 group-hover:text-[#0F5132]',
                 shortName: cat.name,
               };
               const count = products.filter((p) => p.categoryId === cat.id).length;
@@ -209,19 +138,19 @@ export default function HomePage() {
                 <Link
                   key={cat.id}
                   href={`/shop?category=${cat.slug}`}
-                  className="flex flex-col items-center group active:scale-95 transition-all p-1.5 rounded-2xl hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="flex flex-col items-center group active:scale-95 transition-all p-1 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F5132]"
                 >
-                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl ${theme.bg} border ${theme.border} p-1.5 flex flex-col items-center justify-center relative overflow-hidden mb-1.5 group-hover:shadow-md transition-all shadow-xs`}>
+                  <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ${theme.ring} ${theme.bg} p-2 flex items-center justify-center relative overflow-hidden mb-2 shadow-2xs group-hover:scale-105 group-hover:shadow-xs transition-all duration-200`}>
                     <img
                       src={cat.image}
                       alt={cat.name}
-                      className="w-full h-full object-cover rounded-xl sm:rounded-2xl group-hover:scale-108 transition-transform duration-300"
+                      className="w-full h-full object-cover rounded-xl"
                     />
                   </div>
-                  <span className={`text-[11px] sm:text-xs font-black line-clamp-1 leading-tight group-hover:text-emerald-700 ${theme.text}`}>
+                  <span className={`text-xs font-semibold line-clamp-1 leading-tight ${theme.text}`}>
                     {theme.shortName}
                   </span>
-                  <span className="text-[9px] text-slate-400 font-semibold mt-0.5">
+                  <span className="text-[10px] text-gray-400 font-medium mt-0.5">
                     {count} {count === 1 ? 'item' : 'items'}
                   </span>
                 </Link>
@@ -234,25 +163,25 @@ export default function HomePage() {
         {flashDeals.length > 0 && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <div className="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-black">
-                  <Percent className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-[#D97706] flex items-center justify-center font-black">
+                  <Percent className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight flex items-center gap-1.5">
-                    <span>⚡ Daily Flash Savings</span>
-                    <span className="text-[10px] bg-rose-600 text-white font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                  <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight flex items-center gap-2">
+                    <span>Daily Flash Savings</span>
+                    <span className="text-[10px] bg-[#D97706] text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                       Up to 21% OFF
                     </span>
                   </h2>
-                  <p className="text-[10px] text-slate-500">Handpicked price drops on essential grocery items</p>
+                  <p className="text-xs text-gray-500">Handpicked price drops on essential grocery items</p>
                 </div>
               </div>
               <Link
                 href="/deals"
-                className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+                className="text-xs font-bold text-[#0F5132] hover:underline flex items-center gap-0.5"
               >
-                All Offers <ChevronRight className="w-3 h-3" />
+                All Offers <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
@@ -267,22 +196,22 @@ export default function HomePage() {
         {/* ================= SECTION 1: DAILY PANTRY STAPLES ================= */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                <Wheat className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-[#0F5132]/10 text-[#0F5132] flex items-center justify-center">
+                <Wheat className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight">
                   Atta, Rice, Dal & Cooking Oils
                 </h2>
-                <p className="text-[10px] text-slate-500">Essential grocery staples • Unpolished & Pure</p>
+                <p className="text-xs text-gray-500">Essential grocery staples • Unpolished & Pure</p>
               </div>
             </div>
             <Link
               href="/shop?category=groceries-staples"
-              className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+              className="text-xs font-bold text-[#0F5132] hover:underline flex items-center gap-0.5"
             >
-              See all ({featuredStaples.length}) <ChevronRight className="w-3 h-3" />
+              See all ({featuredStaples.length}) <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
@@ -294,24 +223,24 @@ export default function HomePage() {
         </section>
 
         {/* ================= STORE GUARANTEE APP RIBBON ================= */}
-        <section className="bg-gradient-to-r from-emerald-900 via-emerald-950 to-slate-950 rounded-2xl p-3.5 sm:p-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs border border-emerald-800/40">
+        <section className="bg-gradient-to-r from-[#0F5132] via-[#0D442B] to-[#111827] rounded-2xl p-4 sm:p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs border border-[#0F5132]/40">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center flex-shrink-0 border border-amber-400/30">
               <ShieldCheck className="w-5 h-5 text-amber-400" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-black leading-tight text-white flex items-center gap-2">
+              <p className="text-xs sm:text-sm font-bold leading-tight text-white flex items-center gap-2">
                 <span>Sector 14 Direct Fulfillment Hub</span>
                 <span className="text-[10px] bg-emerald-700/80 text-emerald-100 font-bold px-2 py-0.5 rounded-full">100% Owned Inventory</span>
               </p>
-              <p className="text-[11px] text-emerald-200/90 mt-0.5">
+              <p className="text-xs text-gray-200/90 mt-0.5">
                 ⚡ 12–15 Min Express Delivery &nbsp;•&nbsp; 📅 2-Hour Scheduled Slots &nbsp;•&nbsp; ₹0 Delivery Fee
               </p>
             </div>
           </div>
           <Link
             href="/shop"
-            className="self-start sm:self-center flex-shrink-0 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs"
+            className="self-start sm:self-center flex-shrink-0 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-gray-950 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs"
           >
             Explore Catalog
           </Link>
@@ -320,22 +249,22 @@ export default function HomePage() {
         {/* ================= SECTION 2: FARM FRESH VEGGIES & FRUITS ================= */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                <Apple className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100/70 text-emerald-800 flex items-center justify-center">
+                <Apple className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight">
                   Farm-Fresh Fruits & Vegetables
                 </h2>
-                <p className="text-[10px] text-slate-500">Graded & harvested at dawn • Crisp & Wax-Free</p>
+                <p className="text-xs text-gray-500">Graded & harvested at dawn • Crisp & Wax-Free</p>
               </div>
             </div>
             <Link
               href="/shop?category=fruits-vegetables"
-              className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+              className="text-xs font-bold text-[#0F5132] hover:underline flex items-center gap-0.5"
             >
-              See all ({freshProduce.length}) <ChevronRight className="w-3 h-3" />
+              See all ({freshProduce.length}) <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
@@ -349,22 +278,22 @@ export default function HomePage() {
         {/* ================= SECTION 3: DAIRY & BREAKFAST ================= */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center">
-                <Milk className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-800 flex items-center justify-center">
+                <Milk className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight">
                   Amul Milk, Fresh Paneer & Dairy
                 </h2>
-                <p className="text-[10px] text-slate-500">Cold chain delivered daily • Pure & chilled</p>
+                <p className="text-xs text-gray-500">Cold chain delivered daily • Pure & chilled</p>
               </div>
             </div>
             <Link
               href="/shop?category=dairy-breakfast"
-              className="text-[11px] font-bold text-blue-700 hover:underline flex items-center gap-0.5"
+              className="text-xs font-bold text-[#0F5132] hover:underline flex items-center gap-0.5"
             >
-              See all ({dairyProducts.length}) <ChevronRight className="w-3 h-3" />
+              See all ({dairyProducts.length}) <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
@@ -375,25 +304,25 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ================= SECTION 4: SNACKS & CLEANING ================= */}
+        {/* ================= SECTION 4: SNACKS, BEVERAGES & CLEANING ================= */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center">
-                <Cookie className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center">
+                <Cookie className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight">
                   Snacks, Tea & Laundry Care
                 </h2>
-                <p className="text-[10px] text-slate-500">Haldiram&apos;s, Surf Excel & Tata Tea</p>
+                <p className="text-xs text-gray-500">Haldiram&apos;s, Surf Excel & Tata Tea</p>
               </div>
             </div>
             <Link
               href="/shop"
-              className="text-[11px] font-bold text-purple-700 hover:underline flex items-center gap-0.5"
+              className="text-xs font-bold text-[#0F5132] hover:underline flex items-center gap-0.5"
             >
-              See all ({householdClean.length}) <ChevronRight className="w-3 h-3" />
+              See all ({householdClean.length}) <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 

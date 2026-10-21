@@ -95,17 +95,17 @@ export function CartDrawer() {
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-8 sm:pl-10">
-        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col border-l border-slate-200">
+        <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col border-l border-gray-200">
           {/* Header */}
-          <div className="p-4 bg-emerald-950 text-white flex items-center justify-between border-b border-emerald-900">
+          <div className="p-4 bg-[#0F5132] text-white flex items-center justify-between border-b border-[#054A29]">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-800 flex items-center justify-center text-amber-400">
+              <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-amber-300">
                 <ShoppingBag className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-black text-sm sm:text-base text-white">My Cart</h3>
-                <p className="text-[11px] text-emerald-200 font-medium flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-amber-400" />
+                <h3 className="font-extrabold text-sm sm:text-base text-white">My Cart</h3>
+                <p className="text-[11px] text-emerald-100 font-medium flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-amber-300" />
                   <span>Delivery in 12-15 Mins • {storeSettings.serviceArea}</span>
                 </p>
               </div>
@@ -114,7 +114,7 @@ export function CartDrawer() {
               type="button"
               aria-label="Close shopping cart"
               onClick={() => setIsCartDrawerOpen(false)}
-              className="p-1.5 rounded-xl hover:bg-white/10 text-emerald-200 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+              className="p-1.5 rounded-xl hover:bg-white/10 text-emerald-100 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
             >
               <X className="w-5 h-5" />
             </button>
@@ -409,7 +409,7 @@ export function CartDrawer() {
                 aria-label={`Proceed to pay ${formatPrice(grandTotal)} for ${totalItemsCount} items`}
                 onClick={handleProceedToCheckout}
                 disabled={!isMinimumOrderMet}
-                className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl font-black text-sm shadow-lg shadow-emerald-700/25 flex items-center justify-between px-4 transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed group focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
+                className="w-full py-3.5 bg-[#0F5132] hover:bg-[#054A29] text-white rounded-2xl font-bold text-sm shadow-lg shadow-[#0F5132]/25 flex items-center justify-between px-4 transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed group focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none"
               >
                 <div className="text-left">
                   <span className="block text-[10px] text-emerald-200 font-medium">
