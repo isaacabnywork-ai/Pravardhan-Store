@@ -76,8 +76,52 @@ export default function ProductDetailPage({
     .filter((p) => p.categoryId === product.categoryId && p.id !== product.id)
     .slice(0, 4);
 
+  const productStructuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image: product.images,
+    description: product.description,
+    brand: {
+      '@type': 'Brand',
+      name: product.brand,
+    },
+    sku: selectedVariant.sku || product.id,
+    offers: {
+      '@type': 'Offer',
+      url: `https://pravdhanstore.in/product/${product.slug}`,
+      priceCurrency: 'INR',
+      price: selectedVariant.price,
+      priceValidUntil: '2026-12-31',
+      itemCondition: 'https://schema.org/NewCondition',
+      availability:
+        selectedVariant.stock > 0
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+      seller: {
+        '@type': 'Organization',
+        name: 'Pravdhan Store',
+      },
+    },
+    ...(product.reviewCount > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: product.rating,
+            reviewCount: product.reviewCount,
+          },
+        }
+      : {}),
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-100/60 pb-24 md:pb-0">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productStructuredData),
+        }}
+      />
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6 space-y-10">

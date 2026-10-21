@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   X,
@@ -49,6 +49,17 @@ export function CartDrawer() {
   const [couponInput, setCouponInput] = useState('');
   const [couponFeedback, setCouponFeedback] = useState<{ success: boolean; message: string } | null>(null);
 
+  useEffect(() => {
+    if (!isCartDrawerOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsCartDrawerOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCartDrawerOpen, setIsCartDrawerOpen]);
+
   if (!isCartDrawerOpen) return null;
 
   const handleApplyCoupon = (code: string) => {
@@ -71,7 +82,12 @@ export function CartDrawer() {
   const totalSavings = productSavings + couponDiscount;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden animate-in fade-in duration-200">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Shopping Cart Drawer"
+      className="fixed inset-0 z-50 overflow-hidden animate-in fade-in duration-200"
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
@@ -95,8 +111,10 @@ export function CartDrawer() {
               </div>
             </div>
             <button
+              type="button"
+              aria-label="Close shopping cart"
               onClick={() => setIsCartDrawerOpen(false)}
-              className="p-1.5 rounded-xl hover:bg-white/10 text-emerald-200 hover:text-white transition-colors"
+              className="p-1.5 rounded-xl hover:bg-white/10 text-emerald-200 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
             >
               <X className="w-5 h-5" />
             </button>
@@ -192,18 +210,22 @@ export function CartDrawer() {
                       {/* Quantity Stepper with zero layout shift */}
                       <div className="flex items-center border border-emerald-700 rounded-lg overflow-hidden bg-white shadow-2xs">
                         <button
+                          type="button"
+                          aria-label={`Decrease quantity of ${item.productName}`}
                           onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                          className="w-7 h-7 flex items-center justify-center text-emerald-800 hover:bg-emerald-50 active:bg-emerald-100"
+                          className="w-7 h-7 flex items-center justify-center text-emerald-800 hover:bg-emerald-50 active:bg-emerald-100 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                         >
                           {item.quantity === 1 ? <Trash2 className="w-3.5 h-3.5 text-rose-500" /> : <Minus className="w-3 h-3" />}
                         </button>
-                        <span className="w-7 text-center text-xs font-black text-emerald-950">
+                        <span className="w-7 text-center text-xs font-black text-emerald-950" aria-live="polite">
                           {item.quantity}
                         </span>
                         <button
+                          type="button"
+                          aria-label={`Increase quantity of ${item.productName}`}
                           onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
                           disabled={item.quantity >= item.maxStock}
-                          className="w-7 h-7 flex items-center justify-center text-emerald-800 hover:bg-emerald-50 active:bg-emerald-100 disabled:opacity-40"
+                          className="w-7 h-7 flex items-center justify-center text-emerald-800 hover:bg-emerald-50 active:bg-emerald-100 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -225,8 +247,10 @@ export function CartDrawer() {
                 </span>
                 {deliveryTip > 0 && (
                   <button
+                    type="button"
+                    aria-label="Clear delivery partner tip"
                     onClick={() => setDeliveryTip(0)}
-                    className="text-[11px] font-bold text-rose-600 hover:underline"
+                    className="text-[11px] font-bold text-rose-600 hover:underline focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none rounded"
                   >
                     Clear tip
                   </button>
@@ -242,8 +266,9 @@ export function CartDrawer() {
                     <button
                       key={tipAmount}
                       type="button"
+                      aria-label={`Add ₹${tipAmount} delivery tip`}
                       onClick={() => setDeliveryTip(isSelected ? 0 : tipAmount)}
-                      className={`flex-1 py-1.5 rounded-xl text-xs font-black border transition-all ${
+                      className={`flex-1 py-1.5 rounded-xl text-xs font-black border transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                         isSelected
                           ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-xs'
                           : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
@@ -276,8 +301,10 @@ export function CartDrawer() {
                       </div>
                     </div>
                     <button
+                      type="button"
+                      aria-label="Remove coupon"
                       onClick={removeCoupon}
-                      className="text-xs font-bold text-rose-600 hover:underline"
+                      className="text-xs font-bold text-rose-600 hover:underline focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none rounded"
                     >
                       Remove
                     </button>
@@ -289,16 +316,19 @@ export function CartDrawer() {
                         <Tag className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
                         <input
                           type="text"
+                          aria-label="Enter promotional coupon code"
                           placeholder="ENTER PROMO CODE"
                           value={couponInput}
                           onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                          className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 font-bold uppercase outline-none focus:border-emerald-600 bg-white"
+                          className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 font-bold uppercase outline-none focus:border-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500 bg-white"
                         />
                       </div>
                       <button
+                        type="button"
+                        aria-label="Apply promo code"
                         onClick={() => handleApplyCoupon(couponInput)}
                         disabled={!couponInput.trim()}
-                        className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold disabled:opacity-40 transition-colors"
+                        className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold disabled:opacity-40 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                       >
                         Apply
                       </button>
@@ -312,8 +342,10 @@ export function CartDrawer() {
                         .map((p) => (
                           <button
                             key={p.id}
+                            type="button"
+                            aria-label={`Apply coupon ${p.code}`}
                             onClick={() => handleApplyCoupon(p.code)}
-                            className="flex-shrink-0 text-[10px] font-bold bg-white border border-dashed border-emerald-600 text-emerald-800 px-2 py-1 rounded-lg hover:bg-emerald-50 transition-colors"
+                            className="flex-shrink-0 text-[10px] font-bold bg-white border border-dashed border-emerald-600 text-emerald-800 px-2 py-1 rounded-lg hover:bg-emerald-50 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
                           >
                             Use {p.code} ({p.discountType === 'FLAT' ? `₹${p.discountValue} OFF` : `${p.discountValue}% OFF`})
                           </button>
@@ -373,9 +405,11 @@ export function CartDrawer() {
 
               {/* Massive Thumb-Friendly Sticky CTA Button */}
               <button
+                type="button"
+                aria-label={`Proceed to pay ${formatPrice(grandTotal)} for ${totalItemsCount} items`}
                 onClick={handleProceedToCheckout}
                 disabled={!isMinimumOrderMet}
-                className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl font-black text-sm shadow-lg shadow-emerald-700/25 flex items-center justify-between px-4 transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl font-black text-sm shadow-lg shadow-emerald-700/25 flex items-center justify-between px-4 transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed group focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
               >
                 <div className="text-left">
                   <span className="block text-[10px] text-emerald-200 font-medium">

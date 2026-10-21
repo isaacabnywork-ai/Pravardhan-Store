@@ -37,8 +37,19 @@ export function MobileBottomNav() {
       {totalItemsCount > 0 && pathname !== '/cart' && pathname !== '/checkout' && (
         <div className="fixed bottom-16 inset-x-0 z-40 px-3 pb-1 md:hidden pointer-events-none animate-in slide-in-from-bottom-3 duration-200">
           <div
+            role="button"
+            tabIndex={0}
+            aria-label={`View cart with ${totalItemsCount} ${
+              totalItemsCount === 1 ? 'item' : 'items'
+            } totaling ${formatPrice(grandTotal)}`}
             onClick={() => setIsCartDrawerOpen(true)}
-            className="pointer-events-auto bg-gradient-to-r from-emerald-800 to-emerald-950 text-white p-3 rounded-2xl shadow-xl border border-emerald-700/60 flex items-center justify-between cursor-pointer active:scale-98 transition-transform"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIsCartDrawerOpen(true);
+              }
+            }}
+            className="pointer-events-auto bg-gradient-to-r from-emerald-800 to-emerald-950 text-white p-3 rounded-2xl shadow-xl border border-emerald-700/60 flex items-center justify-between cursor-pointer active:scale-98 transition-transform focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
           >
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black text-xs shadow-xs">
@@ -63,7 +74,10 @@ export function MobileBottomNav() {
       )}
 
       {/* Persistent Mobile Bottom Tab Bar */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1 md:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+      <nav
+        aria-label="Mobile Navigation"
+        className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1 md:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.06)]"
+      >
         <div className="flex items-center justify-around">
           {navItems.map((item) => {
             const isActive =
@@ -76,7 +90,9 @@ export function MobileBottomNav() {
               <Link
                 key={item.label}
                 href={item.href}
-                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all relative ${
+                aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex flex-col items-center justify-center min-h-[48px] min-w-[48px] py-1 px-2.5 rounded-xl transition-all relative focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none ${
                   isActive
                     ? 'text-emerald-700 font-bold'
                     : 'text-slate-500 hover:text-slate-900 font-medium'

@@ -198,6 +198,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          {role === 'CUSTOMER' && (
+            <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-start gap-3">
+                <ShieldAlert className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold">Customer Persona Active</p>
+                  <p className="text-[11px] text-amber-800">
+                    You are currently viewing as <strong>Customer</strong>. To manage catalog products, adjust live inventory, or fulfill orders, switch to a back-office staff persona.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsRoleModalOpen(true)}
+                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-xs whitespace-nowrap self-start sm:self-auto transition-colors"
+              >
+                Switch to Staff Role
+              </button>
+            </div>
+          )}
           {children}
         </main>
       </div>

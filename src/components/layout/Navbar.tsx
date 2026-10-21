@@ -200,11 +200,12 @@ export function Navbar() {
                 {searchQuery && (
                   <button
                     type="button"
+                    aria-label="Clear search input"
                     onClick={() => {
                       setSearchQuery('');
                       setSelectedIndex(-1);
                     }}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded-md"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -291,9 +292,11 @@ export function Navbar() {
 
               {/* User Account / Profile Button */}
               <button
+                type="button"
+                aria-label={user ? `Logged in as ${user.name}` : 'Login or Register'}
                 onClick={() => (user ? setIsUserMenuOpen(!isUserMenuOpen) : setIsAuthModalOpen(true))}
                 title={user ? `Logged in as ${user.name}` : 'Login / Register'}
-                className="h-9 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center gap-1.5 font-bold text-xs transition-colors"
+                className="h-9 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center gap-1.5 font-bold text-xs transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
               >
                 {user ? (
                   <>
@@ -314,8 +317,12 @@ export function Navbar() {
 
               {/* Cart Trigger Button */}
               <button
+                type="button"
+                aria-label={`Open shopping cart with ${totalItemsCount} ${
+                  totalItemsCount === 1 ? 'item' : 'items'
+                } totaling ${formatPrice(grandTotal)}`}
                 onClick={() => setIsCartDrawerOpen(true)}
-                className="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-3 sm:px-3.5 py-2 rounded-xl text-xs font-black shadow-md shadow-emerald-700/20 active:scale-95 transition-all"
+                className="flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-3 sm:px-3.5 py-2 rounded-xl text-xs font-black shadow-md shadow-emerald-700/20 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
               >
                 <div className="relative">
                   <ShoppingBag className="w-4 h-4" />
@@ -351,8 +358,9 @@ export function Navbar() {
               {searchQuery && (
                 <button
                   type="button"
+                  aria-label="Clear mobile search input"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-2 text-slate-400"
+                  className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none rounded-md"
                 >
                   <X className="w-4 h-4" />
                 </button>
