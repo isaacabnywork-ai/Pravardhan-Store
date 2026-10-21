@@ -27,14 +27,7 @@ import { Role } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { RoleSwitcherModal } from './RoleSwitcherModal';
 import { AuthModal } from '@/components/auth/AuthModal';
-
-const PLACEHOLDERS = [
-  'Search "milk, butter, curd..."',
-  'Search "chakki atta, rice..."',
-  'Search "fresh tomatoes, onion..."',
-  'Search "chips, biscuits, tea..."',
-  'Search "surf excel, cleaners..."',
-];
+import { SearchBar } from './SearchBar';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -43,80 +36,11 @@ export function Navbar() {
   const { totalItemsCount, grandTotal, setIsCartDrawerOpen } = useCart();
   const { storeSettings, products, categories } = useStore();
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [selectedZone, setSelectedZone] = useState('Sector 14 · Model Town');
-
-  // Animated rotating placeholder for quick-commerce search bar (pauses while typing/focused)
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [fadePlaceholder, setFadePlaceholder] = useState(true);
-
-  useEffect(() => {
-    if (isSearchFocused || searchQuery.trim().length > 0) return;
-    const interval = setInterval(() => {
-      setFadePlaceholder(false);
-      setTimeout(() => {
-        setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDERS.length);
-        setFadePlaceholder(true);
-      }, 200);
-    }, 3200);
-    return () => clearInterval(interval);
-  }, [isSearchFocused, searchQuery]);
-
-  // Search results
-  const searchResults = searchQuery.trim()
-    ? products
-        .filter(
-          (p) =>
-            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.variants.some((v) =>
-              v.title.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-        )
-        .slice(0, 6)
-    : [];
-
-  const handleSearchSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (selectedIndex >= 0 && searchResults[selectedIndex]) {
-      setIsSearchFocused(false);
-      setSearchQuery('');
-      router.push(`/product/${searchResults[selectedIndex].slug}`);
-      return;
-    }
-    if (searchQuery.trim()) {
-      setIsSearchFocused(false);
-      router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') {
-      setIsSearchFocused(false);
-      setSelectedIndex(-1);
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex((prev) =>
-        searchResults.length > 0 ? (prev + 1) % searchResults.length : -1
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((prev) =>
-        searchResults.length > 0
-          ? (prev - 1 + searchResults.length) % searchResults.length
-          : -1
-      );
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSearchSubmit();
-    }
-  };
 
   const roleLabels: Record<Role, string> = {
     CUSTOMER: 'Customer',
@@ -194,89 +118,9 @@ export function Navbar() {
               </div>
             </button>
 
-            {/* Desktop Center: Full Search Bar with rounded-full & animated placeholder */}
+            {/* Desktop Center: Full Search Bar */}
             <div className="hidden lg:block flex-1 max-w-xl lg:max-w-2xl mx-2 sm:mx-4 relative">
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setSelectedIndex(-1);
-                  }}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => setIsSearchFocused(true)}
-                  placeholder={placeholderIndex !== -1 ? PLACEHOLDERS[placeholderIndex] : 'Search for milk, atta, vegetables...'}
-                  className={`w-full pl-11 pr-10 py-2.5 rounded-full border text-xs font-medium bg-gray-50/80 focus:bg-white text-gray-900 border-gray-200 focus:border-[#0F5132] focus:ring-4 focus:ring-[#0F5132]/10 transition-all outline-none ${
-                    fadePlaceholder ? 'placeholder:opacity-100' : 'placeholder:opacity-0'
-                  } placeholder:transition-opacity placeholder:duration-200 placeholder:text-gray-400`}
-                />
-                <Search className="w-4 h-4 text-gray-400 absolute left-4 top-3" />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    aria-label="Clear search input"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedIndex(-1);
-                    }}
-                    className="absolute right-3.5 top-2.5 text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none rounded-full p-0.5"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </form>
-
-              {/* Autocomplete dropdown with keyboard nav support */}
-              {isSearchFocused && (
-                <>
-                  {searchResults.length > 0 ? (
-                    <div
-                      className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 overflow-hidden divide-y divide-gray-100"
-                      onMouseDown={(e) => e.preventDefault()}
-                    >
-                      <div className="p-2.5 bg-gray-50 text-[11px] font-bold text-gray-500 flex justify-between">
-                        <span>SUGGESTED PRODUCTS</span>
-                        <span className="text-[#0F5132] font-semibold">Use ↑↓ keys & Enter</span>
-                      </div>
-                      {searchResults.map((prod, idx) => (
-                        <Link
-                          key={prod.id}
-                          href={`/product/${prod.slug}`}
-                          onClick={() => {
-                            setIsSearchFocused(false);
-                            setSearchQuery('');
-                          }}
-                          className={`flex items-center gap-3 p-2.5 transition-colors ${
-                            idx === selectedIndex ? 'bg-emerald-50/60' : 'hover:bg-gray-50'
-                          }`}
-                        >
-                          <img
-                            src={prod.images[0]}
-                            alt=""
-                            className="w-10 h-10 object-contain rounded-lg border border-gray-100 bg-gray-50 p-0.5"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] text-gray-400 font-bold uppercase">{prod.brand}</p>
-                            <p className="text-xs font-semibold text-gray-900 truncate">{prod.name}</p>
-                            <p className="text-xs text-[#0F5132] font-bold">
-                              {formatPrice(prod.variants[0]?.price || 0)}
-                            </p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : searchQuery.trim().length > 0 ? (
-                    <div
-                      className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 z-50 p-4 text-center"
-                      onMouseDown={(e) => e.preventDefault()}
-                    >
-                      <p className="text-xs font-bold text-gray-800">No products found for &ldquo;{searchQuery}&rdquo;</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">Try searching &ldquo;milk&rdquo;, &ldquo;atta&rdquo;, or &ldquo;tomatoes&rdquo;</p>
-                    </div>
-                  ) : null}
-                </>
-              )}
+              <SearchBar />
             </div>
 
             {/* Desktop Right: Restored Staff, Account Profile & Cart Buttons! */}
@@ -357,31 +201,9 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Mobile & Tablet Full-Width Search Input (Visible on < lg screens) */}
-          <div className="mt-2 lg:hidden relative">
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                placeholder={placeholderIndex !== -1 ? PLACEHOLDERS[placeholderIndex] : 'Search...'}
-                className={`w-full pl-10 pr-9 py-2 rounded-full border text-xs font-medium bg-gray-50 text-gray-900 border-gray-200 focus:border-[#0F5132] focus:bg-white outline-none shadow-2xs ${
-                  fadePlaceholder ? 'placeholder:opacity-100' : 'placeholder:opacity-0'
-                } placeholder:transition-opacity placeholder:duration-200 placeholder:text-gray-400`}
-              />
-              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-2.5" />
-              {searchQuery && (
-                <button
-                  type="button"
-                  aria-label="Clear mobile search input"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-2 text-gray-400 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none rounded-full"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </form>
+          {/* Mobile & Tablet Full-Width Search Bar */}
+          <div className="mt-2.5 lg:hidden relative">
+            <SearchBar />
           </div>
         </div>
 
