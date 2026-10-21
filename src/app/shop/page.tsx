@@ -14,6 +14,7 @@ import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { ExploreCategoriesGrid } from '@/components/categories/ExploreCategoriesGrid';
 import { useStore } from '@/lib/context/StoreContext';
 
 function ShopContent() {
@@ -26,6 +27,9 @@ function ShopContent() {
 
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryParam || 'all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>(subcategoryParam || 'all');
+  const [viewMode, setViewMode] = useState<'categories' | 'products'>(
+    categoryParam || queryParam || subcategoryParam ? 'products' : 'categories'
+  );
   const [sortBy, setSortBy] = useState<string>('popular');
   const [inStockOnly, setInStockOnly] = useState<boolean>(false);
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
@@ -34,9 +38,14 @@ function ShopContent() {
 
   // Synchronize when URL param changes
   React.useEffect(() => {
-    if (categoryParam) setSelectedCategory(categoryParam);
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+      setViewMode('products');
+    } else if (queryParam) {
+      setViewMode('products');
+    }
     if (subcategoryParam) setSelectedSubcategory(subcategoryParam);
-  }, [categoryParam, subcategoryParam]);
+  }, [categoryParam, subcategoryParam, queryParam]);
 
   // Extract all available brands
   const allBrands = useMemo(() => {
@@ -123,65 +132,125 @@ function ShopContent() {
   const activeCategoryObj = categories.find((c) => c.slug === selectedCategory);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col bg-[#F8F9FA] pb-20 md:pb-0">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
-        {/* Breadcrumb & Title */}
-        <div className="mb-6">
-          <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
-            <Link href="/" className="hover:text-emerald-700">Home</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <Link href="/shop" className="hover:text-emerald-700">Shop Catalog</Link>
-            {activeCategoryObj && (
-              <>
-                <ChevronRight className="w-3.5 h-3.5" />
-                <span className="text-slate-800 font-semibold">{activeCategoryObj.name}</span>
-              </>
-            )}
-          </nav>
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                {queryParam
-                  ? `Search Results for "${queryParam}"`
-                  : activeCategoryObj
-                  ? activeCategoryObj.name
-                  : 'All Grocery & Household Essentials'}
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Showing {sortedProducts.length} items with multi-variant pricing
-              </p>
-            </div>
-
-            {/* Sort & Mobile Filter Toggle */}
-            <div className="flex items-center gap-2.5">
-              <button
-                onClick={() => setIsMobileFiltersOpen(true)}
-                className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 shadow-xs"
-              >
-                <SlidersHorizontal className="w-4 h-4 text-emerald-700" />
-                <span>Filters</span>
-              </button>
-
-              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-300 shadow-xs text-xs font-semibold">
-                <span className="text-slate-500 hidden sm:inline">Sort:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-transparent font-bold text-slate-800 outline-none cursor-pointer"
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        {viewMode === 'categories' && selectedCategory === 'all' && !queryParam ? (
+          /* ================= FULL CATEGORIES EXPLORATION DIRECTORY (MATCHING ATTACHED IMAGE) ================= */
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 shadow-2xs">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                  Explore Categories
+                </h1>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Browse snacks, drinks, beauty, household & fresh groceries with 12-min delivery
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('categories')}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-[#0F5132] text-white shadow-2xs cursor-pointer"
                 >
-                  <option value="popular">Popularity & Best Deals</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="rating">Customer Rating</option>
-                  <option value="discount">Biggest Savings (%)</option>
-                </select>
+                  Categories View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('products')}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
+                >
+                  All Products ({products.length})
+                </button>
               </div>
             </div>
+
+            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-3xl border border-gray-200/90 shadow-xs">
+              <ExploreCategoriesGrid />
+            </div>
           </div>
-        </div>
+        ) : (
+          /* ================= PRODUCT CATALOG VIEW WITH FILTERS ================= */
+          <>
+            {/* Breadcrumb & Title */}
+            <div className="mb-6">
+              <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
+                <Link href="/" className="hover:text-emerald-700">Home</Link>
+                <ChevronRight className="w-3.5 h-3.5" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory('all');
+                    setSelectedSubcategory('all');
+                    setViewMode('categories');
+                  }}
+                  className="hover:text-[#0F5132] font-semibold text-gray-700 underline cursor-pointer"
+                >
+                  All Categories
+                </button>
+                {activeCategoryObj && (
+                  <>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                    <span className="text-slate-800 font-semibold">{activeCategoryObj.name}</span>
+                  </>
+                )}
+              </nav>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    {queryParam
+                      ? `Search Results for "${queryParam}"`
+                      : activeCategoryObj
+                      ? activeCategoryObj.name
+                      : 'All Grocery & Household Essentials'}
+                  </h1>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Showing {sortedProducts.length} items with multi-variant pricing
+                  </p>
+                </div>
+
+                {/* Sort & Mobile Filter Toggle */}
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory('all');
+                      setSelectedSubcategory('all');
+                      setViewMode('categories');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <span>Categories View</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileFiltersOpen(true)}
+                    className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 shadow-xs"
+                  >
+                    <SlidersHorizontal className="w-4 h-4 text-emerald-700" />
+                    <span>Filters</span>
+                  </button>
+
+                  <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-300 shadow-xs text-xs font-semibold">
+                    <span className="text-slate-500 hidden sm:inline">Sort:</span>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="bg-transparent font-bold text-slate-800 outline-none cursor-pointer"
+                    >
+                      <option value="popular">Popularity & Best Deals</option>
+                      <option value="price-low">Price: Low to High</option>
+                      <option value="price-high">Price: High to Low</option>
+                      <option value="rating">Customer Rating</option>
+                      <option value="discount">Biggest Savings (%)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
 
         {/* Content Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
@@ -346,6 +415,8 @@ function ShopContent() {
             )}
           </div>
         </div>
+        </>
+      )}
       </main>
 
       {/* Mobile Filters Drawer */}

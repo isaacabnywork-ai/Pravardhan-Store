@@ -18,6 +18,7 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { HeroBannerCarousel } from '@/components/home/HeroBannerCarousel';
+import { ExploreCategoriesGrid } from '@/components/categories/ExploreCategoriesGrid';
 import { useStore } from '@/lib/context/StoreContext';
 import { useCart } from '@/lib/context/CartContext';
 
@@ -110,53 +111,27 @@ export default function HomePage() {
           <HeroBannerCarousel />
         </section>
 
-        {/* ================= APP CATEGORY ROUNDELS WITH PASTEL RINGS ================= */}
+        {/* ================= EXPLORE CATEGORIES SECTION (BLINKIT-STYLE 4-COL PASTEL TILES) ================= */}
         <section className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200/80 shadow-xs">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs sm:text-sm font-bold text-gray-900 uppercase tracking-wider">
-              Explore Categories
-            </h2>
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+            <div>
+              <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 tracking-tight">
+                Explore Categories
+              </h2>
+              <p className="text-[11px] sm:text-xs text-gray-500">
+                Shop by department with express 12-min delivery in Gurugram
+              </p>
+            </div>
             <Link
               href="/shop"
-              className="text-xs font-bold text-[#0F5132] hover:underline flex items-center gap-0.5"
+              className="text-xs font-bold text-[#0F5132] hover:text-[#054A29] flex items-center gap-0.5 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60 transition-colors"
             >
-              View All <ChevronRight className="w-3.5 h-3.5" />
+              <span>View All</span>
+              <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-7 gap-3 sm:gap-4 text-center">
-            {categories.map((cat) => {
-              const theme = CATEGORY_THEMES[cat.id] || {
-                bg: 'bg-gray-50',
-                ring: 'border border-gray-200 ring-4 ring-gray-100',
-                text: 'text-gray-900 group-hover:text-[#0F5132]',
-                shortName: cat.name,
-              };
-              const count = products.filter((p) => p.categoryId === cat.id).length;
-
-              return (
-                <Link
-                  key={cat.id}
-                  href={`/shop?category=${cat.slug}`}
-                  className="flex flex-col items-center group active:scale-95 transition-all p-1 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F5132]"
-                >
-                  <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl ${theme.ring} ${theme.bg} p-2 flex items-center justify-center relative overflow-hidden mb-2 shadow-2xs group-hover:scale-105 group-hover:shadow-xs transition-all duration-200`}>
-                    <img
-                      src={cat.image}
-                      alt={cat.name}
-                      className="w-full h-full object-cover rounded-xl"
-                    />
-                  </div>
-                  <span className={`text-xs font-semibold line-clamp-1 leading-tight ${theme.text}`}>
-                    {theme.shortName}
-                  </span>
-                  <span className="text-[10px] text-gray-400 font-medium mt-0.5">
-                    {count} {count === 1 ? 'item' : 'items'}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
+          <ExploreCategoriesGrid maxSections={3} />
         </section>
 
         {/* ================= SECTION 0: FLASH SAVINGS & PRICE DROPS ================= */}
