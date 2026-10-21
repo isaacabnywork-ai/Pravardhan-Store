@@ -51,7 +51,7 @@ export function ExploreCategoriesGrid({
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-full h-full object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-300"
+                    className="w-full h-full object-cover rounded-xl sm:rounded-2xl shadow-2xs group-hover:scale-108 transition-transform duration-300"
                     loading="lazy"
                   />
                 </div>

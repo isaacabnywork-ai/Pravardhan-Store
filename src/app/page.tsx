@@ -114,17 +114,12 @@ export default function HomePage() {
         {/* ================= EXPLORE CATEGORIES SECTION (BLINKIT-STYLE 4-COL PASTEL TILES) ================= */}
         <section className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200/80 shadow-xs">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-            <div>
-              <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 tracking-tight">
-                Explore Categories
-              </h2>
-              <p className="text-[11px] sm:text-xs text-gray-500">
-                Shop by department with express 12-min delivery in Gurugram
-              </p>
-            </div>
+            <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 tracking-tight">
+              Explore Categories
+            </h2>
             <Link
               href="/shop"
-              className="text-xs font-bold text-[#0F5132] hover:text-[#054A29] flex items-center gap-0.5 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60 transition-colors"
+              className="text-xs font-bold text-[#0F5132] hover:text-[#054A29] inline-flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200/60 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <span>View All</span>
               <ChevronRight className="w-3.5 h-3.5" />
