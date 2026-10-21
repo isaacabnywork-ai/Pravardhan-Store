@@ -12,8 +12,6 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowRight,
-  ShieldCheck,
-  Percent,
   ChevronRight,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
@@ -38,13 +36,12 @@ export default function CartPage() {
     isMinimumOrderMet,
     amountNeededForMinOrder,
     updateQuantity,
-    removeFromCart,
     clearCart,
     applyCoupon,
     removeCoupon,
   } = useCart();
 
-  const { storeSettings, promotions } = useStore();
+  const { storeSettings } = useStore();
   const [couponInput, setCouponInput] = useState('');
   const [couponMessage, setCouponMessage] = useState<{ success: boolean; text: string } | null>(null);
 

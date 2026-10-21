@@ -13,11 +13,8 @@ import {
   Settings,
   ArrowLeft,
   ShieldAlert,
-  User as UserIcon,
-  ChevronRight,
   Menu,
   X,
-  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useStore } from '@/lib/context/StoreContext';
@@ -25,7 +22,7 @@ import { RoleSwitcherModal } from '@/components/layout/RoleSwitcherModal';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const { storeSettings, orders, products } = useStore();
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);

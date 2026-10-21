@@ -3,11 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import {
-  PackageCheck,
   ChevronRight,
-  Clock,
   ArrowRight,
-  ShieldCheck,
   ShoppingBag,
   Truck,
 } from 'lucide-react';

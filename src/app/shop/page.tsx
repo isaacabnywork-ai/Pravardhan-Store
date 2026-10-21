@@ -8,9 +8,6 @@ import {
   SlidersHorizontal,
   ChevronRight,
   X,
-  Check,
-  Search,
-  Sparkles,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -18,7 +15,6 @@ import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/lib/context/StoreContext';
-import { formatPrice } from '@/lib/utils';
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -33,7 +29,7 @@ function ShopContent() {
   const [sortBy, setSortBy] = useState<string>('popular');
   const [inStockOnly, setInStockOnly] = useState<boolean>(false);
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
-  const [priceMax, setPriceMax] = useState<number>(1000);
+  const [priceMax] = useState<number>(1000);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState<boolean>(false);
 
   // Synchronize when URL param changes

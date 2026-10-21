@@ -3,14 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import {
-  User,
   MapPin,
   Phone,
   Mail,
   Plus,
   Trash2,
-  CheckCircle2,
-  ShieldCheck,
   PackageCheck,
   ChevronRight,
   LogOut,
@@ -21,12 +18,9 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth } from '@/lib/context/AuthContext';
-import { useStore } from '@/lib/context/StoreContext';
-import { Address } from '@/types';
 
 export default function AccountPage() {
   const { user, role, logout, addAddress, deleteAddress, setDefaultAddress } = useAuth();
-  const { storeSettings } = useStore();
 
   const [isAdding, setIsAdding] = useState(false);
   const [newAddr, setNewAddr] = useState({

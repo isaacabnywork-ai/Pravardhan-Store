@@ -118,10 +118,8 @@ export default function OrderTrackingPage({
             {statusSequence.map((step, idx) => {
               const isPast = idx < currentStatusIndex;
               const isCurrent = idx === currentStatusIndex;
-              const isFuture = idx > currentStatusIndex;
 
               const historyItem = order.statusHistory.find((h) => h.status === step.status);
-              const Icon = step.icon;
 
               return (
                 <div key={step.status} className="relative flex items-start gap-4">

@@ -11,6 +11,7 @@ import {
   ChevronRight,
   ShieldCheck,
   Check,
+  Percent,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -75,11 +76,20 @@ export default function HomePage() {
   const { applyCoupon, setIsCartDrawerOpen } = useCart();
   const [couponClaimed, setCouponClaimed] = useState(false);
 
+  const flashDeals = products
+    .filter((p) =>
+      p.variants.some((v) => v.mrp > v.price && ((v.mrp - v.price) / v.mrp) >= 0.14)
+    )
+    .slice(0, 5);
+
   const featuredStaples = products.filter((p) => p.categoryId === 'cat-groceries');
   const freshProduce = products.filter((p) => p.categoryId === 'cat-fruits-veg');
   const dairyProducts = products.filter((p) => p.categoryId === 'cat-dairy');
   const householdClean = products.filter(
-    (p) => p.categoryId === 'cat-cleaning' || p.categoryId === 'cat-snacks'
+    (p) =>
+      p.categoryId === 'cat-cleaning' ||
+      p.categoryId === 'cat-snacks' ||
+      p.categoryId === 'cat-beverages'
   );
 
   const handleClaimWelcomeCoupon = () => {
@@ -220,6 +230,40 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ================= SECTION 0: FLASH SAVINGS & PRICE DROPS ================= */}
+        {flashDeals.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center font-black">
+                  <Percent className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-black text-slate-900 leading-tight flex items-center gap-1.5">
+                    <span>⚡ Daily Flash Savings</span>
+                    <span className="text-[10px] bg-rose-600 text-white font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                      Up to 21% OFF
+                    </span>
+                  </h2>
+                  <p className="text-[10px] text-slate-500">Handpicked price drops on essential grocery items</p>
+                </div>
+              </div>
+              <Link
+                href="/deals"
+                className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5"
+              >
+                All Offers <ChevronRight className="w-3 h-3" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3.5">
+              {flashDeals.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ================= SECTION 1: DAILY PANTRY STAPLES ================= */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -242,7 +286,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3.5">
             {featuredStaples.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -295,7 +339,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3.5">
             {freshProduce.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -324,7 +368,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3.5">
             {dairyProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
@@ -353,7 +397,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-3.5">
             {householdClean.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
