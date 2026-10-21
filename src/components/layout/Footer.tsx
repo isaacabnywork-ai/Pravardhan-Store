@@ -26,7 +26,7 @@ export function Footer() {
   const [activePolicy, setActivePolicy] = useState<PolicyType>(null);
 
   return (
-    <footer className="bg-slate-900 text-slate-300 text-xs border-t border-slate-800 mt-16">
+    <footer className="hidden lg:block bg-slate-900 text-slate-300 text-xs border-t border-slate-800 mt-16">
       {/* Trust Badges Strip */}
       <div className="border-b border-slate-800 bg-slate-950/60 py-6 px-4">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
