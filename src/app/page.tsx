@@ -86,6 +86,7 @@ export default function HomePage() {
   const featuredStaples = products.filter((p) => p.categoryId === 'cat-groceries');
   const freshProduce = products.filter((p) => p.categoryId === 'cat-fruits-veg');
   const dairyProducts = products.filter((p) => p.categoryId === 'cat-dairy');
+  const biscuitIndulgence = products.filter((p) => p.subcategoryId === 'sub-biscuits');
   const householdClean = products.filter(
     (p) =>
       p.categoryId === 'cat-cleaning' ||
@@ -160,6 +161,57 @@ export default function HomePage() {
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
+          </section>
+        )}
+
+        {/* ================= SECTION: CREAM-BASED INDULGENCE (QUICK-COMMERCE BISCUIT INDULGENCE) ================= */}
+        {biscuitIndulgence.length > 0 && (
+          <section className="space-y-3 bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/80 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base sm:text-lg font-extrabold text-gray-900 leading-tight">
+                  Cream-based indulgence
+                </h2>
+                <p className="text-xs text-gray-500 font-medium mt-0.5">
+                  Because you bought biscuit
+                </p>
+              </div>
+              <Link
+                href="/shop?category=snacks-munchies&subcategory=biscuits-rusks"
+                className="text-xs font-bold text-[#0F5132] hover:underline flex items-center gap-0.5"
+              >
+                See all ({biscuitIndulgence.length}) <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2.5 sm:gap-3.5">
+              {biscuitIndulgence.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            {/* See all products footer banner with overlapping avatar pills */}
+            <Link
+              href="/shop?category=snacks-munchies&subcategory=biscuits-rusks"
+              className="w-full bg-[#F8F9FA] hover:bg-emerald-50/50 border border-gray-200/90 hover:border-emerald-200/80 rounded-2xl p-2.5 sm:p-3 flex items-center justify-between transition-all group shadow-2xs mt-2"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex -space-x-2 overflow-hidden">
+                  {biscuitIndulgence.slice(0, 3).map((item, idx) => (
+                    <img
+                      key={idx}
+                      src={item.variants[0]?.image || item.images[0]}
+                      alt=""
+                      className="inline-block h-7 w-7 rounded-full ring-2 ring-white object-cover shadow-2xs"
+                    />
+                  ))}
+                </div>
+                <span className="text-xs sm:text-sm font-bold text-gray-900 group-hover:text-[#0F5132] transition-colors">
+                  See all products
+                </span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#0F5132] group-hover:translate-x-1 transition-transform" />
+            </Link>
           </section>
         )}
 
