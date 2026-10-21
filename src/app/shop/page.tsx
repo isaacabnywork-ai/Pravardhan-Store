@@ -138,37 +138,8 @@ function ShopContent() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {viewMode === 'categories' && selectedCategory === 'all' && !queryParam ? (
           /* ================= FULL CATEGORIES EXPLORATION DIRECTORY (MATCHING ATTACHED IMAGE) ================= */
-          <div className="space-y-4 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 shadow-2xs">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-                  Explore Categories
-                </h1>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Browse snacks, drinks, beauty, household & fresh groceries with 12-min delivery
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('categories')}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-[#0F5132] text-white shadow-2xs cursor-pointer"
-                >
-                  Categories View
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('products')}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors cursor-pointer"
-                >
-                  All Products ({products.length})
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-3xl border border-gray-200/90 shadow-xs">
-              <ExploreCategoriesGrid />
-            </div>
+          <div className="bg-white p-4 sm:p-6 md:p-8 rounded-3xl border border-gray-200/90 shadow-xs">
+            <ExploreCategoriesGrid />
           </div>
         ) : (
           /* ================= PRODUCT CATALOG VIEW WITH FILTERS ================= */
