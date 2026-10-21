@@ -65,9 +65,6 @@ export default function DealsPage() {
               <h2 className="text-lg font-extrabold text-slate-900">
                 Trending Festival Deals & Mega Discounts
               </h2>
-              <p className="text-xs text-slate-500">
-                Switch categories to explore curated gift packs, artisanal treats, and home decor
-              </p>
             </div>
           </div>
           <OfferDealsShowcase />

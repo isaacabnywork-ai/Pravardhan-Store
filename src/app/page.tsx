@@ -146,7 +146,6 @@ export default function HomePage() {
                       Up to 21% OFF
                     </span>
                   </h2>
-                  <p className="text-xs text-gray-500">Handpicked price drops on essential grocery items</p>
                 </div>
               </div>
               <Link
@@ -172,9 +171,6 @@ export default function HomePage() {
               <h2 className="text-base sm:text-lg font-extrabold text-gray-900 leading-tight">
                 Festive Gifting & Super Savings
               </h2>
-              <p className="text-xs text-gray-500 font-medium">
-                Switch categories to explore up to 75% OFF dry fruits, artisanal boxes & decor
-              </p>
             </div>
             <Link
               href="/deals"
@@ -194,9 +190,6 @@ export default function HomePage() {
                 <h2 className="text-base sm:text-lg font-extrabold text-gray-900 leading-tight">
                   Cream-based indulgence
                 </h2>
-                <p className="text-xs text-gray-500 font-medium mt-0.5">
-                  Because you bought biscuit
-                </p>
               </div>
               <Link
                 href="/shop?category=snacks-munchies&subcategory=biscuits-rusks"
@@ -248,7 +241,6 @@ export default function HomePage() {
                 <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight">
                   Atta, Rice, Dal & Cooking Oils
                 </h2>
-                <p className="text-xs text-gray-500">Essential grocery staples • Unpolished & Pure</p>
               </div>
             </div>
             <Link
@@ -301,7 +293,6 @@ export default function HomePage() {
                 <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight">
                   Farm-Fresh Fruits & Vegetables
                 </h2>
-                <p className="text-xs text-gray-500">Graded & harvested at dawn • Crisp & Wax-Free</p>
               </div>
             </div>
             <Link
@@ -330,7 +321,6 @@ export default function HomePage() {
                 <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight">
                   Amul Milk, Fresh Paneer & Dairy
                 </h2>
-                <p className="text-xs text-gray-500">Cold chain delivered daily • Pure & chilled</p>
               </div>
             </div>
             <Link
@@ -359,7 +349,6 @@ export default function HomePage() {
                 <h2 className="text-sm sm:text-base font-bold text-gray-900 leading-tight">
                   Snacks, Tea & Laundry Care
                 </h2>
-                <p className="text-xs text-gray-500">Haldiram&apos;s, Surf Excel & Tata Tea</p>
               </div>
             </div>
             <Link
