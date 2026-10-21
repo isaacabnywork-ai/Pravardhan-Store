@@ -149,7 +149,7 @@ export function Navbar() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [selectedZone, setSelectedZone] = useState('Sector 14 · Model Town');
+  const [selectedZone, setSelectedZone] = useState('Sector 14, Model Town, Gurugram');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [locationSearchQuery, setLocationSearchQuery] = useState('');
   const [showShareAddressBanner, setShowShareAddressBanner] = useState(true);
@@ -244,7 +244,7 @@ export function Navbar() {
                 className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-left min-w-0 shadow-2xs group cursor-pointer"
                 title={`Delivery to ${selectedZone}`}
               >
-                <span className="text-xs font-bold text-gray-900 truncate block max-w-[170px]">
+                <span className="text-xs font-bold text-gray-900 truncate block max-w-[260px]">
                   {selectedZone}
                 </span>
                 <ChevronDown className="w-3.5 h-3.5 text-gray-500 flex-shrink-0 group-hover:translate-y-0.5 transition-transform" />
@@ -255,10 +255,10 @@ export function Navbar() {
             <button
               type="button"
               onClick={() => setIsLocationModalOpen(true)}
-              className="lg:hidden ml-auto flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-left min-w-0 shadow-2xs group flex-shrink-0 cursor-pointer"
+              className="lg:hidden ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-left min-w-0 shadow-2xs group flex-shrink-0 cursor-pointer"
               title={`Delivery to ${selectedZone}`}
             >
-              <span className="text-xs font-bold text-gray-900 truncate block max-w-[140px] sm:max-w-[220px]">
+              <span className="text-xs font-bold text-gray-900 truncate block max-w-[210px] sm:max-w-[280px]">
                 {selectedZone}
               </span>
               <ChevronDown className="w-3.5 h-3.5 text-gray-500 flex-shrink-0 group-hover:translate-y-0.5 transition-transform" />
@@ -459,7 +459,7 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedZone('Sector 11, Vrindavan Colony');
+                  setSelectedZone('Sector 11, Vrindavan Colony, Lucknow');
                   setIsLocationModalOpen(false);
                 }}
                 className="w-full p-3 sm:p-3.5 flex items-center justify-between gap-3 hover:bg-gray-50/80 transition-colors text-left group"
@@ -604,7 +604,9 @@ export function Navbar() {
                   <React.Fragment key={addr.id}>
                     <div
                       onClick={() => {
-                        setSelectedZone(addr.address.split(',')[0] || addr.title);
+                        const parts = addr.address.split(',').map((s) => s.trim());
+                        const formatted = parts.length > 2 ? `${parts[0]}, ${parts[1]}, ${parts[2]}` : addr.address;
+                        setSelectedZone(formatted);
                         setIsLocationModalOpen(false);
                       }}
                       className="bg-white rounded-2xl border border-gray-200/90 p-3.5 space-y-2 shadow-2xs hover:border-[#0F5132] transition-colors cursor-pointer group"

@@ -61,7 +61,7 @@ function ShopContent() {
   const [isCategorySwitcherOpen, setIsCategorySwitcherOpen] = useState<boolean>(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [selectedZone, setSelectedZone] = useState<string>(
-    storeSettings.serviceArea || 'Sector 14 · Model Town'
+    storeSettings.serviceArea || 'Sector 14, Model Town, Gurugram'
   );
 
   // Wishlist toggle state (stored in local set for interactive feedback)

@@ -12,7 +12,7 @@ import {
 export const INITIAL_STORE_SETTINGS: StoreSettings = {
   storeName: 'Pravdhan Store',
   tagline: 'Your Trusted Neighborhood Grocery & Essentials',
-  serviceArea: 'Sector 14 · Model Town',
+  serviceArea: 'Sector 14, Model Town, Gurugram',
   city: 'Gurugram',
   minimumOrderValue: 100, // ₹100 as per spec Section 8
   defaultDeliveryCharge: 0, // ₹0 as per spec Section 7
