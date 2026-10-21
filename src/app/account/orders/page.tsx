@@ -445,34 +445,29 @@ export default function MyOrdersPage() {
                     </div>
                   </div>
 
-                  {/* Card Middle: Clickable Product Images */}
-                  <div className="px-4 py-2.5">
-                    <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1">
+                  {/* Card Middle: Clickable Product Thumbnails */}
+                  <div className="px-4 py-3">
+                    <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-0.5">
                       {ord.items.map((item, idx) => (
                         <button
                           key={`${item.productId}-${idx}`}
                           type="button"
                           onClick={() => handleProductClick(item)}
-                          className="group relative w-18 h-18 sm:w-20 sm:h-20 bg-gray-50/90 hover:bg-emerald-50/20 rounded-2xl border border-gray-150 hover:border-emerald-600 transition-all p-1.5 flex items-center justify-center shrink-0 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                          className="group relative w-16 h-16 sm:w-20 sm:h-20 bg-[#F6F7F9] hover:bg-emerald-50/30 rounded-2xl border border-gray-150 hover:border-emerald-600 transition-all p-2 flex items-center justify-center shrink-0 cursor-pointer shadow-2xs overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                           title={`Click to view details: ${item.productName}`}
                         >
                           <img
                             src={item.image}
                             alt={item.productName}
-                            className="max-h-full max-w-full object-contain rounded-lg group-hover:scale-105 transition-transform"
+                            className="w-full h-full object-contain rounded-lg group-hover:scale-105 transition-transform"
                           />
                           {item.quantity > 1 && (
-                            <span className="absolute top-1 right-1 bg-white/90 backdrop-blur-xs text-gray-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-gray-200 shadow-2xs">
+                            <span className="absolute top-1 right-1 bg-white/95 text-gray-800 text-[10px] font-bold px-1.5 py-0.2 rounded-full border border-gray-200 shadow-2xs">
                               ×{item.quantity}
                             </span>
                           )}
                         </button>
                       ))}
-
-                      {/* Optional subtle prompt */}
-                      <span className="text-[10px] text-gray-400 font-medium pl-1 select-none">
-                        Tap product for details
-                      </span>
                     </div>
                   </div>
 
