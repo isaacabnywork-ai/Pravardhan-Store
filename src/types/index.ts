@@ -35,6 +35,7 @@ export interface Subcategory {
   categoryId: string;
   name: string;
   slug: string;
+  image?: string;
 }
 
 export interface Category {

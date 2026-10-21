@@ -63,7 +63,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const p = localStorage.getItem(PRODUCTS_KEY);
-      if (p) setProducts(JSON.parse(p));
+      if (p) {
+        const loaded: Product[] = JSON.parse(p);
+        const existingIds = new Set(loaded.map((item) => item.id));
+        const merged = [...loaded, ...INITIAL_PRODUCTS.filter((item) => !existingIds.has(item.id))];
+        setProducts(merged);
+      }
 
       const o = localStorage.getItem(ORDERS_KEY);
       if (o) {
