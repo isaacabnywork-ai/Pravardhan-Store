@@ -10,6 +10,7 @@ import {
   Clock,
   User as UserIcon,
   ChevronDown,
+  ChevronRight,
   ShieldAlert,
   Percent,
   X,
@@ -27,6 +28,12 @@ import {
   Coffee,
   Sparkles,
   Smile,
+  Plus,
+  Crosshair,
+  Home,
+  Share2,
+  MoreHorizontal,
+  Phone,
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useCart } from '@/lib/context/CartContext';
@@ -144,6 +151,39 @@ export function Navbar() {
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [selectedZone, setSelectedZone] = useState('Sector 14 · Model Town');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [locationSearchQuery, setLocationSearchQuery] = useState('');
+  const [showShareAddressBanner, setShowShareAddressBanner] = useState(true);
+  const [locationToast, setLocationToast] = useState<string | null>(null);
+  const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
+  const [newAddressInput, setNewAddressInput] = useState('');
+
+  const [savedAddressesList, setSavedAddressesList] = useState([
+    {
+      id: 'addr-1',
+      title: 'Home',
+      distance: '1.38 km',
+      address: 'Vrindavan Yojna, 4/279, Sector 4, Vrindavan Colony, Lucknow',
+      phone: '7080907954',
+      lastOrdered: null as string | null,
+    },
+    {
+      id: 'addr-2',
+      title: 'Home',
+      distance: '1.64 km',
+      address:
+        '6-C/94, 903, Vrindavan Yojna-1, Gopeshkunj, Sector 6C, Neel Matha, Lucknow, Uttar Pradesh 226002, India, vrindavan colony lucknow',
+      phone: '7080907954',
+      lastOrdered: 'Last ordered 1 week ago',
+    },
+    {
+      id: 'addr-3',
+      title: 'Work / Gurugram Hub',
+      distance: '0.8 km',
+      address: 'Main Market, Sector 14, Model Town, Gurugram, Haryana 122001',
+      phone: '+91 124 456 7890',
+      lastOrdered: 'Last ordered yesterday',
+    },
+  ]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -201,23 +241,13 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsLocationModalOpen(true)}
-                className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-left min-w-0 shadow-2xs group cursor-pointer"
-                title={`Delivery to ${selectedZone} (${storeSettings.city})`}
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-left min-w-0 shadow-2xs group cursor-pointer"
+                title={`Delivery to ${selectedZone}`}
               >
-                <div className="w-6 h-6 rounded-full bg-[#0F5132]/10 text-[#0F5132] flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-3.5 h-3.5 text-[#0F5132]" />
-                </div>
-                <div className="min-w-0 pr-0.5">
-                  <div className="flex items-center gap-1">
-                    <span className="text-[9px] font-black uppercase tracking-wider text-[#0F5132] bg-[#0F5132]/10 px-1.5 py-0.2 rounded-full">
-                      ⚡ 12 MINS
-                    </span>
-                    <span className="text-xs font-bold text-gray-900 truncate block max-w-[140px]">
-                      {selectedZone}
-                    </span>
-                    <ChevronDown className="w-3 h-3 text-gray-400 flex-shrink-0 group-hover:translate-y-0.5 transition-transform" />
-                  </div>
-                </div>
+                <span className="text-xs font-bold text-gray-900 truncate block max-w-[170px]">
+                  {selectedZone}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-gray-500 flex-shrink-0 group-hover:translate-y-0.5 transition-transform" />
               </button>
             </div>
 
@@ -225,23 +255,13 @@ export function Navbar() {
             <button
               type="button"
               onClick={() => setIsLocationModalOpen(true)}
-              className="lg:hidden ml-auto flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-left min-w-0 shadow-2xs group flex-shrink-0 cursor-pointer"
-              title={`Delivery to ${selectedZone} (${storeSettings.city})`}
+              className="lg:hidden ml-auto flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-left min-w-0 shadow-2xs group flex-shrink-0 cursor-pointer"
+              title={`Delivery to ${selectedZone}`}
             >
-              <div className="w-6 h-6 rounded-full bg-[#0F5132]/10 text-[#0F5132] flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-3.5 h-3.5 text-[#0F5132]" />
-              </div>
-              <div className="min-w-0 pr-0.5">
-                <div className="flex items-center gap-1">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-[#0F5132] bg-[#0F5132]/10 px-1.5 py-0.2 rounded-full">
-                    ⚡ 12 MINS
-                  </span>
-                  <span className="text-xs font-bold text-gray-900 truncate block max-w-[130px] sm:max-w-[200px]">
-                    {selectedZone}
-                  </span>
-                  <ChevronDown className="w-3 h-3 text-gray-400 flex-shrink-0 group-hover:translate-y-0.5 transition-transform" />
-                </div>
-              </div>
+              <span className="text-xs font-bold text-gray-900 truncate block max-w-[140px] sm:max-w-[220px]">
+                {selectedZone}
+              </span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-500 flex-shrink-0 group-hover:translate-y-0.5 transition-transform" />
             </button>
 
             {/* Desktop Center: Full Search Bar */}
@@ -389,114 +409,293 @@ export function Navbar() {
         </nav>
       </header>
 
-      {/* Delivery Location Modal with Full Delivery Areas & Mode Clarification */}
+      {/* Delivery Location Drawer / Modal (as shown in user screenshot) */}
       {isLocationModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200"
           onClick={() => setIsLocationModalOpen(false)}
         >
           <div
-            className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-4"
+            className="relative w-full max-w-lg bg-[#F8F9FA] rounded-t-3xl sm:rounded-3xl p-4 sm:p-5 shadow-2xl max-h-[88vh] overflow-y-auto space-y-3.5 animate-in slide-in-from-bottom-5 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-emerald-700" />
-                <h3 className="font-black text-sm text-slate-900">Select Delivery Location</h3>
+            {/* Floating Dark Close Button at top */}
+            <button
+              type="button"
+              onClick={() => setIsLocationModalOpen(false)}
+              aria-label="Close location selector"
+              className="absolute -top-12 left-1/2 -translate-x-1/2 w-9 h-9 rounded-full bg-slate-900/90 text-white flex items-center justify-center shadow-lg hover:bg-slate-800 active:scale-95 transition-all z-50 border border-white/20 cursor-pointer"
+            >
+              <X className="w-5 h-5 stroke-[2.5]" />
+            </button>
+
+            {/* Modal Title */}
+            <h3 className="font-extrabold text-base sm:text-lg text-gray-900">
+              Select delivery location
+            </h3>
+
+            {/* Search Input Bar */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search for area, street name..."
+                value={locationSearchQuery}
+                onChange={(e) => setLocationSearchQuery(e.target.value)}
+                className="w-full bg-white border border-gray-200/90 rounded-2xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0F5132] focus:border-transparent shadow-2xs"
+              />
+            </div>
+
+            {/* Toast feedback if any */}
+            {locationToast && (
+              <div className="bg-emerald-800 text-white text-xs font-semibold px-3 py-2 rounded-xl shadow-md text-center animate-in fade-in">
+                {locationToast}
               </div>
+            )}
+
+            {/* Action List (4 white rounded rows with chevron) */}
+            <div className="bg-white rounded-2xl border border-gray-200/80 divide-y divide-gray-100 overflow-hidden shadow-2xs">
+              {/* 1. Use current location */}
               <button
-                onClick={() => setIsLocationModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                type="button"
+                onClick={() => {
+                  setSelectedZone('Sector 11, Vrindavan Colony');
+                  setIsLocationModalOpen(false);
+                }}
+                className="w-full p-3 sm:p-3.5 flex items-center justify-between gap-3 hover:bg-gray-50/80 transition-colors text-left group"
               >
-                <X className="w-5 h-5" />
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <Crosshair className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs sm:text-sm font-bold text-emerald-700 block">
+                      Use current location
+                    </span>
+                    <span className="text-[11px] text-gray-500 block truncate">
+                      Sector 11, Vrindavan Colony, Lucknow Division, Lucknow, Uttar Pradesh, 226029, India
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+              </button>
+
+              {/* 2. Add new address */}
+              <button
+                type="button"
+                onClick={() => setIsAddingNewAddress(!isAddingNewAddress)}
+                className="w-full p-3 sm:p-3.5 flex items-center justify-between gap-3 hover:bg-gray-50/80 transition-colors text-left group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <Plus className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold text-emerald-700">
+                    Add new address
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+              </button>
+
+              {/* 3. Request address from someone else */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    navigator.clipboard?.writeText(window.location.origin);
+                  }
+                  setLocationToast('WhatsApp request link copied to clipboard!');
+                  setTimeout(() => setLocationToast(null), 2500);
+                }}
+                className="w-full p-3 sm:p-3.5 flex items-center justify-between gap-3 hover:bg-gray-50/80 transition-colors text-left group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-[#25D366] flex items-center justify-center text-white flex-shrink-0 shadow-2xs">
+                    <Phone className="w-3.5 h-3.5 fill-white stroke-none" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-800">
+                    Request address from someone else
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+              </button>
+
+              {/* 4. Import your addresses from Zomato */}
+              <button
+                type="button"
+                onClick={() => {
+                  setLocationToast('2 addresses imported from Zomato successfully!');
+                  setTimeout(() => setLocationToast(null), 2500);
+                }}
+                className="w-full p-3 sm:p-3.5 flex items-center justify-between gap-3 hover:bg-gray-50/80 transition-colors text-left group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-[#E23744] flex items-center justify-center text-white font-black italic text-[9px] flex-shrink-0 shadow-2xs">
+                    zomato
+                  </div>
+                  <span className="text-xs sm:text-sm font-semibold text-gray-800">
+                    Import your addresses from Zomato
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-500">
-              Select your delivery neighborhood in Gurugram to view accurate delivery times and available slots:
-            </p>
-
-            {/* Selectable Neighborhood Zones */}
-            <div className="space-y-2">
-              {[
-                {
-                  zone: 'Sector 14 · Model Town',
-                  tag: 'Store Hub Direct',
-                  speed: '⚡ 12–15 Mins Express Delivery Available',
-                  isHub: true,
-                },
-                {
-                  zone: 'Old DLF · Sector 15',
-                  tag: 'Zone 1 Coverage',
-                  speed: '⚡ 15–20 Mins Express Delivery Available',
-                  isHub: false,
-                },
-                {
-                  zone: 'DLF Phase 1 & Cyber City',
-                  tag: 'Zone 2 Coverage',
-                  speed: '📅 Scheduled 2-Hour Slots (Morning/Evening)',
-                  isHub: false,
-                },
-                {
-                  zone: 'Civil Lines · Gurugram',
-                  tag: 'Zone 2 Coverage',
-                  speed: '📅 Scheduled 2-Hour Slots (Morning/Evening)',
-                  isHub: false,
-                },
-              ].map((loc) => {
-                const isSelected = selectedZone === loc.zone;
-                return (
+            {/* Inline Add Address Form if toggled */}
+            {isAddingNewAddress && (
+              <div className="bg-white p-3.5 rounded-2xl border border-emerald-200/80 shadow-xs space-y-2.5 animate-in fade-in">
+                <p className="text-xs font-bold text-gray-900">Enter New Delivery Address</p>
+                <input
+                  type="text"
+                  placeholder="House/Flat No., Building, Street..."
+                  value={newAddressInput}
+                  onChange={(e) => setNewAddressInput(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F5132]"
+                />
+                <div className="flex justify-end gap-2">
                   <button
-                    key={loc.zone}
                     type="button"
-                    onClick={() => setSelectedZone(loc.zone)}
-                    className={`w-full text-left p-3 rounded-2xl border transition-all flex items-start justify-between gap-2 ${
-                      isSelected
-                        ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-500/20'
-                        : 'bg-slate-50 hover:bg-slate-100 border-slate-200'
-                    }`}
+                    onClick={() => setIsAddingNewAddress(false)}
+                    className="px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700"
                   >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-slate-900">{loc.zone}</span>
-                        <span className="text-[9px] font-black uppercase tracking-wider bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-600">
-                          {loc.tag}
-                        </span>
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newAddressInput.trim()) {
+                        const newAddr = {
+                          id: `addr-${Date.now()}`,
+                          title: 'Home',
+                          distance: '0.9 km',
+                          address: newAddressInput.trim(),
+                          phone: '7080907954',
+                          lastOrdered: 'Just added',
+                        };
+                        setSavedAddressesList([newAddr, ...savedAddressesList]);
+                        setSelectedZone(newAddressInput.trim().slice(0, 24));
+                        setIsAddingNewAddress(false);
+                        setNewAddressInput('');
+                        setIsLocationModalOpen(false);
+                      }
+                    }}
+                    className="px-4 py-1.5 bg-[#0F5132] text-white text-xs font-bold rounded-xl shadow-xs"
+                  >
+                    Save & Select
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Your saved addresses */}
+            <div className="space-y-2.5 pt-1">
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Your saved addresses
+              </h4>
+
+              {savedAddressesList
+                .filter(
+                  (a) =>
+                    !locationSearchQuery ||
+                    a.title.toLowerCase().includes(locationSearchQuery.toLowerCase()) ||
+                    a.address.toLowerCase().includes(locationSearchQuery.toLowerCase())
+                )
+                .map((addr, index) => (
+                  <React.Fragment key={addr.id}>
+                    <div
+                      onClick={() => {
+                        setSelectedZone(addr.address.split(',')[0] || addr.title);
+                        setIsLocationModalOpen(false);
+                      }}
+                      className="bg-white rounded-2xl border border-gray-200/90 p-3.5 space-y-2 shadow-2xs hover:border-[#0F5132] transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          {/* House yellow icon tile */}
+                          <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200/80 flex flex-col items-center justify-center text-amber-700 flex-shrink-0">
+                            <Home className="w-4 h-4 text-amber-600" />
+                            <span className="text-[8px] font-bold text-gray-500 mt-0.5">
+                              {addr.distance}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <h5 className="text-xs sm:text-sm font-bold text-gray-900 group-hover:text-[#0F5132] transition-colors">
+                              {addr.title}
+                            </h5>
+                            <p className="text-[11px] text-gray-600 line-clamp-2 mt-0.5 leading-snug">
+                              {addr.address}
+                            </p>
+                            <p className="text-[11px] text-gray-500 font-medium mt-1">
+                              Phone number: <span className="font-bold text-gray-700">{addr.phone}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <MapPin className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#0F5132] flex-shrink-0 mt-1" />
                       </div>
-                      <p className="text-[11px] font-semibold text-emerald-700 mt-1 flex items-center gap-1">
-                        {loc.speed}
-                      </p>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-gray-100 text-gray-400 text-xs">
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocationToast(`Actions for ${addr.title}`);
+                              setTimeout(() => setLocationToast(null), 2000);
+                            }}
+                            className="hover:text-gray-700 p-0.5"
+                            title="More options"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (typeof window !== 'undefined') {
+                                navigator.clipboard?.writeText(addr.address);
+                              }
+                              setLocationToast('Address copied to clipboard!');
+                              setTimeout(() => setLocationToast(null), 2000);
+                            }}
+                            className="hover:text-gray-700 p-0.5"
+                            title="Share address"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {addr.lastOrdered && (
+                          <span className="text-[10px] text-gray-400 font-medium">
+                            {addr.lastOrdered}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check className="w-3 h-3 stroke-[3]" />
+
+                    {/* Share banner below Card 1 */}
+                    {index === 0 && showShareAddressBanner && (
+                      <div className="bg-[#FFF8E7] border border-amber-200/70 rounded-xl px-3 py-2 flex items-center justify-between text-xs text-amber-900 font-medium shadow-2xs">
+                        <div className="flex items-center gap-2">
+                          <Share2 className="w-3.5 h-3.5 text-amber-700 flex-shrink-0" />
+                          <span className="text-[11px] font-semibold text-amber-900">
+                            Now share your addresses with friends and family
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowShareAddressBanner(false);
+                          }}
+                          className="w-4 h-4 rounded-full bg-amber-200/60 hover:bg-amber-300 flex items-center justify-center text-amber-800 flex-shrink-0 cursor-pointer"
+                        >
+                          <X className="w-2.5 h-2.5" />
+                        </button>
                       </div>
                     )}
-                  </button>
-                );
-              })}
+                  </React.Fragment>
+                ))}
             </div>
-
-            {/* Delivery Modes Clarification Banner */}
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-1.5 text-[11px]">
-              <div className="flex items-center gap-1.5 font-bold text-slate-800">
-                <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Our 2 Delivery Guarantees:</span>
-              </div>
-              <p className="text-slate-600">
-                • <strong className="text-slate-800">⚡ 12–15 Min Express:</strong> Instant dispatch from Sector 14 Hub for milk, bread, veggies, and urgent snacks.
-              </p>
-              <p className="text-slate-600">
-                • <strong className="text-slate-800">📅 2-Hour Scheduled Slots:</strong> Morning (7–9 AM), Afternoon (12–2 PM), Evening (6–8 PM) for monthly staples & bulk orders.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setIsLocationModalOpen(false)}
-              className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-98"
-            >
-              Confirm Delivery Location
-            </button>
           </div>
         </div>
       )}
