@@ -132,8 +132,8 @@ export function Navbar() {
         {/* Main Header Container */}
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-2.5">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            {/* Left: Brand & Location */}
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            {/* Left: Brand Logo + (Desktop Location Pill) */}
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
               {/* Brand Logo using Official Artwork */}
               <Link
                 href="/"
@@ -147,11 +147,11 @@ export function Navbar() {
                 />
               </Link>
 
-              {/* Delivery Selector High-Contrast Pill */}
+              {/* Desktop Location Selector (visible on lg+ desktop) */}
               <button
                 type="button"
                 onClick={() => setIsLocationModalOpen(true)}
-                className="flex items-center gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-left min-w-0 shadow-2xs group"
+                className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-left min-w-0 shadow-2xs group cursor-pointer"
                 title={`Delivery to ${selectedZone} (${storeSettings.city})`}
               >
                 <div className="w-6 h-6 rounded-full bg-[#0F5132]/10 text-[#0F5132] flex items-center justify-center flex-shrink-0">
@@ -162,7 +162,7 @@ export function Navbar() {
                     <span className="text-[9px] font-black uppercase tracking-wider text-[#0F5132] bg-[#0F5132]/10 px-1.5 py-0.2 rounded-full">
                       ⚡ 12 MINS
                     </span>
-                    <span className="text-xs font-bold text-gray-900 truncate block max-w-[105px] sm:max-w-[140px]">
+                    <span className="text-xs font-bold text-gray-900 truncate block max-w-[140px]">
                       {selectedZone}
                     </span>
                     <ChevronDown className="w-3 h-3 text-gray-400 flex-shrink-0 group-hover:translate-y-0.5 transition-transform" />
@@ -171,8 +171,31 @@ export function Navbar() {
               </button>
             </div>
 
+            {/* Mobile & Tablet Location Selector (Sticks on the right side!) */}
+            <button
+              type="button"
+              onClick={() => setIsLocationModalOpen(true)}
+              className="lg:hidden ml-auto flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all text-left min-w-0 shadow-2xs group flex-shrink-0 cursor-pointer"
+              title={`Delivery to ${selectedZone} (${storeSettings.city})`}
+            >
+              <div className="w-6 h-6 rounded-full bg-[#0F5132]/10 text-[#0F5132] flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-3.5 h-3.5 text-[#0F5132]" />
+              </div>
+              <div className="min-w-0 pr-0.5">
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-[#0F5132] bg-[#0F5132]/10 px-1.5 py-0.2 rounded-full">
+                    ⚡ 12 MINS
+                  </span>
+                  <span className="text-xs font-bold text-gray-900 truncate block max-w-[130px] sm:max-w-[200px]">
+                    {selectedZone}
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-gray-400 flex-shrink-0 group-hover:translate-y-0.5 transition-transform" />
+                </div>
+              </div>
+            </button>
+
             {/* Desktop Center: Full Search Bar with rounded-full & animated placeholder */}
-            <div className="hidden md:block flex-1 max-w-xl lg:max-w-2xl mx-2 sm:mx-4 relative">
+            <div className="hidden lg:block flex-1 max-w-xl lg:max-w-2xl mx-2 sm:mx-4 relative">
               <form onSubmit={handleSearchSubmit} className="relative">
                 <input
                   type="text"
@@ -256,34 +279,86 @@ export function Navbar() {
               )}
             </div>
 
-            {/* Right: Staff Controls (only rendered when testing non-customer roles) */}
-            {role !== 'CUSTOMER' && (
-              <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setIsRoleModalOpen(true)}
-                  className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/90 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all shadow-2xs"
-                  title="Switch persona for testing"
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-amber-700 font-medium">Staff:</span>
-                  <span className="font-bold">{roleLabels[role]}</span>
-                  <ChevronDown className="w-3 h-3 text-amber-600" />
-                </button>
+            {/* Desktop Right: Restored Staff, Account Profile & Cart Buttons! */}
+            <div className="hidden lg:flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+              {/* Staff Pill (only rendered when testing non-customer roles) */}
+              {role !== 'CUSTOMER' && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsRoleModalOpen(true)}
+                    className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/90 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all shadow-2xs cursor-pointer"
+                    title="Switch persona for testing"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-amber-700 font-medium">Staff:</span>
+                    <span className="font-bold">{roleLabels[role]}</span>
+                    <ChevronDown className="w-3 h-3 text-amber-600" />
+                  </button>
 
-                <Link
-                  href="/admin"
-                  className="flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white rounded-full text-xs font-bold hover:bg-gray-800 transition-colors shadow-2xs"
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  <span>Admin</span>
-                </Link>
-              </div>
-            )}
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white rounded-full text-xs font-bold hover:bg-gray-800 transition-colors shadow-2xs"
+                  >
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    <span>Admin</span>
+                  </Link>
+                </div>
+              )}
+
+              {/* Desktop User Account / Profile Button */}
+              <button
+                type="button"
+                aria-label={user ? `Logged in as ${user.name}` : 'Login or Register'}
+                onClick={() => (user ? setIsUserMenuOpen(!isUserMenuOpen) : setIsAuthModalOpen(true))}
+                title={user ? `Logged in as ${user.name}` : 'Login / Register'}
+                className="h-9 px-3 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center gap-1.5 font-bold text-xs transition-colors focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none cursor-pointer"
+              >
+                {user ? (
+                  <>
+                    <div className="w-6 h-6 rounded-full bg-[#0F5132] text-white flex items-center justify-center font-bold text-[11px]">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-gray-800 font-semibold max-w-[100px] truncate">
+                      {user.name.split(' ')[0]}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <UserIcon className="w-4 h-4 text-gray-600" />
+                    <span className="text-gray-700 font-bold text-xs">Login</span>
+                  </>
+                )}
+              </button>
+
+              {/* Desktop Cart Trigger Button */}
+              <button
+                type="button"
+                aria-label={`Open shopping cart with ${totalItemsCount} ${
+                  totalItemsCount === 1 ? 'item' : 'items'
+                } totaling ${formatPrice(grandTotal)}`}
+                onClick={() => setIsCartDrawerOpen(true)}
+                className="flex items-center gap-2.5 bg-[#0F5132] hover:bg-[#054A29] text-white px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold shadow-sm shadow-[#0F5132]/25 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none cursor-pointer"
+              >
+                <div className="relative">
+                  <ShoppingBag className="w-4 h-4" />
+                  {totalItemsCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2 bg-amber-400 text-gray-950 text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-[#0F5132]">
+                      {totalItemsCount}
+                    </span>
+                  )}
+                </div>
+                <div className="text-left">
+                  <span className="block text-[11px] leading-tight font-black">
+                    {totalItemsCount > 0 ? formatPrice(grandTotal) : 'My Cart'}
+                  </span>
+                </div>
+              </button>
+            </div>
           </div>
 
-          {/* Mobile Full-Width Search Input (Visible only on mobile < md) */}
-          <div className="mt-2 md:hidden relative">
+          {/* Mobile & Tablet Full-Width Search Input (Visible on < lg screens) */}
+          <div className="mt-2 lg:hidden relative">
             <form onSubmit={handleSearchSubmit} className="relative">
               <input
                 type="text"

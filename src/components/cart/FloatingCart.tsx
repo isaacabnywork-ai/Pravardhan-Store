@@ -72,7 +72,7 @@ export function FloatingCart() {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center justify-end select-none"
+      className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 lg:hidden z-40 flex items-center justify-end select-none"
     >
       {!isExpanded ? (
         /* Collapsed Floating Cart Icon */
