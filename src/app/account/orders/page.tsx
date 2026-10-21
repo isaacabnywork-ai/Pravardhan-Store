@@ -2,13 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
-  ChevronRight,
+  ArrowLeft,
   ArrowRight,
   ShoppingBag,
   Truck,
 } from 'lucide-react';
-import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -16,8 +16,17 @@ import { useStore } from '@/lib/context/StoreContext';
 import { formatPrice, formatDateTime } from '@/lib/utils';
 
 export default function MyOrdersPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { orders } = useStore();
+
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/account');
+    }
+  };
 
   // If user is logged in, show orders matching user or all demo customer orders
   const userOrders = orders.filter(
@@ -25,24 +34,23 @@ export default function MyOrdersPage() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-0">
-      <Navbar />
-
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-6">
-        <nav className="flex items-center gap-1.5 text-xs text-slate-500 mb-2">
-          <Link href="/" className="hover:text-emerald-700">Home</Link>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <Link href="/account" className="hover:text-emerald-700">My Account</Link>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-slate-800 font-semibold">Order History</span>
-        </nav>
-
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-8">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-4 sm:py-6 space-y-5">
+        {/* Top App Bar with Back Button */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleBack}
+            aria-label="Back"
+            className="w-9 h-9 rounded-full bg-white hover:bg-gray-100 border border-slate-200/80 flex items-center justify-center text-gray-800 transition-colors cursor-pointer shadow-xs"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
               My Orders & Live Deliveries
             </h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-[11px] sm:text-xs text-slate-500">
               Track status timeline and view tax receipts for your grocery purchases
             </p>
           </div>

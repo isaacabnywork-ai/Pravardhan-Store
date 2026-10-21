@@ -39,6 +39,8 @@ export function MobileBottomNav() {
             const isActive =
               item.href === '/'
                 ? pathname === '/'
+                : item.href === '/account'
+                ? pathname === '/account'
                 : pathname.startsWith(item.href);
             const Icon = item.icon;
 

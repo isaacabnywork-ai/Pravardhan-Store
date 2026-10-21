@@ -39,7 +39,6 @@ import {
   Building,
   Mail,
 } from 'lucide-react';
-import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -120,8 +119,6 @@ export default function AccountPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-900 pb-20 md:pb-6">
-      <Navbar />
-
       <main className="flex-1 max-w-xl w-full mx-auto px-4 py-4 space-y-4">
         {/* Top App Bar with Back Button */}
         <div className="flex items-center gap-3">

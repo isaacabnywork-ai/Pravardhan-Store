@@ -2,7 +2,7 @@
 
 import React, { use } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import {
   PackageCheck,
   CheckCircle2,
@@ -17,7 +17,6 @@ import {
   User,
   ShoppingBag,
 } from 'lucide-react';
-import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/lib/context/StoreContext';
@@ -29,6 +28,7 @@ export default function OrderTrackingPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const router = useRouter();
   const resolvedParams = use(params);
   const { orders, storeSettings } = useStore();
 
@@ -50,23 +50,32 @@ export default function OrderTrackingPage({
   const currentStatusIndex = statusSequence.findIndex((s) => s.status === order.orderStatus);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-0">
-      <Navbar />
-
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-8 space-y-6">
-        {/* Breadcrumb & Navigation */}
-        <div className="flex items-center justify-between">
-          <nav className="flex items-center gap-1.5 text-xs text-slate-500">
-            <Link href="/" className="hover:text-emerald-700">Home</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <Link href="/account/orders" className="hover:text-emerald-700">My Orders</Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-slate-800 font-semibold">{order.orderNumber}</span>
-          </nav>
+    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-8">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-4 sm:py-6 space-y-6">
+        {/* Top App Bar with Back Button */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.push('/account/orders')}
+              aria-label="Back to orders"
+              className="w-9 h-9 rounded-full bg-white hover:bg-gray-100 border border-slate-200/80 flex items-center justify-center text-gray-800 transition-colors cursor-pointer shadow-xs"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight">
+                Order Tracking
+              </h1>
+              <p className="text-[11px] text-slate-500">
+                Order #{order.orderNumber}
+              </p>
+            </div>
+          </div>
 
           <Link
             href="/account/orders"
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-emerald-800 bg-white px-3 py-1.5 rounded-xl border border-slate-200"
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-800 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-xl border border-slate-200/80 shadow-xs transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>All Orders</span>
