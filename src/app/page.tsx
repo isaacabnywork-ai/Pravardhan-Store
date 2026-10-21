@@ -19,6 +19,7 @@ import { ProductCard } from '@/components/products/ProductCard';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { HeroBannerCarousel } from '@/components/home/HeroBannerCarousel';
 import { ExploreCategoriesGrid } from '@/components/categories/ExploreCategoriesGrid';
+import { OfferDealsShowcase } from '@/components/home/OfferDealsShowcase';
 import { useStore } from '@/lib/context/StoreContext';
 import { useCart } from '@/lib/context/CartContext';
 
@@ -163,6 +164,27 @@ export default function HomePage() {
             </div>
           </section>
         )}
+
+        {/* ================= SECTION: FESTIVE DEALS & MEGA DISCOUNT SWITCHER ================= */}
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 leading-tight">
+                Festive Gifting & Super Savings
+              </h2>
+              <p className="text-xs text-gray-500 font-medium">
+                Switch categories to explore up to 75% OFF dry fruits, artisanal boxes & decor
+              </p>
+            </div>
+            <Link
+              href="/deals"
+              className="text-xs font-bold text-[#0F5132] hover:underline flex items-center gap-0.5"
+            >
+              All Deals <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <OfferDealsShowcase />
+        </section>
 
         {/* ================= SECTION: CREAM-BASED INDULGENCE (QUICK-COMMERCE BISCUIT INDULGENCE) ================= */}
         {biscuitIndulgence.length > 0 && (

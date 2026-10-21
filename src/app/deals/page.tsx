@@ -13,6 +13,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
+import { OfferDealsShowcase } from '@/components/home/OfferDealsShowcase';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/lib/context/StoreContext';
 import { useCart } from '@/lib/context/CartContext';
@@ -55,6 +56,21 @@ export default function DealsPage() {
               Copy any active coupon below with 1 click to automatically apply the discount to your cart.
             </p>
           </div>
+        </div>
+
+        {/* ================= INTERACTIVE OFFER CATEGORY SWITCHER SHOWCASE ================= */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-lg font-extrabold text-slate-900">
+                Trending Festival Deals & Mega Discounts
+              </h2>
+              <p className="text-xs text-slate-500">
+                Switch categories to explore curated gift packs, artisanal treats, and home decor
+              </p>
+            </div>
+          </div>
+          <OfferDealsShowcase />
         </div>
 
         {/* Coupons Grid */}

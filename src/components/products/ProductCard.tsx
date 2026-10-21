@@ -10,9 +10,17 @@ import { useCart } from '@/lib/context/CartContext';
 interface ProductCardProps {
   product: Product;
   compact?: boolean;
+  highlightPrice?: boolean;
+  pillLabel?: string;
+  pillHref?: string;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({
+  product,
+  highlightPrice = false,
+  pillLabel,
+  pillHref,
+}: ProductCardProps) {
   const { items, addToCart, updateQuantity } = useCart();
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
@@ -193,7 +201,13 @@ export function ProductCard({ product }: ProductCardProps) {
           {/* ================= 3. PRICE & DISCOUNT ROW ================= */}
           <div className="mt-1">
             <div className="flex items-baseline gap-1">
-              <span className="text-sm sm:text-base font-extrabold text-gray-900 tracking-tight">
+              <span
+                className={`text-sm sm:text-base font-extrabold tracking-tight ${
+                  highlightPrice || discount >= 25
+                    ? 'bg-[#FEE580] px-1 rounded-xs text-gray-950'
+                    : 'text-gray-900'
+                }`}
+              >
                 {formatPrice(selectedVariant.price)}
               </span>
               {selectedVariant.mrp > selectedVariant.price && (
@@ -204,7 +218,9 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
             {discount > 0 ? (
               <p className="text-[10px] sm:text-[11px] font-bold text-blue-600 leading-tight mt-0.5">
-                {discount}% OFF on MRP
+                {selectedVariant.mrp - selectedVariant.price >= 50
+                  ? `₹${selectedVariant.mrp - selectedVariant.price} OFF`
+                  : `${discount}% OFF on MRP`}
               </p>
             ) : (
               <div className="h-3.5" />
@@ -221,10 +237,29 @@ export function ProductCard({ product }: ProductCardProps) {
           </Link>
         </div>
 
-        {/* ================= 5. EXPRESS DELIVERY BADGE ================= */}
-        <div className="flex items-center gap-1 text-[11px] font-medium text-gray-500 mt-1.5 pt-1">
-          <Clock className="w-3 h-3 text-gray-400 stroke-[2]" />
-          <span>12 mins</span>
+        {/* ================= 5. EXPRESS DELIVERY BADGE & ACTION PILL ================= */}
+        <div className="mt-1.5 pt-1 space-y-1">
+          <div className="flex items-center gap-2 text-[11px] font-medium text-gray-500 flex-wrap">
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3 text-gray-400 stroke-[2]" />
+              <span>{product.categoryId === 'cat-snacks' ? '8 mins' : '12 mins'}</span>
+            </div>
+            {selectedVariant.stock <= 5 && selectedVariant.stock > 0 && (
+              <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/70">
+                📦 {selectedVariant.stock} left
+              </span>
+            )}
+          </div>
+
+          {pillLabel && (
+            <Link
+              href={pillHref || `/shop?category=${product.categoryId}`}
+              className="inline-flex items-center gap-0.5 text-[10px] font-bold text-[#0F5132] bg-emerald-50 hover:bg-emerald-100/90 border border-emerald-200/80 rounded-md px-2 py-0.5 transition-colors"
+            >
+              <span>{pillLabel}</span>
+              <span className="text-[9px]">▸</span>
+            </Link>
+          )}
         </div>
       </div>
 
