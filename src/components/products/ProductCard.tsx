@@ -50,49 +50,49 @@ export function ProductCard({ product }: ProductCardProps) {
                 e.stopPropagation();
                 setIsFavorite(!isFavorite);
               }}
-              className="absolute top-2 right-2 z-10 p-1.5 rounded-full text-gray-400 hover:text-red-500 transition-colors focus-visible:outline-none"
+              className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-white/75 hover:bg-white backdrop-blur-xs flex items-center justify-center text-gray-700 hover:text-red-500 shadow-2xs transition-all active:scale-110 focus-visible:outline-none"
             >
               <Heart
-                className={`w-4 h-4 transition-transform active:scale-125 ${
+                className={`w-3.5 h-3.5 transition-colors ${
                   isFavorite
                     ? 'text-red-500 fill-red-500'
-                    : 'text-gray-500 hover:text-red-500'
+                    : 'text-gray-700 hover:text-red-500'
                 }`}
-                strokeWidth={1.8}
+                strokeWidth={2}
               />
             </button>
 
             {/* Bottom-Left: Multiple Images Gallery Dots */}
-            <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 pointer-events-none">
-              <span className="w-1.5 h-1.5 rounded-full bg-gray-600/80"></span>
-              <span className="w-1 h-1 rounded-full bg-gray-400/60"></span>
-              <span className="w-1 h-1 rounded-full bg-gray-400/60"></span>
-              <span className="w-1 h-1 rounded-full bg-gray-400/60"></span>
+            <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 bg-black/35 backdrop-blur-xs px-1.5 py-0.5 rounded-full pointer-events-none">
+              <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+              <span className="w-1 h-1 rounded-full bg-white/60"></span>
+              <span className="w-1 h-1 rounded-full bg-white/60"></span>
+              <span className="w-1 h-1 rounded-full bg-white/60"></span>
             </div>
 
             {/* Bottom-Right: Indian Green Vegetarian Food Mark */}
             <div className="absolute bottom-2 right-2 z-10 pointer-events-none">
-              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-[1.5px] border-emerald-600 bg-white/95 rounded-[3px] flex items-center justify-center p-[2px] shadow-2xs">
+              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-[1.5px] border-emerald-600 bg-white/95 backdrop-blur-xs rounded-[3px] flex items-center justify-center p-[2px] shadow-xs">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-600"></div>
               </div>
             </div>
 
-            {/* Product Image Link */}
+            {/* Product Image Link (Full Cover) */}
             <Link
               href={`/product/${product.slug}`}
               aria-label={`View details for ${product.name}`}
-              className="w-full h-full flex items-center justify-center p-2 focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none rounded-xl"
+              className="w-full h-full block overflow-hidden focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none"
             >
               {!imageError && imageUrl ? (
                 <img
                   src={imageUrl}
                   alt={product.name}
                   onError={() => setImageError(true)}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-2xs"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100/80 rounded-xl p-2 text-center text-gray-400">
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100/80 p-2 text-center text-gray-400">
                   <Package className="w-8 h-8 text-[#0F5132]/60 mb-1" />
                   <span className="text-[10px] font-bold text-gray-600 line-clamp-1">{product.brand}</span>
                   <span className="text-[9px] text-gray-400 font-medium">{selectedVariant.title}</span>
