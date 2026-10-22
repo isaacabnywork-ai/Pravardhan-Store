@@ -14,8 +14,13 @@ import {
 export function MobileBottomNav() {
   const pathname = usePathname();
 
-  // Don't render on admin pages or product detail pages (which have dedicated bottom action bar)
-  if (pathname.startsWith('/admin') || pathname.startsWith('/product/')) {
+  // Don't render on admin, product details, cart or checkout (which have dedicated bottom action bars)
+  if (
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/product/') ||
+    pathname === '/checkout' ||
+    pathname === '/cart'
+  ) {
     return null;
   }
 
