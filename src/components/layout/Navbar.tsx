@@ -215,6 +215,7 @@ export function Navbar() {
   const roleLabels: Record<Role, string> = {
     CUSTOMER: 'Customer',
     PRODUCT_MANAGER: 'Product Mgr',
+    STORE_MANAGER: 'Store Mgr',
     ORDER_MANAGER: 'Order Mgr',
     DELIVERY_STAFF: 'Delivery Staff',
     SUPER_ADMIN: 'Super Admin',

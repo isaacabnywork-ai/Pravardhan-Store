@@ -62,6 +62,17 @@ export function RoleSwitcherModal({ isOpen, onClose }: RoleSwitcherModalProps) {
       routeHint: 'Navigates to /admin/products',
     },
     {
+      role: 'STORE_MANAGER',
+      title: 'Store Manager',
+      badge: 'Store Operations Desk',
+      persona: 'Anil Gupta (Gurugram Store)',
+      icon: Store,
+      color: 'text-teal-700 border-teal-500',
+      bgLight: 'bg-teal-50/50 hover:bg-teal-50',
+      description: 'Oversee picking, packing, inventory replenishment, and daily fulfillment for the assigned store.',
+      routeHint: 'Navigates to /admin/inventory',
+    },
+    {
       role: 'ORDER_MANAGER',
       title: 'Order Manager',
       badge: 'Fulfillment & Ops',
@@ -103,6 +114,8 @@ export function RoleSwitcherModal({ isOpen, onClose }: RoleSwitcherModalProps) {
       router.push('/');
     } else if (r === 'PRODUCT_MANAGER') {
       router.push('/admin/products');
+    } else if (r === 'STORE_MANAGER') {
+      router.push('/admin/inventory');
     } else if (r === 'ORDER_MANAGER') {
       router.push('/admin/orders');
     } else if (r === 'DELIVERY_STAFF') {

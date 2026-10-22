@@ -1,0 +1,242 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  PRODUCT_MANAGER
+  STORE_MANAGER
+  ORDER_MANAGER
+  DELIVERY_STAFF
+  SUPER_ADMIN
+}
+
+enum ProductStatus {
+  PUBLISHED
+  DRAFT
+  OUT_OF_STOCK
+  ARCHIVED
+}
+
+enum InventoryChangeType {
+  STOCK_RECEIVED
+  STOCK_ADJUSTMENT
+  ORDER_RESERVED
+  ORDER_CANCELLED
+  ORDER_COMPLETED
+  MANUAL_CORRECTION
+}
+
+model User {
+  id           String    @id @default(cuid())
+  phone        String?   @unique
+  email        String?   @unique
+  passwordHash String?
+  name         String
+  role         Role      @default(CUSTOMER)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  addresses    Address[]
+  auditLogs    AuditLog[]
+  movements    InventoryMovement[]
+
+  @@map("users")
+}
+
+model Address {
+  id           String    @id @default(cuid())
+  userId       String
+  label        String    @default("Home") // Home, Office, Other
+  name         String
+  phone        String
+  houseNumber  String
+  street       String
+  landmark     String?
+  area         String
+  city         String
+  pincode      String
+  isDefault    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_addresses")
+}
+
+model Store {
+  id                    String    @id @default(cuid())
+  name                  String
+  code                  String    @unique
+  address               String
+  city                  String
+  serviceArea           String
+  minOrderValue         Int       @default(10000) // In paise (₹100 = 10000)
+  deliveryFee           Int       @default(0)     // In paise
+  freeDeliveryThreshold Int       @default(0)
+  operatingHours        String    @default("7:00 AM - 10:00 PM")
+  supportPhone          String    @default("+91 124 456 7890")
+  supportEmail          String    @default("care@pravdhanstore.in")
+  isActive              Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  inventory             Inventory[]
+  movements             InventoryMovement[]
+
+  @@map("stores")
+}
+
+model Category {
+  id           String         @id @default(cuid())
+  name         String
+  slug         String         @unique
+  icon         String?
+  image        String?
+  description  String?
+  displayOrder Int            @default(0)
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  subcategories Subcategory[]
+  products      Product[]
+
+  @@map("categories")
+}
+
+model Subcategory {
+  id           String    @id @default(cuid())
+  categoryId   String
+  name         String
+  slug         String    @unique
+  image        String?
+  displayOrder Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  category     Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products     Product[]
+
+  @@index([categoryId])
+  @@map("subcategories")
+}
+
+model Product {
+  id            String          @id @default(cuid())
+  name          String
+  slug          String          @unique
+  brand         String
+  categoryId    String
+  subcategoryId String?
+  description   String?
+  features      String[]        @default([])
+  images        String[]        @default([])
+  isFeatured    Boolean         @default(false)
+  isPopular     Boolean         @default(false)
+  isOrganic     Boolean         @default(false)
+  rating        Float           @default(4.8)
+  reviewCount   Int             @default(0)
+  status        ProductStatus   @default(PUBLISHED)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  category      Category        @relation(fields: [categoryId], references: [id])
+  subcategory   Subcategory?    @relation(fields: [subcategoryId], references: [id])
+  variants      ProductVariant[]
+
+  @@index([categoryId])
+  @@index([subcategoryId])
+  @@index([status])
+  @@map("products")
+}
+
+model ProductVariant {
+  id            String       @id @default(cuid())
+  productId     String
+  sku           String       @unique
+  title         String
+  unit          String       // e.g. "1 KG", "500g", "Pack of 2"
+  mrp           Int          // In paise (₹150.00 = 15000)
+  price         Int          // Selling price in paise
+  image         String?
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  product       Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  inventory     Inventory[]
+  movements     InventoryMovement[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model Inventory {
+  id                String         @id @default(cuid())
+  storeId           String
+  variantId         String
+  quantity          Int            @default(0) // Available physical stock
+  reservedQuantity  Int            @default(0) // In-progress checkout reservations
+  lowStockThreshold Int            @default(5)
+  updatedAt         DateTime       @updatedAt
+
+  store             Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  variant           ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, variantId])
+  @@index([storeId])
+  @@index([variantId])
+  @@map("inventory")
+}
+
+model InventoryMovement {
+  id             String              @id @default(cuid())
+  storeId        String
+  variantId      String
+  changeType     InventoryChangeType
+  quantityChange Int
+  previousStock  Int
+  newStock       Int
+  reason         String
+  updatedById    String?
+  createdAt      DateTime            @default(now())
+
+  store          Store               @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  variant        ProductVariant      @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  updatedBy      User?               @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([storeId])
+  @@index([variantId])
+  @@index([createdAt])
+  @@map("inventory_movements")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorRole String?
+  action    String
+  entity    String
+  entityId  String
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

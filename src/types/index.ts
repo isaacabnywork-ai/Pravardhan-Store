@@ -1,6 +1,7 @@
 export type Role =
   | 'CUSTOMER'
   | 'PRODUCT_MANAGER'
+  | 'STORE_MANAGER'
   | 'ORDER_MANAGER'
   | 'DELIVERY_STAFF'
   | 'SUPER_ADMIN';
