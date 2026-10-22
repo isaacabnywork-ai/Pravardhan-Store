@@ -32,7 +32,7 @@ export function LocationConfirmModal() {
       distance: '0.6 km',
       address: 'House No. 42B, 2nd Floor, Arjun Marg, DLF Phase 1, Sector 14, Gurugram, Haryana 122001',
       phone: '9876543210',
-      tag: 'Fastest 8-min delivery',
+      tag: 'Express delivery',
     },
     {
       id: 'addr-gurugram-2',

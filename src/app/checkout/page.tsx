@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   Search,
   Share2,
-  Clock,
   Heart,
   Plus,
   Minus,
@@ -243,7 +242,7 @@ export default function CheckoutPage() {
           pincode: selectedAddress.pincode,
         },
         slotDate: slotDateType,
-        slotTime: selectedSlot?.timeSlot || 'Express 8-min Delivery',
+        slotTime: selectedSlot?.timeSlot || 'Express Delivery',
         paymentMethod,
         tipAmount: deliveryTip,
         handlingFee,
@@ -342,7 +341,7 @@ export default function CheckoutPage() {
         {
           status: 'DELIVERED',
           label: 'Delivered',
-          timestamp: `Expected: ${selectedSlot?.timeSlot || 'in 8 mins'}`,
+          timestamp: `Expected: ${selectedSlot?.timeSlot || 'Express Delivery'}`,
           completed: false,
         },
       ],
@@ -418,7 +417,7 @@ export default function CheckoutPage() {
           </div>
           <h2 className="text-2xl font-black text-slate-900 mb-2">Your cart is empty</h2>
           <p className="text-sm text-slate-500 mb-6">
-            Looks like you haven&apos;t added anything to your cart yet. Explore thousands of everyday essentials delivered in 8 minutes!
+            Looks like you haven&apos;t added anything to your cart yet. Explore thousands of everyday essentials delivered to your doorstep!
           </p>
           <Link
             href="/"
@@ -490,30 +489,22 @@ export default function CheckoutPage() {
 
       {/* Main Unified Page Content */}
       <main className="max-w-2xl mx-auto w-full px-3 py-3 space-y-3">
-        {/* TOP SECTION: Delivery in 8 minutes + Cart items */}
+        {/* TOP SECTION: Cart items */}
         <section className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80">
-          {/* 8-minute delivery banner */}
-          <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-            <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <h2 className="text-sm font-black text-slate-900">Delivery in 8 minutes</h2>
-              <p className="text-xs text-slate-500 font-medium">
-                Shipment of {items.reduce((acc, i) => acc + i.quantity, 0)} {items.length === 1 ? 'item' : 'items'}
-              </p>
-            </div>
-          </div>
-
           {/* Cart items list */}
           <div className="divide-y divide-slate-100">
-            {items.map((item) => {
+            {items.map((item, idx) => {
               const mrpTotal = item.mrp * item.quantity;
               const priceTotal = item.price * item.quantity;
               const hasDiscount = item.mrp > item.price;
 
               return (
-                <div key={item.variantId} className="py-3 flex items-start gap-3">
+                <div
+                  key={item.variantId}
+                  className={`py-3 flex items-start gap-3 ${idx === 0 ? 'pt-0' : ''} ${
+                    idx === items.length - 1 ? 'pb-0' : ''
+                  }`}
+                >
                   {/* Thumbnail */}
                   <div className="w-16 h-16 rounded-2xl border border-slate-200/90 overflow-hidden shrink-0 bg-slate-100 flex items-center justify-center relative shadow-2xs">
                     {item.image ? (
@@ -1007,7 +998,7 @@ export default function CheckoutPage() {
               <div className="flex items-center gap-2">
                 <span className="font-black text-slate-900">{selectedAddress.label}</span>
                 <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-full">
-                  Fastest 8-min delivery
+                  Express delivery
                 </span>
               </div>
               <p className="text-slate-600 font-medium mt-0.5">
@@ -1081,7 +1072,7 @@ export default function CheckoutPage() {
                   title: 'Pay Online (UPI, Cards, NetBanking)',
                   subtitle: 'Google Pay, PhonePe, Paytm, Cards & NetBanking',
                   icon: CreditCard,
-                  badge: 'Instant 8-min',
+                  badge: 'Instant',
                 },
                 {
                   id: 'COD' as PaymentMethod,
