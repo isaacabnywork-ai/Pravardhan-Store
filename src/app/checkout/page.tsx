@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -536,12 +535,19 @@ export default function CheckoutPage() {
                   {/* Thumbnail */}
                   <div className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden shrink-0 bg-slate-50 flex items-center justify-center relative">
                     {item.image ? (
-                      <Image
+                      <img
                         src={item.image}
                         alt={item.productName}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-emerald-50 text-emerald-700 font-bold text-[10px]">🛍️</div>';
+                          }
+                        }}
                       />
                     ) : (
                       <ShoppingBag className="w-6 h-6 text-slate-400" />
@@ -656,12 +662,19 @@ export default function CheckoutPage() {
                     </button>
                     <div className="aspect-square w-full rounded-lg bg-white overflow-hidden relative flex items-center justify-center mb-2">
                       {p.images[0] ? (
-                        <Image
+                        <img
                           src={p.images[0]}
                           alt={p.name}
-                          fill
-                          className="object-contain p-1.5 group-hover:scale-105 transition-transform"
-                          sizes="(max-width: 640px) 150px, 200px"
+                          className="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-emerald-50 text-emerald-700 font-bold text-xs">🛍️</div>';
+                            }
+                          }}
                         />
                       ) : (
                         <ShoppingBag className="w-8 h-8 text-slate-300" />
@@ -1427,15 +1440,16 @@ export default function CheckoutPage() {
                   return (
                     <div key={p.id} className="py-2 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-10 h-10 rounded-lg bg-slate-50 relative overflow-hidden shrink-0 border border-slate-200">
-                          {p.images[0] && (
-                            <Image
+                        <div className="w-10 h-10 rounded-lg bg-slate-50 relative overflow-hidden shrink-0 border border-slate-200 flex items-center justify-center">
+                          {p.images[0] ? (
+                            <img
                               src={p.images[0]}
                               alt={p.name}
-                              fill
-                              className="object-cover"
-                              sizes="40px"
+                              className="w-full h-full object-cover"
+                              loading="lazy"
                             />
+                          ) : (
+                            <ShoppingBag className="w-4 h-4 text-slate-300" />
                           )}
                         </div>
                         <div>
