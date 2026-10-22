@@ -59,3 +59,165 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ========================================================================= */
+/* DARK THEME STYLING                                                        */
+/* ========================================================================= */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0b0f19 !important;
+  color: #f3f4f6 !important;
+}
+
+/* Backgrounds & surfaces */
+html.dark .bg-white {
+  background-color: #111827 !important;
+  color: #f3f4f6;
+}
+
+html.dark .bg-\[\#F8F9FA\],
+html.dark .bg-\[\#F4F8F1\],
+html.dark .bg-gray-50,
+html.dark .bg-slate-50 {
+  background-color: #0b0f19 !important;
+}
+
+html.dark .bg-gray-100,
+html.dark .bg-slate-100 {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-gray-200,
+html.dark .bg-slate-200 {
+  background-color: #374151 !important;
+}
+
+/* Headers & Sticky Bars */
+html.dark header,
+html.dark nav,
+html.dark .bg-white\/90,
+html.dark .bg-white\/95 {
+  background-color: rgba(17, 24, 39, 0.95) !important;
+  border-color: #1f2937 !important;
+}
+
+/* Borders & Dividers */
+html.dark .border-gray-200,
+html.dark .border-gray-150,
+html.dark .border-gray-100,
+html.dark .border-slate-200,
+html.dark .border-slate-150,
+html.dark .border-slate-100,
+html.dark .border-black\/\[0\.04\],
+html.dark .border-black\/\[0\.06\] {
+  border-color: #1f2937 !important;
+}
+
+html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-150 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1f2937 !important;
+}
+
+/* Typography */
+html.dark .text-gray-900,
+html.dark .text-gray-800,
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+  color: #f9fafb !important;
+}
+
+html.dark .text-gray-700,
+html.dark .text-gray-600,
+html.dark .text-slate-700,
+html.dark .text-slate-600 {
+  color: #d1d5db !important;
+}
+
+html.dark .text-gray-500,
+html.dark .text-gray-400,
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #9ca3af !important;
+}
+
+/* Inputs, Selects, and Textareas */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Brand green accents & badges */
+html.dark .text-\[\#0F5132\],
+html.dark .text-emerald-800,
+html.dark .text-emerald-700 {
+  color: #34d399 !important;
+}
+
+html.dark .bg-emerald-50,
+html.dark .bg-emerald-50\/70,
+html.dark .bg-emerald-50\/80,
+html.dark .bg-emerald-50\/60,
+html.dark .bg-emerald-50\/20 {
+  background-color: rgba(6, 78, 59, 0.3) !important;
+  border-color: rgba(5, 150, 105, 0.4) !important;
+}
+
+/* Modals & Dialogs */
+html.dark .bg-white.rounded-t-3xl,
+html.dark .bg-white.rounded-3xl,
+html.dark .bg-white.rounded-2xl {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+}
+
+/* Category squircle pastel tiles in explore directory */
+html.dark [class*="bg-\[#FEF7EC\]"],
+html.dark [class*="bg-\[#E8F5FA\]"],
+html.dark [class*="bg-\[#F3E8FF\]"],
+html.dark [class*="bg-\[#ECFDF5\]"],
+html.dark [class*="bg-\[#FFF1F2\]"],
+html.dark [class*="bg-\[#FEF3C7\]"],
+html.dark [class*="bg-\[#F0FDF4\]"],
+html.dark [class*="bg-\[#EFF6FF\]"] {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+/* Hover feedback */
+html.dark .hover\:bg-gray-50:hover,
+html.dark .hover\:bg-gray-50\/80:hover,
+html.dark .hover\:bg-gray-100:hover {
+  background-color: #1f2937 !important;
+}
+
+/* Shadows */
+html.dark .shadow-2xs,
+html.dark .shadow-xs,
+html.dark .shadow-sm,
+html.dark .shadow-md,
+html.dark .shadow-lg,
+html.dark .shadow-xl,
+html.dark .shadow-2xl {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Subcategory rail aside */
+html.dark aside[aria-label="Subcategories"] {
+  background-color: #111827 !important;
+  border-color: #1f2937 !important;
+}

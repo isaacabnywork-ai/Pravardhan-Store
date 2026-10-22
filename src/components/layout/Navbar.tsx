@@ -34,10 +34,13 @@ import {
   Share2,
   MoreHorizontal,
   Phone,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useCart } from '@/lib/context/CartContext';
 import { useStore } from '@/lib/context/StoreContext';
+import { useTheme } from '@/lib/context/ThemeContext';
 import { Role } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { RoleSwitcherModal } from './RoleSwitcherModal';
@@ -144,6 +147,7 @@ export function Navbar() {
   const { user, role, logout } = useAuth();
   const { totalItemsCount, grandTotal, setIsCartDrawerOpen } = useCart();
   const { storeSettings, products, categories } = useStore();
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -295,6 +299,21 @@ export function Navbar() {
                   </Link>
                 </div>
               )}
+
+              {/* Desktop Theme Toggle Button */}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+                title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+                className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none cursor-pointer"
+              >
+                {resolvedTheme === 'dark' ? (
+                  <Moon className="w-4 h-4 text-indigo-400 stroke-[2.2]" />
+                ) : (
+                  <Sun className="w-4 h-4 text-amber-500 stroke-[2.2]" />
+                )}
+              </button>
 
               {/* Desktop User Account / Profile Button */}
               <button

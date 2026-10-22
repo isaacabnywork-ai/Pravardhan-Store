@@ -10,6 +10,7 @@ import {
   Wallet,
   MessageSquare,
   Sun,
+  Moon,
   SlidersHorizontal,
   ChevronRight,
   ChevronDown,
@@ -31,14 +32,16 @@ import {
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useTheme } from '@/lib/context/ThemeContext';
 
 export default function AccountPage() {
   const router = useRouter();
   const { user, logout, addAddress, deleteAddress, setDefaultAddress } = useAuth();
+  const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
 
   // Dialog & Modal states
   const [activeModal, setActiveModal] = useState<
-    'address' | 'wallet' | 'help' | 'preferences' | 'toast' | null
+    'address' | 'wallet' | 'help' | 'preferences' | 'theme' | 'toast' | null
   >(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -179,22 +182,49 @@ export default function AccountPage() {
           </button>
         </div>
 
-        {/* Appearance Card */}
+        {/* Appearance Card (Light / Dark Theme Switcher) */}
         <div className="bg-white rounded-2xl p-3.5 border border-gray-200/80 flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-2.5">
-            <Sun className="w-4 h-4 text-gray-500" />
-            <span className="text-xs sm:text-sm font-semibold text-gray-900">
-              Appearance
-            </span>
+            {resolvedTheme === 'dark' ? (
+              <Moon className="w-4.5 h-4.5 text-indigo-400 stroke-[2.2]" />
+            ) : (
+              <Sun className="w-4.5 h-4.5 text-amber-500 stroke-[2.2]" />
+            )}
+            <div>
+              <span className="text-xs sm:text-sm font-semibold text-gray-900 block leading-tight">
+                Appearance
+              </span>
+              <span className="text-[10px] text-gray-500 font-medium capitalize">
+                {theme === 'system' ? `System (${resolvedTheme})` : `${theme} mode`}
+              </span>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => showToast('Theme is set to Light')}
-            className="text-xs font-bold text-gray-500 hover:text-gray-900 flex items-center gap-1 uppercase tracking-wider cursor-pointer"
-          >
-            <span>LIGHT</span>
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                toggleTheme();
+                showToast(`Switched to ${resolvedTheme === 'dark' ? 'Light' : 'Dark'} theme`);
+              }}
+              aria-label="Toggle light and dark theme"
+              className="text-xs font-bold text-gray-700 hover:text-emerald-700 flex items-center gap-1.5 uppercase tracking-wider cursor-pointer px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-all active:scale-95 shadow-2xs"
+            >
+              <span>{resolvedTheme.toUpperCase()}</span>
+              {resolvedTheme === 'dark' ? (
+                <Moon className="w-3.5 h-3.5 text-indigo-400" />
+              ) : (
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveModal('theme')}
+              aria-label="Choose appearance theme"
+              className="w-8 h-8 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Content Preferences Card (With Green Border & NEW Badge) */}
@@ -657,6 +687,91 @@ export default function AccountPage() {
             >
               Save Preferences
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ================= THEME / APPEARANCE MODAL ================= */}
+      {activeModal === 'theme' && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200"
+          onClick={() => setActiveModal(null)}
+        >
+          <div
+            className="w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-gray-100 space-y-3.5 animate-in slide-in-from-bottom-5 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+              <h3 className="text-base font-extrabold text-gray-900 flex items-center gap-2">
+                <Sun className="w-5 h-5 text-amber-500" />
+                <span>Appearance Theme</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {[
+                {
+                  id: 'light',
+                  label: 'Light Mode',
+                  description: 'Clean, crisp white storefront',
+                  icon: Sun,
+                  color: 'text-amber-500',
+                },
+                {
+                  id: 'dark',
+                  label: 'Dark Mode',
+                  description: 'Sleek, high-contrast night theme',
+                  icon: Moon,
+                  color: 'text-indigo-400',
+                },
+                {
+                  id: 'system',
+                  label: 'System Default',
+                  description: 'Matches device color scheme',
+                  icon: SlidersHorizontal,
+                  color: 'text-emerald-600',
+                },
+              ].map((opt) => {
+                const isSelected = theme === opt.id;
+                const Icon = opt.icon;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setTheme(opt.id as any);
+                      setActiveModal(null);
+                      showToast(`Appearance set to ${opt.label}`);
+                    }}
+                    className={`w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-emerald-600 bg-emerald-50/70 text-emerald-950 font-bold shadow-2xs'
+                        : 'border-gray-200 hover:bg-gray-50 text-gray-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+                        <Icon className={`w-4.5 h-4.5 ${opt.color}`} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold">{opt.label}</p>
+                        <p className="text-[11px] text-gray-500 font-medium">{opt.description}</p>
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 ring-4 ring-emerald-100" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
