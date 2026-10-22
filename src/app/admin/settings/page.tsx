@@ -53,7 +53,7 @@ export default function AdminSettingsPage() {
             Store Rules & Operational Settings
           </h1>
           <p className="text-xs text-slate-500">
-            Configure business rules, minimum cart value, delivery charges, and local store parameters (Spec Section 7 & 8)
+            Configure business rules, minimum cart value, delivery charges, and local dark store parameters
           </p>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function AdminSettingsPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Business Rules (Spec Section 7 & 8) */}
+        {/* Core Commercial & Checkout Rules */}
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
           <div className="pb-3 border-b border-slate-100">
             <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
@@ -97,7 +97,7 @@ export default function AdminSettingsPage() {
                 className="w-full p-2.5 rounded-xl border border-amber-300 font-black text-base bg-white text-slate-900"
               />
               <p className="text-[10px] text-amber-800">
-                Spec Section 8: Orders under this value cannot proceed to checkout.
+                Enforced server-side: Orders below this basket value cannot proceed to checkout.
               </p>
             </div>
 
@@ -117,7 +117,7 @@ export default function AdminSettingsPage() {
                 className="w-full p-2.5 rounded-xl border border-emerald-300 font-black text-base bg-white text-slate-900"
               />
               <p className="text-[10px] text-emerald-800">
-                Spec Section 7: Currently set to ₹0. Can be updated dynamically.
+                Standard dark store delivery fee applied when order is below free delivery threshold.
               </p>
             </div>
 

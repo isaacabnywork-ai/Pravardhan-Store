@@ -15,6 +15,9 @@ import {
   ShieldAlert,
   Menu,
   X,
+  BarChart3,
+  Users,
+  Layers,
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useStore } from '@/lib/context/StoreContext';
@@ -33,168 +36,253 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const lowStockCount = products.flatMap((p) => p.variants).filter((v) => v.stock <= 5).length;
 
-  const navLinks = [
+  const navGroups = [
     {
-      title: 'Dashboard Overview',
-      href: '/admin',
-      icon: LayoutDashboard,
-      roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER', 'ORDER_MANAGER'],
+      group: 'Fulfillment & Ops',
+      links: [
+        {
+          title: 'Command Center',
+          href: '/admin',
+          icon: LayoutDashboard,
+          roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER', 'ORDER_MANAGER', 'DELIVERY_STAFF'],
+        },
+        {
+          title: 'Orders & Dispatch',
+          href: '/admin/orders',
+          icon: PackageCheck,
+          badge: pendingOrdersCount > 0 ? `${pendingOrdersCount} new` : undefined,
+          badgeColor: 'bg-emerald-500 text-white font-bold',
+          roles: ['SUPER_ADMIN', 'ORDER_MANAGER'],
+        },
+        {
+          title: 'Delivery & Fleet',
+          href: '/admin/delivery',
+          icon: Truck,
+          roles: ['SUPER_ADMIN', 'DELIVERY_STAFF', 'ORDER_MANAGER'],
+        },
+      ],
     },
     {
-      title: 'Products & Variants',
-      href: '/admin/products',
-      icon: Store,
-      badge: `${products.length} Items`,
-      roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER'],
+      group: 'Catalog & Inventory',
+      links: [
+        {
+          title: 'Products & SKUs',
+          href: '/admin/products',
+          icon: Layers,
+          badge: `${products.length}`,
+          roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER'],
+        },
+        {
+          title: 'Stock Ledger',
+          href: '/admin/inventory',
+          icon: Boxes,
+          badge: lowStockCount > 0 ? `${lowStockCount} alert` : undefined,
+          badgeColor: 'bg-amber-500 text-white font-bold',
+          roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER'],
+        },
+        {
+          title: 'Promotions & Coupons',
+          href: '/admin/promotions',
+          icon: Tag,
+          roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER'],
+        },
+      ],
     },
     {
-      title: 'Real-Time Inventory',
-      href: '/admin/inventory',
-      icon: Boxes,
-      badge: lowStockCount > 0 ? `${lowStockCount} low` : undefined,
-      badgeColor: 'bg-amber-100 text-amber-800',
-      roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER'],
+      group: 'Intelligence & Growth',
+      links: [
+        {
+          title: 'Analytics & GMV',
+          href: '/admin/analytics',
+          icon: BarChart3,
+          roles: ['SUPER_ADMIN', 'ORDER_MANAGER'],
+        },
+      ],
     },
     {
-      title: 'Orders & Fulfillment',
-      href: '/admin/orders',
-      icon: PackageCheck,
-      badge: pendingOrdersCount > 0 ? `${pendingOrdersCount} new` : undefined,
-      badgeColor: 'bg-emerald-100 text-emerald-800 font-bold',
-      roles: ['SUPER_ADMIN', 'ORDER_MANAGER'],
-    },
-    {
-      title: 'Delivery & Logistics',
-      href: '/admin/delivery',
-      icon: Truck,
-      roles: ['SUPER_ADMIN', 'DELIVERY_STAFF', 'ORDER_MANAGER'],
-    },
-    {
-      title: 'Promotions & Coupons',
-      href: '/admin/promotions',
-      icon: Tag,
-      roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER'],
-    },
-    {
-      title: 'Store Settings',
-      href: '/admin/settings',
-      icon: Settings,
-      roles: ['SUPER_ADMIN'],
+      group: 'Administration',
+      links: [
+        {
+          title: 'Staff & Team',
+          href: '/admin/staff',
+          icon: Users,
+          roles: ['SUPER_ADMIN'],
+        },
+        {
+          title: 'Store Settings',
+          href: '/admin/settings',
+          icon: Settings,
+          roles: ['SUPER_ADMIN'],
+        },
+      ],
     },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
-      {/* Top Admin Bar */}
-      <header className="sticky top-0 z-40 bg-slate-900 text-white border-b border-slate-800 px-4 py-2.5 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-100/70 flex flex-col font-sans">
+      {/* Top Admin Header Bar - Full Width */}
+      <header className="sticky top-0 z-40 w-full bg-slate-900 text-white border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-            className="lg:hidden p-1.5 rounded-lg bg-slate-800 text-slate-300"
+            className="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+            aria-label="Toggle Navigation"
           >
             {isMobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white shadow-sm">
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center font-bold text-white shadow-md shadow-emerald-950/20">
               <Store className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-extrabold text-sm text-white">Pravdhan Store</span>
-              <span className="text-[10px] text-emerald-400 font-bold block uppercase tracking-wider">
-                Back-Office Portal
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-sm tracking-tight text-white">
+                  Pravdhan Store
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Dark Store #01
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-medium">
+                Operations & Management Console
+              </p>
             </div>
           </Link>
         </div>
 
+        {/* Center / Right Badges */}
         <div className="flex items-center gap-3">
-          {/* Back to Customer Storefront */}
+          {/* Warehouse Status Pill */}
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-slate-300 font-semibold">{storeSettings.serviceArea}</span>
+            <span className="text-slate-500">•</span>
+            <span className="text-emerald-400 font-bold">Open for Dispatch</span>
+          </div>
+
+          {/* Customer Storefront Link */}
           <Link
             href="/"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Storefront View</span>
+            <span className="hidden sm:inline">Customer Storefront</span>
+            <span className="sm:hidden">Store</span>
           </Link>
 
           {/* Role Switcher Pill */}
           <button
             onClick={() => setIsRoleModalOpen(true)}
-            className="flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold text-emerald-300 transition-colors"
+            className="flex items-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-3.5 py-1.5 rounded-xl text-xs font-bold text-emerald-300 transition-all shadow-xs"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Role: {role.replace(/_/g, ' ')}</span>
-            <ShieldAlert className="w-3 h-3 text-amber-400 ml-1" />
+            <ShieldAlert className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{role.replace(/_/g, ' ')}</span>
+            <span className="hidden sm:inline text-[10px] bg-emerald-400/20 text-emerald-300 px-1.5 py-0.5 rounded">
+              Switch
+            </span>
           </button>
         </div>
       </header>
 
-      {/* Main Body */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto">
+      {/* Main Full-Width Body */}
+      <div className="flex-1 flex w-full">
         {/* Left Navigation Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 top-14 z-30 w-64 bg-white border-r border-slate-200 p-4 transform transition-transform duration-200 lg:static lg:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 top-15 z-30 w-64 lg:w-72 bg-white border-r border-slate-200/90 flex flex-col justify-between transform transition-transform duration-200 lg:static lg:translate-x-0 ${
             isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 mb-4">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Operating Warehouse
-            </p>
-            <p className="text-xs font-bold text-slate-800">{storeSettings.serviceArea}</p>
-            <p className="text-[10px] text-emerald-700 font-medium">
-              Min Order: ₹{storeSettings.minimumOrderValue} • Delivery: ₹{storeSettings.defaultDeliveryCharge}
-            </p>
+          <div className="p-4 space-y-6 overflow-y-auto">
+            {/* Dark Store Hub Info Card */}
+            <div className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-sm border border-slate-800">
+              <div className="flex items-center justify-between text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                <span>Active Dark Store</span>
+                <span className="bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded">
+                  Live Sync
+                </span>
+              </div>
+              <p className="text-xs font-bold text-white">{storeSettings.storeName}</p>
+              <p className="text-[11px] text-slate-300 mt-0.5">{storeSettings.serviceArea}</p>
+              <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-[10px] text-slate-300">
+                <span>Min Order: <strong className="text-white">₹{storeSettings.minimumOrderValue}</strong></span>
+                <span>Delivery: <strong className="text-emerald-300">₹{storeSettings.defaultDeliveryCharge}</strong></span>
+              </div>
+            </div>
+
+            {/* Nav Groups */}
+            <div className="space-y-5">
+              {navGroups.map((group) => (
+                <div key={group.group} className="space-y-1">
+                  <p className="px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                    {group.group}
+                  </p>
+                  <div className="space-y-0.5">
+                    {group.links.map((link) => {
+                      const isActive = pathname === link.href;
+                      const Icon = link.icon;
+                      const hasAccess = link.roles.includes(role);
+
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          onClick={() => setIsMobileSidebarOpen(false)}
+                          className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                            isActive
+                              ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-700/20'
+                              : hasAccess
+                              ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                              : 'text-slate-400 hover:bg-slate-50 opacity-60'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Icon
+                              className={`w-4 h-4 ${
+                                isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-700'
+                              }`}
+                            />
+                            <span>{link.title}</span>
+                          </div>
+                          {link.badge && (
+                            <span
+                              className={`text-[10px] px-2 py-0.5 rounded-full ${
+                                isActive
+                                  ? 'bg-white/25 text-white'
+                                  : link.badgeColor || 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {link.badge}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <nav className="space-y-1">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              const Icon = link.icon;
-              const hasAccess = link.roles.includes(role);
-
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setIsMobileSidebarOpen(false)}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${
-                    isActive
-                      ? 'bg-emerald-800 text-white shadow-sm'
-                      : hasAccess
-                      ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
-                      : 'text-slate-400 hover:bg-slate-50 opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className="w-4 h-4" />
-                    <span>{link.title}</span>
-                  </div>
-                  {link.badge && (
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full ${
-                        isActive ? 'bg-white/20 text-white' : link.badgeColor || 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {link.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="mt-8 p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900">
-            <span className="font-bold block mb-0.5">Role Permission Test</span>
-            <p className="text-[11px] text-amber-800 leading-snug">
-              You are currently viewing as <strong>{role}</strong>. Use the Role Switcher at the top right to test Super Admin, Product Manager, Order Manager, or Delivery Staff privileges.
-            </p>
+          {/* Sidebar Footer with Role Switch Info */}
+          <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/80 text-xs">
+              <div className="flex items-center justify-between font-bold text-amber-900 mb-1">
+                <span>Testing Mode</span>
+                <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded">
+                  {role}
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-snug">
+                Switch roles above to test Super Admin, Manager, and Rider views.
+              </p>
+            </div>
           </div>
         </aside>
 
-        {/* Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        {/* Content Area - Full Width with Breathing Room */}
+        <main className="flex-1 min-w-0 p-5 sm:p-7 lg:p-9 xl:p-10 overflow-y-auto">
           {role === 'CUSTOMER' && (
             <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
               <div className="flex items-start gap-3">

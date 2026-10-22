@@ -79,10 +79,10 @@ def run_suite():
     variant_id = prods['data'][0]['primaryVariant']['id']
     variant_name = prods['data'][0]['name']
 
-    status, cart = req(f"{BASE}/cart/items", "POST", {"variantId": variant_id, "quantity": 2}, token=cust_token)
+    status, cart = req(f"{BASE}/cart/items", "POST", {"variantId": variant_id, "quantity": 4}, token=cust_token)
     assert status in [200, 201], f"Cart add failed: {cart}"
     grand = cart['data']['summary']['grandTotal'] / 100
-    print(f"✅ 6. Cart & Pricing: Added 2x '{variant_name}' (Total: ₹{grand:.2f})")
+    print(f"✅ 6. Cart & Pricing: Added 4x '{variant_name}' (Total: ₹{grand:.2f})")
 
     # 7. Order Placement
     order_payload = {

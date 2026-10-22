@@ -219,7 +219,7 @@ export default function AdminProductsPage() {
             Products & Multi-Variant Catalog
           </h1>
           <p className="text-xs text-slate-500">
-            Maintain SKUs, weight packs, pricing, and active statuses (Spec Section 4 & 14)
+            Maintain SKUs, weight packs, pricing, image media, and active storefront visibility
           </p>
         </div>
 
@@ -463,7 +463,7 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              {/* Variants Section (Spec Section 4) */}
+              {/* Variants Section */}
               <div className="pt-3 border-t border-slate-200">
                 <div className="flex items-center justify-between mb-3">
                   <div>

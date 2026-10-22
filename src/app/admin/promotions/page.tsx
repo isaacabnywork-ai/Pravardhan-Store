@@ -70,7 +70,7 @@ export default function AdminPromotionsPage() {
             Promotions & Coupons Engine
           </h1>
           <p className="text-xs text-slate-500">
-            Create and maintain promotional discount campaigns and coupon rules (Spec Section 12)
+            Create and maintain promotional discount campaigns, promo codes, and basket value rules
           </p>
         </div>
 
