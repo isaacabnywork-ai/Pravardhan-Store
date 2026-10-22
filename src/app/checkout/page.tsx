@@ -14,13 +14,10 @@ import {
   Tag,
   CheckCircle2,
   ChevronRight,
-  ChevronDown,
-  Gift,
   Bike,
   Receipt,
   ShoppingBag,
   ShoppingCart,
-  Building2,
   CreditCard,
   Banknote,
   Wallet,
@@ -31,7 +28,6 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useCart } from '@/lib/context/CartContext';
 import { useStore } from '@/lib/context/StoreContext';
@@ -54,8 +50,6 @@ export default function CheckoutPage() {
     amountNeededForFreeDelivery,
     deliveryTip,
     setDeliveryTip,
-    donationAmount,
-    setDonationAmount,
     handlingFee,
     smallCartFee,
     grandTotal,
@@ -81,17 +75,9 @@ export default function CheckoutPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [wishlistItems, setWishlistItems] = useState<Record<string, boolean>>({});
 
-  // GSTIN accordion
-  const [isGstinOpen, setIsGstinOpen] = useState(false);
-  const [gstinNumber, setGstinNumber] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [gstinSaved, setGstinSaved] = useState(false);
-
-  // Custom Tip & Donation inputs
+  // Custom Tip inputs
   const [isCustomTipOpen, setIsCustomTipOpen] = useState(false);
   const [customTipInput, setCustomTipInput] = useState('');
-  const [isCustomDonationOpen, setIsCustomDonationOpen] = useState(false);
-  const [customDonationInput, setCustomDonationInput] = useState('');
 
   // Coupon input inside modal
   const [couponCodeInput, setCouponCodeInput] = useState('');
@@ -260,11 +246,8 @@ export default function CheckoutPage() {
         slotTime: selectedSlot?.timeSlot || 'Express 8-min Delivery',
         paymentMethod,
         tipAmount: deliveryTip,
-        donationAmount,
         handlingFee,
         smallCartFee,
-        gstin: gstinSaved ? gstinNumber : undefined,
-        businessName: gstinSaved ? businessName : undefined,
         subtotal,
         deliveryCharge,
         couponDiscount,
@@ -445,7 +428,6 @@ export default function CheckoutPage() {
           </Link>
         </main>
         <Footer />
-        <MobileBottomNav />
       </div>
     );
   }
@@ -902,17 +884,6 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {/* Feeding India Donation */}
-            {donationAmount > 0 && (
-              <div className="flex items-center justify-between text-rose-700 font-bold">
-                <div className="flex items-center gap-2">
-                  <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-                  <span>Feeding India Donation</span>
-                </div>
-                <span>+₹{donationAmount}</span>
-              </div>
-            )}
-
             {/* Delivery Partner Tip */}
             {deliveryTip > 0 && (
               <div className="flex items-center justify-between text-amber-700 font-bold">
@@ -936,179 +907,7 @@ export default function CheckoutPage() {
           </div>
         </section>
 
-        {/* 4. Add GSTIN Card */}
-        <section className="bg-white rounded-2xl p-3.5 shadow-xs border border-slate-200/80">
-          <div
-            onClick={() => setIsGstinOpen(!isGstinOpen)}
-            className="flex items-center justify-between cursor-pointer select-none"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                <Building2 className="w-4 h-4 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-xs font-black text-slate-900">
-                  {gstinSaved ? `GSTIN: ${gstinNumber}` : 'Add GSTIN'}
-                </h3>
-                <p className="text-[11px] text-slate-500 font-medium">
-                  {gstinSaved ? businessName : 'Claim GST input credit up to 18% on your order'}
-                </p>
-              </div>
-            </div>
-            <ChevronRight
-              className={`w-4 h-4 text-slate-400 transition-transform ${
-                isGstinOpen ? 'rotate-90' : ''
-              }`}
-            />
-          </div>
-
-          {isGstinOpen && (
-            <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">
-              <input
-                type="text"
-                placeholder="Enter 15-digit GSTIN (e.g. 06AAAAA0000A1Z5)"
-                value={gstinNumber}
-                onChange={(e) => setGstinNumber(e.target.value.toUpperCase())}
-                maxLength={15}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl uppercase font-mono tracking-wider focus:outline-none focus:border-emerald-600"
-              />
-              <input
-                type="text"
-                placeholder="Registered Legal Business Name"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600"
-              />
-              <div className="flex gap-2 justify-end pt-1">
-                {gstinSaved && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setGstinNumber('');
-                      setBusinessName('');
-                      setGstinSaved(false);
-                      setIsGstinOpen(false);
-                    }}
-                    className="px-3 py-1.5 text-xs text-rose-600 font-bold hover:underline"
-                  >
-                    Clear GSTIN
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (gstinNumber.trim().length >= 10) {
-                      setGstinSaved(true);
-                      setIsGstinOpen(false);
-                      showToast('GST details saved successfully');
-                    } else {
-                      showToast('Please enter a valid GSTIN');
-                    }
-                  }}
-                  className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl"
-                >
-                  Save GSTIN
-                </button>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* 5. Join us at Feeding India Banner */}
-        <section className="bg-gradient-to-r from-sky-50 via-teal-50 to-emerald-50 rounded-2xl p-4 shadow-xs border border-sky-100 relative overflow-hidden">
-          <div className="flex items-start justify-between relative z-10">
-            <div className="max-w-[70%]">
-              <h3 className="text-xs font-black text-slate-900 flex items-center gap-1">
-                <span>Join us at feeding india</span>
-                <span className="text-rose-500">❤</span>
-                <ChevronRight className="w-3.5 h-3.5 text-slate-700" />
-              </h3>
-              <p className="text-[11px] text-slate-600 font-medium mt-0.5 leading-snug">
-                Together, we can fuel young minds to grow, learn, and thrive
-              </p>
-            </div>
-            {/* Playful illustration tag */}
-            <div className="text-right">
-              <span className="text-2xl select-none">🪁</span>
-            </div>
-          </div>
-
-          <div className="mt-3 pt-2">
-            <p className="text-[11px] text-slate-500 font-medium mb-1.5 flex items-center gap-1">
-              <span>Donate with this order</span>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
-            </p>
-            <div className="flex gap-2">
-              {[
-                { val: 5, label: '₹5' },
-                { val: 10, label: '₹10' },
-                { val: 15, label: '₹15', badge: '1 MEAL' },
-              ].map((item) => {
-                const isSelected = donationAmount === item.val;
-                return (
-                  <button
-                    key={item.val}
-                    type="button"
-                    onClick={() => {
-                      setDonationAmount(isSelected ? 0 : item.val);
-                      setIsCustomDonationOpen(false);
-                    }}
-                    className={`flex-1 relative py-2 rounded-xl text-xs font-black border transition-all ${
-                      isSelected
-                        ? 'bg-white text-emerald-800 border-emerald-600 shadow-sm ring-2 ring-emerald-500/20'
-                        : 'bg-white/80 text-slate-700 border-slate-200 hover:bg-white'
-                    }`}
-                  >
-                    {item.badge && (
-                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-emerald-100 text-emerald-800 text-[9px] font-black px-1.5 py-0.2 rounded-full border border-emerald-300 whitespace-nowrap">
-                        {item.badge}
-                      </span>
-                    )}
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                onClick={() => setIsCustomDonationOpen(!isCustomDonationOpen)}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${
-                  isCustomDonationOpen || (donationAmount > 0 && ![5, 10, 15].includes(donationAmount))
-                    ? 'bg-white text-emerald-800 border-emerald-600 shadow-sm'
-                    : 'bg-white/80 text-slate-700 border-slate-200 hover:bg-white'
-                }`}
-              >
-                Custom
-              </button>
-            </div>
-
-            {isCustomDonationOpen && (
-              <div className="mt-2 flex gap-2">
-                <input
-                  type="number"
-                  placeholder="Enter donation amount (₹)"
-                  value={customDonationInput}
-                  onChange={(e) => setCustomDonationInput(e.target.value)}
-                  className="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const amt = Number(customDonationInput);
-                    if (amt > 0) {
-                      setDonationAmount(amt);
-                      showToast(`Added ₹${amt} donation`);
-                    }
-                  }}
-                  className="px-3 py-1.5 bg-emerald-700 text-white rounded-xl text-xs font-bold hover:bg-emerald-800"
-                >
-                  Apply
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* 6. Tip your delivery partner Card */}
+        {/* Tip your delivery partner Card */}
         <section className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80">
           <div className="flex items-start justify-between">
             <div className="max-w-[70%]">
@@ -1188,28 +987,7 @@ export default function CheckoutPage() {
           )}
         </section>
 
-        {/* 7. Gift Packaging Card */}
-        <section className="bg-white rounded-2xl p-3.5 shadow-xs border border-slate-200/80 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-            <Gift className="w-4 h-4 text-purple-600" />
-          </div>
-          <div>
-            <h4 className="text-xs font-black text-slate-900">Gift Packaging</h4>
-            <p className="text-[11px] text-slate-400 font-medium">
-              Apologies, currently unavailable at this location
-            </p>
-          </div>
-        </section>
-
-        {/* 8. Cancellation Policy Card */}
-        <section className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80">
-          <h4 className="text-xs font-black text-slate-900">Cancellation Policy</h4>
-          <p className="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">
-            Once order placed, any cancellation may result in a fee. In case of unexpected delays leading to order cancellation, a complete refund will be provided.
-          </p>
-        </section>
-
-        {/* 9. Delivery Address & Slot Picker Section */}
+        {/* Delivery Address & Slot Picker Section */}
         <section ref={checkoutSectionRef} className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-black text-slate-900">Delivery Address</h2>
