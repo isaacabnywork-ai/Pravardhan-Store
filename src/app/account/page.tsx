@@ -14,27 +14,16 @@ import {
   ChevronRight,
   ChevronDown,
   BookOpen,
-  Coffee,
   Heart,
-  FileText,
-  Gift,
-  FileCheck,
   CreditCard,
-  Award,
-  HeartHandshake,
-  Receipt,
   Share2,
   Info,
-  Store,
   Lock,
   Bell,
-  Bot,
   LogOut,
   Plus,
   Trash2,
-  Check,
   X,
-  MapPin,
   Home,
   Building,
   Mail,
@@ -42,11 +31,10 @@ import {
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth } from '@/lib/context/AuthContext';
-import { formatPrice } from '@/lib/utils';
 
 export default function AccountPage() {
   const router = useRouter();
-  const { user, role, logout, addAddress, deleteAddress, setDefaultAddress } = useAuth();
+  const { user, logout, addAddress, deleteAddress, setDefaultAddress } = useAuth();
 
   // Dialog & Modal states
   const [activeModal, setActiveModal] = useState<
@@ -248,20 +236,6 @@ export default function AccountPage() {
               <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
             </button>
 
-            <button
-              type="button"
-              onClick={() => showToast('Bookmarked recipes list will appear here!')}
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Coffee className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  Bookmarked recipes
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-
             <Link
               href="/shop"
               className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group"
@@ -274,48 +248,6 @@ export default function AccountPage() {
               </div>
               <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
             </Link>
-
-            <button
-              type="button"
-              onClick={() => showToast('GST Details registered for Business Invoicing')}
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <FileText className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  GST details
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => showToast('E-gift card balance: ₹0. Enter code to redeem')}
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Gift className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  E-gift cards
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => showToast('No active prescriptions uploaded')}
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <FileCheck className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  Your prescriptions
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
           </div>
         </div>
 
@@ -352,87 +284,10 @@ export default function AccountPage() {
               </div>
               <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
             </button>
-
-            <button
-              type="button"
-              onClick={() => showToast('Pravdhan Co-branded Card: Earn 5% cashback on every grocery cart!')}
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  Pravdhan SBI Credit Card
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-
-            <Link
-              href="/deals"
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group"
-            >
-              <div className="flex items-center gap-3">
-                <Gift className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  Claim Gift card
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => showToast('Rewards balance: 250 Coins available')}
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Award className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  Your collected rewards
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
           </div>
         </div>
 
-        {/* ================= SECTION 3: PRAVDHAN FOUNDATION ================= */}
-        <div className="space-y-2 pt-1">
-          <h3 className="text-xs sm:text-sm font-extrabold text-gray-900">
-            Pravdhan Foundation
-          </h3>
-          <div className="bg-white rounded-2xl border border-gray-200/80 divide-y divide-gray-100 overflow-hidden shadow-2xs">
-            <button
-              type="button"
-              onClick={() => showToast('Over 12,000 daily meals provided in Sector 14 & Gurugram')}
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <HeartHandshake className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  Feeding India impact
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => showToast('Donation 80G tax receipt will be sent to your email')}
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Receipt className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  Get donation receipt
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-        </div>
-
-        {/* ================= SECTION 4: OTHER INFORMATION ================= */}
+        {/* ================= SECTION 3: OTHER INFORMATION ================= */}
         <div className="space-y-2 pt-1">
           <h3 className="text-xs sm:text-sm font-extrabold text-gray-900">
             Other Information
@@ -468,20 +323,6 @@ export default function AccountPage() {
 
             <button
               type="button"
-              onClick={() => showToast('Seller Partner Program: email partner@pravdhanstore.in')}
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Store className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  Sell on Pravdhan
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-
-            <button
-              type="button"
               onClick={() => showToast('Strict RBI data compliance. No card credentials stored.')}
               className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
             >
@@ -503,20 +344,6 @@ export default function AccountPage() {
                 <Bell className="w-4 h-4 text-gray-600" />
                 <span className="text-xs sm:text-sm font-medium text-gray-800">
                   Notification preferences
-                </span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => showToast('You are enrolled in the Gurugram early preview beta program')}
-              className="w-full p-3.5 flex items-center justify-between hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Bot className="w-4 h-4 text-gray-600" />
-                <span className="text-xs sm:text-sm font-medium text-gray-800">
-                  Manage beta program
                 </span>
               </div>
               <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
