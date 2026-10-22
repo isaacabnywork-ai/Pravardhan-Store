@@ -92,6 +92,7 @@ model Store {
 
   inventory             Inventory[]
   movements             InventoryMovement[]
+  serviceAreas          ServiceArea[]
 
   @@map("stores")
 }
@@ -239,4 +240,36 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model ServiceArea {
+  id           String   @id @default(cuid())
+  storeId      String
+  name         String
+  pincode      String
+  deliveryFee  Int      @default(0) // In paise
+  minOrder     Int      @default(10000) // In paise (₹100)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, pincode])
+  @@index([pincode])
+  @@map("store_service_areas")
+}
+
+model OtpChallenge {
+  id         String   @id @default(cuid())
+  phone      String
+  codeHash   String
+  attempts   Int      @default(0)
+  isUsed     Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([phone])
+  @@index([expiresAt])
+  @@map("otp_challenges")
 }

@@ -42,6 +42,35 @@ async function main() {
     },
   });
 
+  // 1b. Seed Service Areas for Gurugram
+  console.log('🗺️  Seeding delivery service areas...');
+  const serviceAreas = [
+    { pincode: '122001', name: 'Sector 14 & Old Gurugram' },
+    { pincode: '122002', name: 'DLF Phase 1 & 2' },
+    { pincode: '122003', name: 'Sushant Lok & Sector 43' },
+    { pincode: '122018', name: 'Model Town & Civil Lines' },
+  ];
+
+  for (const sa of serviceAreas) {
+    await prisma.serviceArea.upsert({
+      where: {
+        storeId_pincode: {
+          storeId: store.id,
+          pincode: sa.pincode,
+        },
+      },
+      update: { name: sa.name, isActive: true },
+      create: {
+        storeId: store.id,
+        pincode: sa.pincode,
+        name: sa.name,
+        deliveryFee: 0,
+        minOrder: 10000,
+        isActive: true,
+      },
+    });
+  }
+
   // 2. Seed Staff Accounts with Argon2/Bcrypt Password Hashes
   console.log('👤 Seeding staff role accounts...');
   const salt = await bcrypt.genSalt(12);
