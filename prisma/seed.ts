@@ -269,6 +269,66 @@ async function main() {
     }
   }
 
+  // 5. Seed Promotional Coupons
+  console.log('🎟️  Seeding promotional coupons...');
+  const coupons = [
+    {
+      code: 'WELCOME100',
+      title: 'Flat ₹100 Off on First Order',
+      description: 'Get ₹100 flat discount on orders above ₹499.',
+      discountType: 'FLAT' as const,
+      discountValue: 10000, // ₹100 in paise
+      minOrderValue: 49900, // ₹499 in paise
+      validTill: new Date('2028-12-31'),
+    },
+    {
+      code: 'PRAVDHAN20',
+      title: '20% Off Daily Essentials',
+      description: 'Get 20% discount up to ₹100 on orders above ₹299.',
+      discountType: 'PERCENTAGE' as const,
+      discountValue: 20,
+      maxDiscount: 10000, // ₹100 in paise
+      minOrderValue: 29900, // ₹299 in paise
+      validTill: new Date('2028-12-31'),
+    },
+    {
+      code: 'FREEDEL',
+      title: 'Free Express Delivery',
+      description: 'Enjoy zero delivery fees on orders above ₹199.',
+      discountType: 'FLAT' as const,
+      discountValue: 2500, // ₹25 in paise
+      minOrderValue: 19900,
+      validTill: new Date('2028-12-31'),
+    },
+  ];
+
+  for (const c of coupons) {
+    await prisma.coupon.upsert({
+      where: { code: c.code },
+      update: {
+        title: c.title,
+        description: c.description,
+        discountType: c.discountType,
+        discountValue: c.discountValue,
+        minOrderValue: c.minOrderValue,
+        maxDiscount: c.maxDiscount,
+        validTill: c.validTill,
+        isActive: true,
+      },
+      create: {
+        code: c.code,
+        title: c.title,
+        description: c.description,
+        discountType: c.discountType,
+        discountValue: c.discountValue,
+        minOrderValue: c.minOrderValue,
+        maxDiscount: c.maxDiscount,
+        validTill: c.validTill,
+        isActive: true,
+      },
+    });
+  }
+
   console.log('✅ Pravdhan Store database seeded successfully!');
 }
 

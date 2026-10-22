@@ -47,6 +47,10 @@ model User {
   addresses    Address[]
   auditLogs    AuditLog[]
   movements    InventoryMovement[]
+  cart         Cart?
+  orders       Order[]
+  deliveries   Order[]             @relation("StaffDeliveries")
+  redemptions  CouponRedemption[]
 
   @@map("users")
 }
@@ -93,6 +97,7 @@ model Store {
   inventory             Inventory[]
   movements             InventoryMovement[]
   serviceAreas          ServiceArea[]
+  orders                Order[]
 
   @@map("stores")
 }
@@ -155,6 +160,7 @@ model Product {
   category      Category        @relation(fields: [categoryId], references: [id])
   subcategory   Subcategory?    @relation(fields: [subcategoryId], references: [id])
   variants      ProductVariant[]
+  orderItems    OrderItem[]
 
   @@index([categoryId])
   @@index([subcategoryId])
@@ -178,6 +184,8 @@ model ProductVariant {
   product       Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
   inventory     Inventory[]
   movements     InventoryMovement[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
 
   @@index([productId])
   @@map("product_variants")
@@ -272,4 +280,209 @@ model OtpChallenge {
   @@index([phone])
   @@index([expiresAt])
   @@map("otp_challenges")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FLAT
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PLACED
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  COD
+  UPI
+  CARD
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Cart {
+  id         String     @id @default(cuid())
+  userId     String?    @unique
+  sessionId  String?    @unique
+  couponCode String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  items      CartItem[]
+  user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("carts")
+}
+
+model CartItem {
+  id         String         @id @default(cuid())
+  cartId     String
+  variantId  String
+  quantity   Int            @default(1)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  cart       Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variant    ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, variantId])
+  @@index([cartId])
+  @@index([variantId])
+  @@map("cart_items")
+}
+
+model Coupon {
+  id            String         @id @default(cuid())
+  code          String         @unique
+  title         String
+  description   String
+  discountType  DiscountType   @default(PERCENTAGE)
+  discountValue Int            // In paise or percentage (e.g. 20 for 20%, 5000 for ₹50)
+  minOrderValue Int            @default(10000) // In paise (₹100 = 10000)
+  maxDiscount   Int?           // In paise
+  usageLimit    Int?
+  perUserLimit  Int            @default(1)
+  validTill     DateTime
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  redemptions   CouponRedemption[]
+
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id        String   @id @default(cuid())
+  couponId  String
+  userId    String
+  orderId   String
+  discount  Int      // Saved discount amount in paise
+  createdAt DateTime @default(now())
+
+  coupon    Coupon   @relation(fields: [couponId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([couponId])
+  @@index([userId])
+  @@index([orderId])
+  @@map("coupon_redemptions")
+}
+
+model Order {
+  id                 String               @id @default(cuid())
+  orderNumber        String               @unique // e.g. PRV-2026-XXXX
+  userId             String
+  storeId            String
+  deliveryStaffId    String?
+  customerName       String
+  customerPhone      String
+  
+  deliveryAddress    Json                 // Immutable snapshot
+  deliverySlot       String               @default("Instant (10-15 mins)")
+  
+  subtotal           Int                  // in paise
+  discount           Int                  @default(0)
+  couponCode         String?
+  couponDiscount     Int                  @default(0)
+  deliveryFee        Int                  @default(0)
+  deliveryTip        Int                  @default(0)
+  handlingFee        Int                  @default(0)
+  grandTotal         Int                  // in paise
+  
+  paymentMethod      PaymentMethod        @default(COD)
+  paymentStatus      PaymentStatus        @default(PENDING)
+  orderStatus        OrderStatus          @default(PLACED)
+  notes              String?
+  cancellationReason String?
+  
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  user               User                 @relation(fields: [userId], references: [id])
+  store              Store                @relation(fields: [storeId], references: [id])
+  deliveryStaff      User?                @relation("StaffDeliveries", fields: [deliveryStaffId], references: [id])
+  items              OrderItem[]
+  statusHistory      OrderStatusHistory[]
+  payments           Payment[]
+  redemptions        CouponRedemption[]
+
+  @@index([userId])
+  @@index([storeId])
+  @@index([orderStatus])
+  @@index([orderNumber])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String         @id @default(cuid())
+  orderId        String
+  productId      String
+  variantId      String
+  productName    String
+  variantTitle   String
+  brand          String
+  unit           String
+  purchasedPrice Int            // Preserved historical price in paise
+  purchasedMrp   Int            // Preserved historical MRP in paise
+  quantity       Int
+  image          String?
+  createdAt      DateTime       @default(now())
+
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product        @relation(fields: [productId], references: [id])
+  variant        ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  status    OrderStatus
+  label     String
+  note      String?
+  actorId   String?
+  createdAt DateTime    @default(now())
+
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("order_status_history")
+}
+
+model Payment {
+  id                 String        @id @default(cuid())
+  orderId            String
+  paymentMethod      PaymentMethod
+  paymentStatus      PaymentStatus @default(PENDING)
+  amount             Int           // in paise
+  gatewayOrderId     String?       // Razorpay order ID
+  gatewayPaymentId   String?       // Razorpay payment ID
+  gatewaySignature   String?
+  gatewayRawResponse Json?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  order              Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([gatewayOrderId])
+  @@map("payments")
 }
