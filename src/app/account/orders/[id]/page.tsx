@@ -16,6 +16,7 @@ import {
   ChevronRight,
   User,
   ShoppingBag,
+  Camera,
 } from 'lucide-react';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
@@ -202,6 +203,39 @@ export default function OrderTrackingPage({
               >
                 <Phone className="w-3.5 h-3.5" /> Call Rider
               </a>
+            </div>
+          )}
+
+          {/* Doorstep Proof of Delivery Photo if delivered */}
+          {order.deliveryProofPhoto && (
+            <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-white border border-emerald-200 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-emerald-700" />
+                  <h3 className="font-extrabold text-sm text-slate-900">
+                    Doorstep Proof of Delivery Photo
+                  </h3>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                  ✓ Verified Handover
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Your delivery executive took this photograph at your doorstep to confirm successful handover.
+              </p>
+              <div className="relative max-w-sm rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                <img
+                  src={order.deliveryProofPhoto}
+                  alt="Delivery Proof"
+                  className="w-full h-56 object-cover"
+                />
+                {order.deliveryProofTimestamp && (
+                  <div className="absolute inset-x-0 bottom-0 bg-slate-950/80 p-2 text-white text-[10px] font-mono flex items-center justify-between backdrop-blur-xs">
+                    <span>Delivered at Doorstep</span>
+                    <span>{formatDateTime(order.deliveryProofTimestamp)}</span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

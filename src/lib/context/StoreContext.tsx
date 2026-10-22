@@ -37,8 +37,9 @@ interface StoreContextType {
   updateProduct: (product: Product) => void;
   addProduct: (product: Omit<Product, 'id'>) => Product;
   adjustStock: (variantId: string, quantityChange: number, reason: string, updatedBy: string) => void;
-  updateOrderStatus: (orderId: string, status: OrderStatus, note?: string) => void;
+  updateOrderStatus: (orderId: string, status: OrderStatus, note?: string, proofPhoto?: string) => void;
   assignDeliveryStaff: (orderId: string, staffId: string, staffName: string) => void;
+  toggleOrderItemPicked: (orderId: string, itemVariantId: string) => void;
   createOrder: (order: Order) => void;
   updateStoreSettings: (settings: Partial<StoreSettings>) => void;
   addPromotion: (promo: Omit<Promotion, 'id' | 'usageCount'>) => void;
@@ -333,7 +334,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus, note?: string) => {
+  const updateOrderStatus = (
+    orderId: string,
+    status: OrderStatus,
+    note?: string,
+    proofPhoto?: string
+  ) => {
     const statusLabels: Record<OrderStatus, string> = {
       ORDER_PLACED: 'Order Placed',
       ORDER_CONFIRMED: 'Order Confirmed',
@@ -382,6 +388,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ...ord,
         orderStatus: status,
         statusHistory: updatedHistory,
+        deliveryProofPhoto: proofPhoto || ord.deliveryProofPhoto,
+        deliveryProofTimestamp: proofPhoto ? new Date().toISOString() : ord.deliveryProofTimestamp,
         updatedAt: new Date().toISOString(),
       };
     });
@@ -404,7 +412,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       fetch(`/api/v1/admin/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: backendStatus, note }),
+        body: JSON.stringify({ status: backendStatus, note, proofPhoto }),
       }).catch(() => null);
     }
   };
@@ -420,6 +428,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           }
         : o
     );
+    saveOrders(updated);
+  };
+
+  const toggleOrderItemPicked = (orderId: string, itemVariantId: string) => {
+    const updated = orders.map((o) => {
+      if (o.id !== orderId) return o;
+      const currentPicked = o.pickedItems || {};
+      const newPicked = {
+        ...currentPicked,
+        [itemVariantId]: !currentPicked[itemVariantId],
+      };
+      return {
+        ...o,
+        pickedItems: newPicked,
+        updatedAt: new Date().toISOString(),
+      };
+    });
     saveOrders(updated);
   };
 
@@ -590,6 +615,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         adjustStock,
         updateOrderStatus,
         assignDeliveryStaff,
+        toggleOrderItemPicked,
         createOrder,
         updateStoreSettings,
         addPromotion,

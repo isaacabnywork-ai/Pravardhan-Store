@@ -210,6 +210,9 @@ export interface Order {
   statusHistory: OrderStatusHistoryItem[];
   deliveryStaffId?: string;
   deliveryStaffName?: string;
+  deliveryProofPhoto?: string;
+  deliveryProofTimestamp?: string;
+  pickedItems?: Record<string, boolean>;
   notes?: string;
   createdAt: string;
   updatedAt: string;
