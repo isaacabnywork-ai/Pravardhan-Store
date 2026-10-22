@@ -86,6 +86,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       const s = localStorage.getItem(SETTINGS_KEY);
       if (s) setStoreSettings(JSON.parse(s));
+
+      // Asynchronously sync stock levels with live Neon backend
+      fetch('/api/v1/products?pageSize=100')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((res) => {
+          if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+            setProducts((current) => {
+              const liveMap = new Map(res.data.map((p: any) => [p.slug, p]));
+              return current.map((item) => {
+                const live = liveMap.get(item.slug) as any;
+                if (!live) return item;
+                return {
+                  ...item,
+                  variants: item.variants.map((v) => {
+                    if (
+                      live.primaryVariant &&
+                      (v.sku === live.primaryVariant.sku || v.title === live.primaryVariant.title)
+                    ) {
+                      return {
+                        ...v,
+                        stock: live.primaryVariant.availableStock ?? v.stock,
+                      };
+                    }
+                    return v;
+                  }),
+                };
+              });
+            });
+          }
+        })
+        .catch(() => null);
     } catch {
       // ignore
     }
@@ -177,6 +208,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const prev = targetVariant.stock;
       const next = Math.max(0, prev + quantityChange);
 
+      // Async sync with live backend
+      fetch('/api/v1/admin/inventory/adjustments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          variantId,
+          changeType: quantityChange > 0 ? 'STOCK_RECEIVED' : 'STOCK_ADJUSTMENT',
+          quantity: Math.abs(quantityChange),
+          reason,
+        }),
+      }).catch(() => null);
+
       const historyEntry: InventoryHistory = {
         id: `inv-hist-${Date.now()}`,
         variantId,
@@ -252,6 +295,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
 
     saveOrders(newOrders);
+
+    // Async sync with live backend
+    const statusMap: Record<OrderStatus, string> = {
+      ORDER_PLACED: 'PLACED',
+      ORDER_CONFIRMED: 'CONFIRMED',
+      BEING_PREPARED: 'PREPARING',
+      READY_FOR_DELIVERY: 'READY_FOR_PICKUP',
+      OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
+      DELIVERED: 'DELIVERED',
+      CANCELLED: 'CANCELLED',
+      REFUNDED: 'REFUNDED',
+    };
+    const backendStatus = statusMap[status];
+    if (backendStatus) {
+      fetch(`/api/v1/admin/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: backendStatus, note }),
+      }).catch(() => null);
+    }
   };
 
   const assignDeliveryStaff = (orderId: string, staffId: string, staffName: string) => {

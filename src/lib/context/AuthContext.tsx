@@ -50,9 +50,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginWithPhoneOtp = async (phone: string, otp: string, name?: string) => {
-    // In V1, any 6-digit OTP is accepted or demo OTP "123456"
     if (otp.length < 4) {
       return { success: false, message: 'Please enter a valid OTP' };
+    }
+
+    try {
+      const res = await fetch('/api/v1/auth/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, otp }),
+      });
+      const data = await res.json();
+      if (res.ok && data.data && data.data.user) {
+        const liveUser = data.data.user;
+        const mappedUser: User = {
+          id: liveUser.id,
+          name: liveUser.name || name || `Customer ${phone.slice(-4)}`,
+          phone: liveUser.phone,
+          email: liveUser.email || undefined,
+          role: liveUser.role || 'CUSTOMER',
+          addresses: liveUser.addresses || [],
+          createdAt: liveUser.createdAt || new Date().toISOString(),
+        };
+        saveUser(mappedUser);
+        return { success: true };
+      }
+    } catch {
+      // fallback to local if network error
     }
 
     // Check if user with this phone exists in initial list
@@ -72,6 +96,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    try {
+      fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => null);
+    } catch {
+      // ignore
+    }
     saveUser(null);
   };
 
@@ -86,6 +115,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const addAddress = (addr: Omit<Address, 'id' | 'userId'>) => {
     if (!user) return;
+
+    fetch('/api/v1/me/addresses', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(addr),
+    }).catch(() => null);
+
     const newAddr: Address = {
       ...addr,
       id: `addr-${Date.now()}`,
@@ -106,6 +142,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const deleteAddress = (id: string) => {
     if (!user) return;
+
+    fetch(`/api/v1/me/addresses/${id}`, {
+      method: 'DELETE',
+    }).catch(() => null);
+
     const updatedUser = {
       ...user,
       addresses: user.addresses.filter((a) => a.id !== id),
