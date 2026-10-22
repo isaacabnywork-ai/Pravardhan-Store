@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ShoppingBag, ArrowRight, ChevronRight } from 'lucide-react';
 import { useCart } from '@/lib/context/CartContext';
 import { formatPrice } from '@/lib/utils';
 
 export function FloatingCart() {
   const pathname = usePathname();
-  const { totalItemsCount, grandTotal, setIsCartDrawerOpen, isCartDrawerOpen } = useCart();
+  const router = useRouter();
+  const { totalItemsCount, grandTotal, openCartWithLocationCheck, isCartDrawerOpen } = useCart();
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasJustAdded, setHasJustAdded] = useState(false);
   const prevCount = useRef(totalItemsCount);
@@ -137,11 +138,11 @@ export function FloatingCart() {
             type="button"
             onClick={() => {
               setIsExpanded(false);
-              setIsCartDrawerOpen(true);
+              openCartWithLocationCheck(() => router.push('/checkout'));
             }}
             className="flex items-center gap-1.5 bg-white hover:bg-emerald-50 text-[#0F5132] px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-black shadow-md active:scale-95 transition-all flex-shrink-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
           >
-            <span>View Full Cart</span>
+            <span>View Cart & Checkout</span>
             <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
           </button>
 

@@ -13,9 +13,14 @@ interface CartContextType {
   productSavings: number; // totalMrp - subtotal
   couponDiscount: number;
   deliveryCharge: number;
+  freeDeliveryThreshold: number;
+  amountNeededForFreeDelivery: number;
   deliveryTip: number;
   setDeliveryTip: (tip: number) => void;
+  donationAmount: number;
+  setDonationAmount: (amount: number) => void;
   handlingFee: number;
+  smallCartFee: number;
   grandTotal: number;
   isMinimumOrderMet: boolean;
   amountNeededForMinOrder: number;
@@ -27,6 +32,11 @@ interface CartContextType {
   removeCoupon: () => void;
   isCartDrawerOpen: boolean;
   setIsCartDrawerOpen: (open: boolean) => void;
+  isLocationModalOpen: boolean;
+  setIsLocationModalOpen: (open: boolean) => void;
+  selectedZone: string;
+  setSelectedZone: (zone: string) => void;
+  openCartWithLocationCheck: (onConfirmedCallback?: () => void) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -34,13 +44,19 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const CART_STORAGE_KEY = 'pravdhan_cart_v1';
 const COUPON_STORAGE_KEY = 'pravdhan_coupon_v1';
 const TIP_STORAGE_KEY = 'pravdhan_tip_v1';
+const DONATION_STORAGE_KEY = 'pravdhan_donation_v1';
+const ZONE_STORAGE_KEY = 'pravdhan_zone_v1';
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { storeSettings, promotions } = useStore();
   const [items, setItems] = useState<CartItem[]>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<Promotion | null>(null);
   const [deliveryTip, setDeliveryTipState] = useState<number>(0);
+  const [donationAmount, setDonationAmountState] = useState<number>(0);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [selectedZone, setSelectedZoneState] = useState('Sector 14, Model Town, Gurugram');
+  const [onLocationConfirmAction, setOnLocationConfirmAction] = useState<(() => void) | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -53,11 +69,47 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       const savedTip = localStorage.getItem(TIP_STORAGE_KEY);
       if (savedTip) setDeliveryTipState(Number(savedTip));
+
+      const savedDonation = localStorage.getItem(DONATION_STORAGE_KEY);
+      if (savedDonation) setDonationAmountState(Number(savedDonation));
+
+      const savedZone = localStorage.getItem(ZONE_STORAGE_KEY);
+      if (savedZone) setSelectedZoneState(savedZone);
     } catch {
       // ignore
     }
     setMounted(true);
   }, []);
+
+  const setSelectedZone = (zone: string) => {
+    setSelectedZoneState(zone);
+    try {
+      localStorage.setItem(ZONE_STORAGE_KEY, zone);
+    } catch {
+      // ignore
+    }
+    if (onLocationConfirmAction) {
+      const action = onLocationConfirmAction;
+      setOnLocationConfirmAction(null);
+      action();
+    }
+  };
+
+  const setDonationAmount = (amount: number) => {
+    setDonationAmountState(amount);
+    try {
+      localStorage.setItem(DONATION_STORAGE_KEY, amount.toString());
+    } catch {
+      // ignore
+    }
+  };
+
+  const openCartWithLocationCheck = (onConfirmedCallback?: () => void) => {
+    if (onConfirmedCallback) {
+      setOnLocationConfirmAction(() => onConfirmedCallback);
+    }
+    setIsLocationModalOpen(true);
+  };
 
   const saveItems = (newItems: CartItem[]) => {
     setItems(newItems);
@@ -145,9 +197,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const productSavings = Math.max(0, totalMrp - subtotal);
 
-  // Delivery charge calculation
-  const deliveryCharge = storeSettings.defaultDeliveryCharge;
-  const handlingFee = items.length > 0 ? 2 : 0; // standard nominal quick commerce handling fee
+  // Delivery charge & threshold calculation
+  const freeDeliveryThreshold = storeSettings.freeDeliveryThreshold > 0 ? storeSettings.freeDeliveryThreshold : 149;
+  const deliveryCharge = totalItemsCount === 0 || subtotal >= freeDeliveryThreshold ? 0 : (storeSettings.defaultDeliveryCharge || 30);
+  const amountNeededForFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
+  const handlingFee = totalItemsCount > 0 ? 5 : 0; // Quick commerce nominal packaging & handling fee
+  const smallCartFee = totalItemsCount > 0 && subtotal < 99 ? 20 : 0; // Standard small cart charge on orders under ₹99
 
   // Coupon calculation
   let couponDiscount = 0;
@@ -165,7 +220,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const grandTotal = Math.max(
     0,
-    subtotal - couponDiscount + deliveryCharge + deliveryTip + handlingFee
+    subtotal - couponDiscount + deliveryCharge + deliveryTip + donationAmount + handlingFee + smallCartFee
   );
 
   const isMinimumOrderMet = subtotal >= storeSettings.minimumOrderValue;
@@ -210,9 +265,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         productSavings,
         couponDiscount,
         deliveryCharge,
+        freeDeliveryThreshold,
+        amountNeededForFreeDelivery,
         deliveryTip,
         setDeliveryTip,
+        donationAmount,
+        setDonationAmount,
         handlingFee,
+        smallCartFee,
         grandTotal,
         isMinimumOrderMet,
         amountNeededForMinOrder,
@@ -224,6 +284,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeCoupon,
         isCartDrawerOpen,
         setIsCartDrawerOpen,
+        isLocationModalOpen,
+        setIsLocationModalOpen,
+        selectedZone,
+        setSelectedZone,
+        openCartWithLocationCheck,
       }}
     >
       {children}

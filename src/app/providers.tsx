@@ -6,6 +6,7 @@ import { AuthProvider } from '@/lib/context/AuthContext';
 import { StoreProvider } from '@/lib/context/StoreContext';
 import { CartProvider } from '@/lib/context/CartContext';
 import { FloatingCart } from '@/components/cart/FloatingCart';
+import { LocationConfirmModal } from '@/components/location/LocationConfirmModal';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <CartProvider>
             {children}
             <FloatingCart />
+            <LocationConfirmModal />
           </CartProvider>
         </AuthProvider>
       </StoreProvider>
