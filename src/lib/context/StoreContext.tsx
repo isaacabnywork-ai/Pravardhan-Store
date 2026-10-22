@@ -117,6 +117,80 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           }
         })
         .catch(() => null);
+
+      // Asynchronously sync customer/admin orders with live Neon backend
+      fetch('/api/v1/orders')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((res) => {
+          if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+            setOrders((current) => {
+              const liveOrders = res.data.map((o: any) => ({
+                id: o.id,
+                orderNumber: o.orderNumber,
+                userId: o.userId,
+                customerName: o.customerName,
+                customerPhone: o.customerPhone,
+                deliveryAddress: o.deliveryAddress,
+                deliverySlot: {
+                  id: 'slot-instant',
+                  label: o.deliverySlot || 'Instant (10-15 mins)',
+                  timeSlot: o.deliverySlot || 'Instant (10-15 mins)',
+                  dateType: 'TODAY' as const,
+                  isAvailable: true,
+                },
+                items: (o.items || []).map((i: any) => ({
+                  productId: i.productId,
+                  variantId: i.variantId,
+                  productName: i.productName,
+                  variantTitle: i.variantTitle,
+                  brand: i.brand,
+                  unit: i.unit,
+                  purchasedPrice: Math.round((i.purchasedPrice || 0) / 100),
+                  purchasedMrp: Math.round((i.purchasedMrp || 0) / 100),
+                  quantity: i.quantity,
+                  image: i.image,
+                })),
+                subtotal: Math.round((o.subtotal || 0) / 100),
+                discount: Math.round((o.discount || 0) / 100),
+                couponCode: o.couponCode,
+                couponDiscount: Math.round((o.couponDiscount || 0) / 100),
+                deliveryCharge: Math.round((o.deliveryFee || 0) / 100),
+                deliveryTip: Math.round((o.deliveryTip || 0) / 100),
+                handlingFee: Math.round((o.handlingFee || 0) / 100),
+                grandTotal: Math.round((o.grandTotal || 0) / 100),
+                paymentMethod: o.paymentMethod,
+                paymentStatus: o.paymentStatus,
+                orderStatus:
+                  o.orderStatus === 'PLACED'
+                    ? 'ORDER_PLACED'
+                    : o.orderStatus === 'CONFIRMED'
+                    ? 'ORDER_CONFIRMED'
+                    : o.orderStatus === 'PREPARING'
+                    ? 'BEING_PREPARED'
+                    : o.orderStatus === 'READY_FOR_PICKUP'
+                    ? 'READY_FOR_DELIVERY'
+                    : o.orderStatus,
+                statusHistory: (o.statusHistory || []).map((h: any) => ({
+                  status: h.status,
+                  label: h.label,
+                  timestamp: new Date(h.createdAt).toLocaleTimeString('en-IN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }),
+                  note: h.note,
+                  completed: true,
+                })),
+                createdAt: o.createdAt,
+                updatedAt: o.updatedAt,
+              }));
+
+              const liveIds = new Set(liveOrders.map((lo: any) => lo.id));
+              const remaining = current.filter((c) => !liveIds.has(c.id));
+              return [...liveOrders, ...remaining];
+            });
+          }
+        })
+        .catch(() => null);
     } catch {
       // ignore
     }
