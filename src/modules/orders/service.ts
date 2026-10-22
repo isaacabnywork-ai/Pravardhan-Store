@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { OrderStatus, PaymentMethod, PaymentStatus, InventoryChangeType } from '@prisma/client';
 import { cartService } from '@/modules/cart/service';
+import { notificationService } from '@/modules/notifications/service';
 import { NotFoundError, ValidationError, ConflictError, ForbiddenError } from '@/lib/errors';
 import { createOrderSchema } from './schemas';
 import { z } from 'zod';
@@ -341,6 +342,72 @@ export class OrderService {
           });
         }
       }
+
+      return updatedOrder;
+    });
+  }
+
+  /**
+   * Confirm Online Payment (Razorpay verification / test callback)
+   */
+  async confirmPayment(
+    orderId: string,
+    paymentDetails: {
+      gatewayPaymentId: string;
+      gatewayOrderId?: string;
+      gatewaySignature?: string;
+    },
+    actorId?: string
+  ) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { payments: true },
+    });
+
+    if (!order) {
+      throw new NotFoundError('Order');
+    }
+
+    return prisma.$transaction(async (tx) => {
+      // 1. Update Payment status
+      await tx.payment.updateMany({
+        where: { orderId },
+        data: {
+          paymentStatus: PaymentStatus.PAID,
+          gatewayPaymentId: paymentDetails.gatewayPaymentId,
+          gatewaySignature: paymentDetails.gatewaySignature,
+        },
+      });
+
+      // 2. Advance Order status from PLACED -> CONFIRMED
+      const updatedOrder = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: PaymentStatus.PAID,
+          orderStatus: OrderStatus.CONFIRMED,
+          statusHistory: {
+            create: {
+              status: OrderStatus.CONFIRMED,
+              label: 'Payment Verified & Order Confirmed',
+              note: `Paid online via Razorpay (Payment ID: ${paymentDetails.gatewayPaymentId})`,
+              actorId,
+            },
+          },
+        },
+        include: {
+          items: true,
+          statusHistory: true,
+          payments: true,
+        },
+      });
+
+      // 3. Dispatch customer notification
+      await notificationService.notifyOrderStatusChange(
+        updatedOrder.userId,
+        updatedOrder.orderNumber,
+        updatedOrder.id,
+        OrderStatus.CONFIRMED
+      ).catch(() => null);
 
       return updatedOrder;
     });

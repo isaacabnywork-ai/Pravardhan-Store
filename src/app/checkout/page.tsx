@@ -24,6 +24,7 @@ import { useStore } from '@/lib/context/StoreContext';
 import { PaymentMethod, Order } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { RazorpayPaymentModal } from '@/components/checkout/RazorpayPaymentModal';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -47,6 +48,8 @@ export default function CheckoutPage() {
   const { deliverySlots, storeSettings, createOrder } = useStore();
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isRazorpayModalOpen, setIsRazorpayModalOpen] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<{ liveOrder: any; frontendOrder: Order } | null>(null);
   const [selectedAddressId, setSelectedAddressId] = useState<string>(
     user?.addresses[0]?.id || ''
   );
@@ -94,6 +97,47 @@ export default function CheckoutPage() {
     }
     addAddress(newAddr);
     setIsAddingAddress(false);
+  };
+
+  const handleRazorpaySuccess = async (paymentId: string) => {
+    if (!pendingOrder) return;
+    setIsRazorpayModalOpen(false);
+    setIsPlacingOrder(true);
+
+    try {
+      await fetch(`/api/v1/orders/${pendingOrder.liveOrder.id}/pay`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gatewayPaymentId: paymentId,
+        }),
+      });
+    } catch {
+      // ignore
+    }
+
+    const confirmedOrder: Order = {
+      ...pendingOrder.frontendOrder,
+      paymentStatus: 'PAID',
+      orderStatus: 'ORDER_CONFIRMED',
+      statusHistory: [
+        ...pendingOrder.frontendOrder.statusHistory.map((s) =>
+          s.status === 'ORDER_CONFIRMED'
+            ? { ...s, completed: true, note: `Paid online via Razorpay (Payment ID: ${paymentId})` }
+            : s
+        ),
+      ],
+    };
+
+    createOrder(confirmedOrder);
+    clearCart();
+    setIsPlacingOrder(false);
+    router.push(`/account/orders/${pendingOrder.liveOrder.id}`);
+  };
+
+  const handleRazorpayFailure = (errorMessage: string) => {
+    setIsRazorpayModalOpen(false);
+    setOrderError(errorMessage);
   };
 
   const handlePlaceOrder = async () => {
@@ -231,6 +275,13 @@ export default function CheckoutPage() {
           updatedAt: liveOrder.updatedAt || new Date().toISOString(),
         };
 
+        if (paymentMethod !== 'COD') {
+          setPendingOrder({ liveOrder, frontendOrder });
+          setIsRazorpayModalOpen(true);
+          setIsPlacingOrder(false);
+          return;
+        }
+
         createOrder(frontendOrder);
         clearCart();
         setIsPlacingOrder(false);
@@ -323,6 +374,13 @@ export default function CheckoutPage() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+
+      if (paymentMethod !== 'COD') {
+        setPendingOrder({ liveOrder: { id: orderId, orderNumber }, frontendOrder: newOrder });
+        setIsRazorpayModalOpen(true);
+        setIsPlacingOrder(false);
+        return;
+      }
 
       createOrder(newOrder);
       clearCart();
@@ -950,6 +1008,18 @@ export default function CheckoutPage() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+      <RazorpayPaymentModal
+        isOpen={isRazorpayModalOpen}
+        orderId={pendingOrder?.liveOrder?.id || ''}
+        orderNumber={pendingOrder?.liveOrder?.orderNumber || ''}
+        amount={grandTotal}
+        customerName={user?.name || ''}
+        customerPhone={user?.phone || ''}
+        customerEmail={user?.email}
+        onSuccess={handleRazorpaySuccess}
+        onFailure={handleRazorpayFailure}
+        onClose={() => setIsRazorpayModalOpen(false)}
       />
       <Footer />
       <MobileBottomNav />
