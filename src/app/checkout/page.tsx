@@ -533,19 +533,19 @@ export default function CheckoutPage() {
               return (
                 <div key={item.variantId} className="py-3 flex items-start gap-3">
                   {/* Thumbnail */}
-                  <div className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden shrink-0 bg-slate-50 flex items-center justify-center relative">
+                  <div className="w-16 h-16 rounded-2xl border border-slate-200/90 overflow-hidden shrink-0 bg-slate-100 flex items-center justify-center relative shadow-2xs">
                     {item.image ? (
                       <img
                         src={item.image}
                         alt={item.productName}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover rounded-2xl"
                         loading="lazy"
                         onError={(e) => {
                           const target = e.currentTarget;
                           target.style.display = 'none';
                           const parent = target.parentElement;
                           if (parent) {
-                            parent.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-emerald-50 text-emerald-700 font-bold text-[10px]">🛍️</div>';
+                            parent.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-emerald-50 text-emerald-700 font-bold text-xs rounded-2xl">🛍️</div>';
                           }
                         }}
                       />
@@ -644,15 +644,15 @@ export default function CheckoutPage() {
               return (
                 <div
                   key={p.id}
-                  className="border border-slate-100 rounded-xl p-2.5 flex flex-col justify-between bg-slate-50/50 hover:border-emerald-200 transition-all group"
+                  className="border border-slate-200/90 rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between bg-white hover:border-emerald-300 transition-all shadow-2xs group"
                 >
-                  {/* Top Heart and Image */}
-                  <div className="relative">
+                  {/* Top Heart and Filled Box Image */}
+                  <div className="relative mb-2">
                     <button
                       type="button"
                       onClick={() => toggleWishlist(p.id, p.name)}
                       aria-label="Wishlist"
-                      className="absolute top-1 right-1 z-10 w-6 h-6 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-slate-400 hover:text-rose-500 shadow-xs"
+                      className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-white/85 hover:bg-white backdrop-blur-xs flex items-center justify-center text-slate-400 hover:text-rose-500 shadow-sm transition-transform active:scale-110"
                     >
                       <Heart
                         className={`w-3.5 h-3.5 ${
@@ -660,19 +660,19 @@ export default function CheckoutPage() {
                         }`}
                       />
                     </button>
-                    <div className="aspect-square w-full rounded-lg bg-white overflow-hidden relative flex items-center justify-center mb-2">
+                    <div className="aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-100/90 relative flex items-center justify-center shadow-inner">
                       {p.images[0] ? (
                         <img
                           src={p.images[0]}
                           alt={p.name}
-                          className="w-full h-full object-contain p-1.5 group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 rounded-2xl"
                           loading="lazy"
                           onError={(e) => {
                             const target = e.currentTarget;
                             target.style.display = 'none';
                             const parent = target.parentElement;
                             if (parent) {
-                              parent.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-emerald-50 text-emerald-700 font-bold text-xs">🛍️</div>';
+                              parent.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-emerald-50 text-emerald-700 font-bold text-xs rounded-2xl">🛍️</div>';
                             }
                           }}
                         />
