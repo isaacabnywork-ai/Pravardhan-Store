@@ -183,7 +183,7 @@ export default function CheckoutPage() {
           pincode: selectedAddress.pincode,
         },
         deliverySlot: selectedSlot.timeSlot,
-        paymentMethod: paymentMethod === 'COD' ? 'COD' : 'RAZORPAY',
+        paymentMethod: paymentMethod === 'COD' ? 'COD' : (paymentMethod === 'CARD' ? 'CARD' : 'UPI'),
         couponCode: appliedCoupon?.code,
         deliveryTip: deliveryTip * 100, // paise
       };

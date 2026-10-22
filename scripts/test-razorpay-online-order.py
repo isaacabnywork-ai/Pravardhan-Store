@@ -34,10 +34,10 @@ def main():
     variant_id = prods["data"][0]["primaryVariant"]["id"]
     req(f"{BASE}/cart/items", "POST", {"variantId": variant_id, "quantity": 1}, token=token)
 
-    # 4. Place Order with RAZORPAY
+    # 4. Place Order with UPI (Razorpay)
     status, order_res = req(f"{BASE}/orders", "POST", {
         "addressId": address_id,
-        "paymentMethod": "RAZORPAY",
+        "paymentMethod": "UPI",
         "deliveryTip": 1000,
         "deliverySlot": "Instant (10-15 mins)"
     }, token=token)
