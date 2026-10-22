@@ -1074,12 +1074,12 @@ export default function CheckoutPage() {
           {/* Payment Method Selector */}
           <div>
             <h3 className="text-xs font-black text-slate-900 mb-2">Payment Option</h3>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {[
                 {
                   id: 'UPI' as PaymentMethod,
                   title: 'Pay Online (UPI, Cards, NetBanking)',
-                  subtitle: 'Fast, secure checkout via Razorpay Test Gateway',
+                  subtitle: 'Google Pay, PhonePe, Paytm, Cards & NetBanking',
                   icon: CreditCard,
                   badge: 'Instant 8-min',
                 },
@@ -1093,7 +1093,7 @@ export default function CheckoutPage() {
                 {
                   id: 'CARD' as PaymentMethod,
                   title: 'Credit / Debit Card',
-                  subtitle: 'Visa, MasterCard, RuPay, Amex',
+                  subtitle: 'Visa, MasterCard, RuPay, Amex via Razorpay',
                   icon: Wallet,
                   badge: 'Instant',
                 },
@@ -1103,38 +1103,45 @@ export default function CheckoutPage() {
                   <div
                     key={opt.id}
                     onClick={() => setPaymentMethod(opt.id)}
-                    className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                    className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
                       isSelected
-                        ? 'border-emerald-600 bg-emerald-50/70 ring-1 ring-emerald-500'
-                        : 'border-slate-200 hover:bg-slate-50'
+                        ? 'border-emerald-600 bg-emerald-50/70 shadow-xs ring-1 ring-emerald-500'
+                        : 'border-slate-200/90 bg-white hover:bg-slate-50'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          isSelected ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        <opt.icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-black text-slate-900">{opt.title}</span>
-                          {opt.badge && (
-                            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-full">
-                              {opt.badge}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-500 font-medium">{opt.subtitle}</p>
-                      </div>
-                    </div>
+                    {/* Left Icon */}
                     <div
-                      className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                        isSelected ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                        isSelected ? 'bg-emerald-700 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
                       }`}
                     >
-                      {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      <opt.icon className="w-5 h-5" />
+                    </div>
+
+                    {/* Middle Details */}
+                    <div className="flex-1 min-w-0 pr-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-black text-slate-900 leading-tight">
+                          {opt.title}
+                        </span>
+                        {opt.badge && (
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                            {opt.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                        {opt.subtitle}
+                      </p>
+                    </div>
+
+                    {/* Right Radio Indicator */}
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                        isSelected ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300 bg-white'
+                      }`}
+                    >
+                      {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                     </div>
                   </div>
                 );
