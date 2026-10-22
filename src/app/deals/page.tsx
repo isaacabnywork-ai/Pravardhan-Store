@@ -6,7 +6,6 @@ import {
   Tag,
   Copy,
   Check,
-  Percent,
   ArrowRight,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
@@ -42,22 +41,6 @@ export default function DealsPage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-10">
-        {/* Deals Hero */}
-        <div className="rounded-2xl bg-gradient-to-r from-amber-600 via-amber-700 to-emerald-900 text-white p-6 sm:p-8 shadow-lg">
-          <div className="max-w-xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/40 text-amber-300 text-xs font-black uppercase tracking-wider mb-2">
-              <Percent className="w-4 h-4" />
-              <span>Direct Savings Club</span>
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
-              Daily Super Deals & Active Coupons
-            </h1>
-            <p className="text-xs sm:text-sm text-amber-100 leading-relaxed">
-              Copy any active coupon below with 1 click to automatically apply the discount to your cart.
-            </p>
-          </div>
-        </div>
-
         {/* ================= INTERACTIVE OFFER CATEGORY SWITCHER SHOWCASE ================= */}
         <div>
           <div className="flex items-center justify-between mb-3">
