@@ -228,7 +228,7 @@ export function Navbar() {
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Left: Brand Logo + (Desktop Location Pill) */}
             <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-              {/* Brand Logo using Official Artwork */}
+              {/* Brand Logo using Official Artwork (Adaptive Light & Dark Logos) */}
               <Link
                 href="/"
                 className="flex items-center group flex-shrink-0"
@@ -237,7 +237,12 @@ export function Navbar() {
                 <img
                   src="/images/logo.png"
                   alt="Pravdhan Store"
-                  className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform group-hover:scale-102"
+                  className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform group-hover:scale-102 dark:hidden"
+                />
+                <img
+                  src="/images/logo-dark.png"
+                  alt="Pravdhan Store"
+                  className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-transform group-hover:scale-102 hidden dark:block"
                 />
               </Link>
 

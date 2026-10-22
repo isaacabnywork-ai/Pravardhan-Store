@@ -77,11 +77,16 @@ export function Footer() {
         {/* Brand Details */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="bg-white px-3 py-1.5 rounded-xl shadow-xs inline-flex items-center">
+            <div className="bg-white dark:bg-transparent px-3 py-1.5 rounded-xl shadow-xs inline-flex items-center">
               <img
                 src="/images/logo.png"
                 alt="Pravdhan Store"
-                className="h-7 sm:h-8 w-auto object-contain"
+                className="h-7 sm:h-8 w-auto object-contain dark:hidden"
+              />
+              <img
+                src="/images/logo-dark.png"
+                alt="Pravdhan Store"
+                className="h-7 sm:h-8 w-auto object-contain hidden dark:block"
               />
             </div>
           </div>
