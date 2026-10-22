@@ -50,6 +50,7 @@ model User {
   cart         Cart?
   orders       Order[]
   deliveries   Order[]             @relation("StaffDeliveries")
+  riderAssignments DeliveryAssignment[] @relation("RiderAssignments")
   redemptions  CouponRedemption[]
 
   @@map("users")
@@ -419,6 +420,7 @@ model Order {
   statusHistory      OrderStatusHistory[]
   payments           Payment[]
   redemptions        CouponRedemption[]
+  deliveryAssignments DeliveryAssignment[]
 
   @@index([userId])
   @@index([storeId])
@@ -485,4 +487,38 @@ model Payment {
   @@index([orderId])
   @@index([gatewayOrderId])
   @@map("payments")
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  ACCEPTED
+  REJECTED
+  PICKED_UP
+  DELIVERED
+  FAILED
+}
+
+model DeliveryAssignment {
+  id              String           @id @default(cuid())
+  orderId         String
+  riderId         String
+  status          AssignmentStatus @default(ASSIGNED)
+  assignedAt      DateTime         @default(now())
+  acceptedAt      DateTime?
+  pickedUpAt      DateTime?
+  deliveredAt     DateTime?
+  failedAt        DateTime?
+  failureReason   String?
+  customerOtp     String?          // 4-digit verification OTP (e.g. "4829")
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  rider           User             @relation("RiderAssignments", fields: [riderId], references: [id])
+
+  @@index([orderId])
+  @@index([riderId])
+  @@index([status])
+  @@map("delivery_assignments")
 }
