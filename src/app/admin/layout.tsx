@@ -129,42 +129,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-slate-100/70 flex flex-col font-sans">
-      {/* Top Admin Header Bar - Full Width */}
-      <header className="sticky top-0 z-40 w-full bg-slate-900 text-white border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
+      {/* Top Admin Header Bar - Clean and Responsive on Mobile & Desktop */}
+      <header className="sticky top-0 z-40 w-full bg-slate-900 text-white border-b border-slate-800 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
-            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-            className="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
-            aria-label="Toggle Navigation"
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors flex-shrink-0"
+            aria-label="Open Navigation Menu"
           >
-            {isMobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <Menu className="w-5 h-5" />
           </button>
 
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center font-bold text-white shadow-md shadow-emerald-950/20">
-              <Store className="w-5 h-5" />
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center font-bold text-white shadow-md shadow-emerald-950/20 flex-shrink-0">
+              <Store className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-sm tracking-tight text-white">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-extrabold text-xs sm:text-sm tracking-tight text-white truncate">
                   Pravdhan Store
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Dark Store #01
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium">
-                Operations & Management Console
+              <p className="text-[10px] text-slate-400 font-medium truncate">
+                Admin Portal
               </p>
             </div>
           </Link>
         </div>
 
-        {/* Center / Right Badges */}
-        <div className="flex items-center gap-3">
-          {/* Warehouse Status Pill */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs">
+        {/* Center / Right Controls */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {/* Warehouse Status Pill (Desktop only) */}
+          <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
             <span className="text-slate-300 font-semibold">{storeSettings.serviceArea}</span>
             <span className="text-slate-500">•</span>
@@ -174,42 +174,77 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Customer Storefront Link */}
           <Link
             href="/"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+            title="Switch to Storefront"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Customer Storefront</span>
-            <span className="sm:hidden">Store</span>
+            <span className="hidden sm:inline">Storefront</span>
           </Link>
 
           {/* Role Switcher Pill */}
           <button
             onClick={() => setIsRoleModalOpen(true)}
-            className="flex items-center gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-3.5 py-1.5 rounded-xl text-xs font-bold text-emerald-300 transition-all shadow-xs"
+            className="flex items-center gap-1.5 sm:gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold text-emerald-300 transition-all shadow-xs"
           >
             <ShieldAlert className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{role.replace(/_/g, ' ')}</span>
-            <span className="hidden sm:inline text-[10px] bg-emerald-400/20 text-emerald-300 px-1.5 py-0.5 rounded">
-              Switch
+            <span className="text-[11px] sm:text-xs">
+              {role === 'SUPER_ADMIN'
+                ? 'Super Admin'
+                : role === 'PRODUCT_MANAGER'
+                ? 'Product Mgr'
+                : role === 'ORDER_MANAGER'
+                ? 'Order Mgr'
+                : role === 'DELIVERY_STAFF'
+                ? 'Rider'
+                : 'Customer'}
             </span>
           </button>
         </div>
       </header>
 
+      {/* Mobile Drawer Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-xs lg:hidden transition-opacity"
+          aria-hidden="true"
+        />
+      )}
+
       {/* Main Full-Width Body */}
-      <div className="flex-1 flex w-full">
-        {/* Left Navigation Sidebar */}
+      <div className="flex-1 flex w-full relative">
+        {/* Navigation Sidebar Drawer */}
         <aside
-          className={`fixed inset-y-0 left-0 top-15 z-30 w-64 lg:w-72 bg-white border-r border-slate-200/90 flex flex-col justify-between transform transition-transform duration-200 lg:static lg:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white border-r border-slate-200/90 flex flex-col justify-between shadow-2xl transition-transform duration-200 lg:static lg:z-auto lg:shadow-none lg:translate-x-0 ${
             isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          <div className="p-4 space-y-6 overflow-y-auto">
+          {/* Mobile Drawer Top Header (only on mobile) */}
+          <div className="lg:hidden p-4 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-white">
+                <Store className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-extrabold text-xs text-white">Pravdhan Store</p>
+                <p className="text-[10px] text-emerald-400 font-bold uppercase">Navigation Menu</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-4 space-y-6 overflow-y-auto flex-1">
             {/* Dark Store Hub Info Card */}
             <div className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-sm border border-slate-800">
               <div className="flex items-center justify-between text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
                 <span>Active Dark Store</span>
                 <span className="bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded">
-                  Live Sync
+                  Live
                 </span>
               </div>
               <p className="text-xs font-bold text-white">{storeSettings.storeName}</p>
@@ -290,16 +325,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </aside>
 
-        {/* Content Area - Full Width with Breathing Room */}
-        <main className="flex-1 min-w-0 p-5 sm:p-7 lg:p-9 xl:p-10 overflow-y-auto">
+        {/* Content Area - Full Width with Mobile-Friendly Padding */}
+        <main className="flex-1 min-w-0 p-3.5 sm:p-6 lg:p-8 xl:p-10 overflow-y-auto">
           {role === 'CUSTOMER' && (
-            <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-start gap-3">
-                <ShieldAlert className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="mb-5 p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-start gap-2.5 sm:gap-3">
+                <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-bold">Customer Persona Active</p>
                   <p className="text-[11px] text-amber-800">
-                    You are currently viewing as <strong>Customer</strong>. To manage catalog products, adjust live inventory, or fulfill orders, switch to a back-office staff persona.
+                    Switch to a staff role to test back-office order fulfillment, stock edits, or wallet management.
                   </p>
                 </div>
               </div>

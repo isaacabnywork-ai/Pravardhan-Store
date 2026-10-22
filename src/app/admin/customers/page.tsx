@@ -147,73 +147,81 @@ export default function AdminCustomersPage() {
         </div>
       </div>
 
-      {/* KPI Cards Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Total Shoppers
+      {/* KPI Cards Strip - Responsive 2x2 on Mobile, 4x1 on Desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Shoppers
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
-              {customers.length} Accounts
-            </h2>
-            <span className="text-xs text-slate-500 font-medium mt-1 block">
-              100% Phone OTP Verified
-            </span>
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-            <Users className="w-6 h-6" />
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
+              {customers.length}
+            </h2>
+            <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block truncate">
+              OTP Verified
+            </span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Total Free Cash in Wallets
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Free Cash In Wallets
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-amber-800 mt-1">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold flex-shrink-0">
+              <Wallet className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-amber-800 tracking-tight">
               {formatPrice(totalWalletCirculation)}
             </h2>
-            <span className="text-xs text-amber-700 font-medium mt-1 block">
-              Available Pravdhan Cash
+            <span className="text-[10px] sm:text-xs text-amber-700 font-medium mt-0.5 block truncate">
+              Available Cash
             </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-            <Wallet className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Average Wallet Balance
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Avg Balance
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold flex-shrink-0">
+              <Gift className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               {formatPrice(avgWalletBalance)}
             </h2>
-            <span className="text-xs text-emerald-700 font-medium mt-1 block">
-              Per registered customer
+            <span className="text-[10px] sm:text-xs text-emerald-700 font-medium mt-0.5 block truncate">
+              Per Customer
             </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-            <Gift className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Lifetime Spend (LTV)
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Lifetime Spend
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0">
+              <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               {formatPrice(totalCustomerSpend)}
             </h2>
-            <span className="text-xs text-indigo-700 font-medium mt-1 block">
-              {vipCustomersCount} VIP Customers (&gt; ₹5,000)
+            <span className="text-[10px] sm:text-xs text-indigo-700 font-medium mt-0.5 block truncate">
+              {vipCustomersCount} VIP Shoppers
             </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-            <IndianRupee className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -417,28 +425,28 @@ export default function AdminCustomersPage() {
 
       {/* Give Free Cash / Wallet Management Modal */}
       {walletModalCust && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] flex flex-col my-auto animate-in fade-in zoom-in-95">
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-600 to-amber-700 text-white flex items-center justify-between">
-              <div>
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-600 to-amber-700 text-white flex items-center justify-between flex-shrink-0">
+              <div className="min-w-0 pr-2">
                 <div className="flex items-center gap-2">
-                  <Gift className="w-5 h-5 text-amber-200" />
-                  <h3 className="font-extrabold text-base">Grant Pravdhan Wallet Money</h3>
+                  <Gift className="w-5 h-5 text-amber-200 flex-shrink-0" />
+                  <h3 className="font-extrabold text-sm sm:text-base truncate">Grant Pravdhan Wallet Money</h3>
                 </div>
-                <p className="text-xs text-amber-100 mt-0.5">
+                <p className="text-xs text-amber-100 mt-0.5 truncate">
                   Customer: <strong>{walletModalCust.name}</strong> (+91 {walletModalCust.phone})
                 </p>
               </div>
               <button
                 onClick={() => setWalletModalCust(null)}
-                className="p-1 text-amber-200 hover:text-white"
+                className="p-1.5 text-amber-200 hover:text-white rounded-lg hover:bg-amber-800/40"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleApplyWalletMoney} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleApplyWalletMoney} className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
               {/* Balance Summary Box */}
               <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-center justify-between">
                 <div>
@@ -588,36 +596,36 @@ export default function AdminCustomersPage() {
 
       {/* Customer 360 Full Detail Drawer */}
       {selectedCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden my-6 animate-in fade-in zoom-in-95 max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto animate-in fade-in zoom-in-95 max-h-[92vh] flex flex-col">
             {/* Drawer Header */}
-            <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 text-white font-black flex items-center justify-center text-lg shadow-md">
+            <div className="p-3.5 sm:p-5 bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 pr-2">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 text-white font-black flex items-center justify-center text-base sm:text-lg shadow-md flex-shrink-0">
                   {selectedCustomer.name.charAt(0)}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-extrabold text-lg text-white">{selectedCustomer.name}</h3>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <h3 className="font-extrabold text-sm sm:text-lg text-white truncate">{selectedCustomer.name}</h3>
+                    <span className="hidden sm:inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                       Customer Profile 360
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300 mt-0.5">
+                  <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 truncate">
                     +91 {selectedCustomer.phone} • {selectedCustomer.email || 'No email registered'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedCustomer(null)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800"
+                className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 flex-shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Drawer Body */}
-            <div className="p-6 space-y-6 overflow-y-auto text-xs flex-1">
+            <div className="p-4 sm:p-6 space-y-5 sm:space-y-6 overflow-y-auto text-xs flex-1">
               {/* Wallet Hub Strip */}
               <div className="p-5 bg-gradient-to-r from-amber-50 via-amber-50/50 to-orange-50 rounded-3xl border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">

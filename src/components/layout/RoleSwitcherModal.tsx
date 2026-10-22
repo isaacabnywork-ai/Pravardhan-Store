@@ -126,31 +126,31 @@ export function RoleSwitcherModal({ isOpen, onClose }: RoleSwitcherModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="bg-white rounded-2xl sm:rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
         {/* Header */}
-        <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-500/20 rounded-xl text-emerald-400">
-              <ShieldAlert className="w-5 h-5" />
+        <div className="p-3.5 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 pr-2">
+            <div className="p-1.5 sm:p-2 bg-emerald-500/20 rounded-xl text-emerald-400 flex-shrink-0">
+              <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h2 className="font-bold text-base sm:text-lg">Role & Persona Switcher</h2>
-              <p className="text-xs text-slate-300">
+            <div className="min-w-0">
+              <h2 className="font-bold text-sm sm:text-lg truncate">Role & Persona Switcher</h2>
+              <p className="text-[11px] sm:text-xs text-slate-300 truncate">
                 Pravdhan Store V1 contains 5 distinct RBAC roles. Select one to test:
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors flex-shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Roles List */}
-        <div className="p-4 sm:p-5 max-h-[70vh] overflow-y-auto space-y-3">
+        <div className="p-3 sm:p-5 max-h-[70vh] overflow-y-auto space-y-2.5 sm:space-y-3 flex-1">
           {roles.map((item) => {
             const isCurrent = role === item.role;
             const Icon = item.icon;

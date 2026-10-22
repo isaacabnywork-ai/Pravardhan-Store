@@ -160,10 +160,10 @@ export default function AdminStaffPage() {
   return (
     <div className="space-y-8 max-w-full">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200/80">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-slate-200/80">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               Staff & Fleet Management
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -185,73 +185,81 @@ export default function AdminStaffPage() {
         </button>
       </div>
 
-      {/* KPI Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Total Roster
+      {/* KPI Summary Cards - Responsive 2x2 on Mobile */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Roster
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
-              {staff.length} Members
-            </h2>
-            <span className="text-xs text-slate-500 font-medium mt-1 block">
-              Across all shifts
-            </span>
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold flex-shrink-0">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
-            <Users className="w-6 h-6" />
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
+              {staff.length}
+            </h2>
+            <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block truncate">
+              Across shifts
+            </span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
               Riders on Road
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-emerald-700 mt-1">
-              {activeRidersCount} On Duty
-            </h2>
-            <span className="text-xs text-emerald-600 font-medium mt-1 block">
-              Ready for immediate dispatch
-            </span>
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold flex-shrink-0">
+              <Bike className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-            <Bike className="w-6 h-6" />
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-emerald-700 tracking-tight">
+              {activeRidersCount} Active
+            </h2>
+            <span className="text-[10px] sm:text-xs text-emerald-600 font-medium mt-0.5 block truncate">
+              Ready to dispatch
+            </span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Active Orders In Transit
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Bags In Transit
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-blue-700 mt-1">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">
+              <Package className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-blue-700 tracking-tight">
               {staff.reduce((sum, s) => sum + s.activeOrdersCount, 0)} Bags
             </h2>
-            <span className="text-xs text-blue-600 font-medium mt-1 block">
-              Last-mile doorstep delivery
+            <span className="text-[10px] sm:text-xs text-blue-600 font-medium mt-0.5 block truncate">
+              Doorstep delivery
             </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-            <Package className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Deliveries Fulfilled Today
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Fulfilled Today
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
-              {staff.reduce((sum, s) => sum + s.completedToday, 0)} Orders
-            </h2>
-            <span className="text-xs text-emerald-700 font-medium mt-1 block">
-              100% Doorstep OTP verified
-            </span>
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold flex-shrink-0">
+              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-            <CheckCircle2 className="w-6 h-6" />
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
+              {staff.reduce((sum, s) => sum + s.completedToday, 0)}
+            </h2>
+            <span className="text-[10px] sm:text-xs text-emerald-700 font-medium mt-0.5 block truncate">
+              100% OTP verified
+            </span>
           </div>
         </div>
       </div>
@@ -414,10 +422,10 @@ export default function AdminStaffPage() {
 
       {/* Add Staff Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="font-extrabold text-base text-slate-900">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100">
+              <h3 className="font-extrabold text-sm sm:text-base text-slate-900">
                 Register New Staff Member
               </h3>
               <button

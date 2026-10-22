@@ -85,10 +85,10 @@ export default function AdminInventoryPage() {
   return (
     <div className="space-y-8 max-w-full">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200/80">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-slate-200/80">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               Real-Time Inventory & Stock Ledger
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -102,10 +102,10 @@ export default function AdminInventoryPage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-xs self-start sm:self-auto">
+        <div className="grid grid-cols-2 sm:flex bg-white p-1 rounded-2xl border border-slate-200 shadow-xs w-full sm:w-auto">
           <button
             onClick={() => setActiveTab('STOCK')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'STOCK'
                 ? 'bg-slate-900 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -116,7 +116,7 @@ export default function AdminInventoryPage() {
           </button>
           <button
             onClick={() => setActiveTab('AUDIT_LOG')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'AUDIT_LOG'
                 ? 'bg-slate-900 text-white shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -128,73 +128,81 @@ export default function AdminInventoryPage() {
         </div>
       </div>
 
-      {/* Stock Health KPI Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Total Stock Valuation
+      {/* Stock Health KPI Strip - Responsive 2x2 on Mobile */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Valuation
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold flex-shrink-0">
+              <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               {formatPrice(totalValuation)}
             </h2>
-            <span className="text-xs text-slate-500 font-medium mt-1 block">
-              {totalStockUnits} total physical units
+            <span className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 block truncate">
+              {totalStockUnits} units total
             </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-            <IndianRupee className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
               Stocked & Healthy
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-emerald-700 mt-1">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold flex-shrink-0">
+              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-emerald-700 tracking-tight">
               {flatVariants.length - (lowStockCount + outOfStockCount)} SKUs
             </h2>
-            <span className="text-xs text-emerald-600 font-medium mt-1 block">
+            <span className="text-[10px] sm:text-xs text-emerald-600 font-medium mt-0.5 block truncate">
               Buffer &gt; 5 units
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
               Low Stock Alert
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-amber-700 mt-1">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold flex-shrink-0">
+              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-amber-700 tracking-tight">
               {lowStockCount} SKUs
             </h2>
-            <span className="text-xs text-amber-600 font-medium mt-1 block">
-              Requires immediate reorder
+            <span className="text-[10px] sm:text-xs text-amber-600 font-medium mt-0.5 block truncate">
+              Needs reorder
             </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-            <AlertTriangle className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
               Out of Stock
             </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-rose-700 mt-1">
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold flex-shrink-0">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2 sm:mt-3">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-rose-700 tracking-tight">
               {outOfStockCount} SKUs
             </h2>
-            <span className="text-xs text-rose-600 font-medium mt-1 block">
-              Zero storefront availability
+            <span className="text-[10px] sm:text-xs text-rose-600 font-medium mt-0.5 block truncate">
+              0 availability
             </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
-            <AlertCircle className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -442,22 +450,22 @@ export default function AdminInventoryPage() {
 
       {/* Stock Adjustment Modal */}
       {selectedVariant && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95">
-            <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-base">Adjust Inventory Stock</h3>
-                <p className="text-xs text-slate-300">Audited dark-store stock correction</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col animate-in fade-in zoom-in-95">
+            <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
+              <div className="min-w-0 pr-2">
+                <h3 className="font-bold text-sm sm:text-base truncate">Adjust Inventory Stock</h3>
+                <p className="text-xs text-slate-300 truncate">Audited dark-store stock correction</p>
               </div>
               <button
                 onClick={() => setSelectedVariant(null)}
-                className="p-1 text-slate-400 hover:text-white"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg flex-shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handlePerformAdjustment} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handlePerformAdjustment} className="p-4 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1">
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
                 <p className="font-bold text-slate-900 text-sm">{selectedVariant.productName}</p>
                 <p className="text-[11px] text-slate-500 font-mono mt-0.5">

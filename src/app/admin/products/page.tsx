@@ -354,10 +354,10 @@ export default function AdminProductsPage() {
 
       {/* Add / Edit Product Modal */}
       {(editingProduct || isCreatingNew) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden my-8">
-            <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between">
-              <h3 className="font-bold text-base">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
+            <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
+              <h3 className="font-bold text-sm sm:text-base truncate">
                 {editingProduct ? 'Edit Product & Variants' : 'Add New Product to Catalog'}
               </h3>
               <button
@@ -365,13 +365,13 @@ export default function AdminProductsPage() {
                   setEditingProduct(null);
                   setIsCreatingNew(false);
                 }}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300"
+                className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 flex-shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveProduct} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handleSaveProduct} className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
               {/* Product Basic Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

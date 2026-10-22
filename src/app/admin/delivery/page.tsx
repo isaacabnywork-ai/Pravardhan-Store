@@ -54,10 +54,10 @@ export default function AdminDeliveryPage() {
   return (
     <div className="space-y-8 max-w-full">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200/80">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-slate-200/80">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               Delivery & Fleet Logistics
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
@@ -71,13 +71,13 @@ export default function AdminDeliveryPage() {
         </div>
 
         {/* Assigned Rider Banner */}
-        <div className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-2xl shadow-xs">
-          <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
+        <div className="flex items-center gap-2 p-2 sm:p-2.5 bg-white border border-slate-200 rounded-2xl shadow-xs self-start md:self-auto">
+          <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold flex-shrink-0">
             <Bike className="w-4 h-4" />
           </div>
           <div className="text-xs pr-2">
             <span className="text-slate-400 font-bold block text-[10px] uppercase">Rider On Duty</span>
-            <span className="font-extrabold text-slate-900">Amit Singh (+91 9833445566)</span>
+            <span className="font-extrabold text-slate-900 text-xs sm:text-sm">Amit Singh (+91 9833445566)</span>
           </div>
         </div>
       </div>
@@ -167,27 +167,29 @@ export default function AdminDeliveryPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
           {deliverySlots.map((slot) => {
             const fillPercentage = Math.round((slot.bookedCount / slot.capacity) * 100);
             return (
               <div
                 key={slot.id}
-                className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2 text-xs"
+                className="p-3 sm:p-4 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200/80 space-y-2 text-xs flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-slate-900">{slot.timeSlot}</span>
-                  <span className="text-[10px] font-bold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
-                    {slot.dateType}
-                  </span>
+                <div>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-extrabold text-slate-900 text-[11px] sm:text-xs truncate">{slot.timeSlot}</span>
+                    <span className="text-[9px] sm:text-[10px] font-bold text-slate-600 bg-white px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">
+                      {slot.dateType}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between text-[10px] sm:text-[11px] text-slate-500 mt-1.5">
+                    <span>Cap: {slot.capacity}</span>
+                    <span className="font-bold text-slate-800">{slot.bookedCount} booked</span>
+                  </div>
                 </div>
 
-                <div className="flex justify-between text-[11px] text-slate-500">
-                  <span>Capacity: {slot.capacity} orders</span>
-                  <span className="font-bold text-slate-800">{slot.bookedCount} booked</span>
-                </div>
-
-                <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-200 h-1.5 sm:h-2 rounded-full overflow-hidden mt-2">
                   <div
                     className={`h-full rounded-full transition-all ${
                       fillPercentage > 80 ? 'bg-rose-500' : 'bg-emerald-600'
@@ -329,8 +331,8 @@ export default function AdminDeliveryPage() {
 
       {/* Doorstep OTP Verification Modal */}
       {otpModalOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-sm w-full p-4 sm:p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <KeyRound className="w-4 h-4 text-emerald-600" />

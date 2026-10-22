@@ -73,27 +73,27 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-8 max-w-full">
       {/* Executive Command Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200/80">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-slate-200/80">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               Command Center
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              Live Operations
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+              Live
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Real-time telemetry for <strong>{storeSettings.storeName}</strong> • {storeSettings.serviceArea} • Target SLA: 15-min delivery
+          <p className="text-[11px] sm:text-sm text-slate-500 mt-0.5 sm:mt-1">
+            Real-time telemetry for <strong>{storeSettings.storeName}</strong> • {storeSettings.serviceArea}
           </p>
         </div>
 
         {/* Quick Action Toolbar */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={handleRefresh}
-            className={`p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 ${
+            className={`p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center flex-shrink-0 ${
               isRefreshing ? 'animate-spin' : ''
             }`}
             title="Refresh Live Telemetry"
@@ -102,117 +102,114 @@ export default function AdminDashboardPage() {
           </button>
           <Link
             href="/admin/products"
-            className="px-3.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold shadow-xs flex items-center gap-2 transition-all"
+            className="flex-1 sm:flex-initial px-3 sm:px-3.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all"
           >
             <Plus className="w-4 h-4 text-emerald-600" />
             <span>Add SKU</span>
           </Link>
           <Link
             href="/admin/orders"
-            className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-700/20 flex items-center gap-2 transition-all"
+            className="flex-1 sm:flex-initial px-3 sm:px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-sm shadow-emerald-700/20 flex items-center justify-center gap-1.5 transition-all"
           >
             <PackageCheck className="w-4 h-4" />
-            <span>Fulfillment Desk</span>
+            <span>Fulfillment</span>
           </Link>
         </div>
       </div>
 
-      {/* Primary KPI Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* Primary KPI Metrics Grid - 2 Cols on Mobile, 4 on Desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         {/* Total GMV Revenue */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Gross Merchandise Value
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Gross GMV
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <IndianRupee className="w-5 h-5" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold flex-shrink-0">
+              <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <div className="mt-2 sm:mt-4">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               {formatPrice(totalRevenue)}
             </h2>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                <TrendingUp className="w-3 h-3" /> +14.2%
+            <div className="flex items-center gap-1.5 mt-1 sm:mt-2">
+              <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                <TrendingUp className="w-3 h-3" /> +14%
               </span>
-              <span className="text-[11px] text-slate-400 font-medium">vs last 7 days</span>
+              <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">vs last 7 days</span>
             </div>
           </div>
         </div>
 
         {/* Active In-Progress Orders */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Active Fulfillment
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Active Orders
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-              <PackageCheck className="w-5 h-5" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">
+              <PackageCheck className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <div className="mt-2 sm:mt-4">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               {activeOrders.length} Orders
             </h2>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
+            <div className="flex items-center gap-1.5 mt-1 sm:mt-2">
+              <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">
                 <Clock className="w-3 h-3" /> {placedCount + confirmedCount} Pending
               </span>
-              <span className="text-[11px] text-slate-400 font-medium">in queue</span>
             </div>
           </div>
         </div>
 
         {/* Inventory Stock Health */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Inventory Valuation
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Valuation
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-              <Boxes className="w-5 h-5" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold flex-shrink-0">
+              <Boxes className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <div className="mt-2 sm:mt-4">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               {formatPrice(inventoryValuation)}
             </h2>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-1.5 mt-1 sm:mt-2">
               {lowStockVariants.length > 0 ? (
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md">
-                  <AlertTriangle className="w-3 h-3" /> {lowStockVariants.length} Low Stock
+                <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded">
+                  <AlertTriangle className="w-3 h-3" /> {lowStockVariants.length} Low
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                  <CheckCircle2 className="w-3 h-3" /> 100% Stocked
+                <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  <CheckCircle2 className="w-3 h-3" /> 100% OK
                 </span>
               )}
-              <span className="text-[11px] text-slate-400 font-medium">({totalStockUnits} units)</span>
             </div>
           </div>
         </div>
 
         {/* Fleet & Delivery SLA */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              Fleet & Delivery SLA
+            <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+              Avg SLA
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-              <Truck className="w-5 h-5" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold flex-shrink-0">
+              <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
-          <div className="mt-4">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <div className="mt-2 sm:mt-4">
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
               13.8 Mins
             </h2>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md">
+            <div className="flex items-center gap-1.5 mt-1 sm:mt-2">
+              <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">
                 <Zap className="w-3 h-3" /> 99.4% On-Time
               </span>
-              <span className="text-[11px] text-slate-400 font-medium">4 active riders</span>
             </div>
           </div>
         </div>
