@@ -18,21 +18,22 @@ def req(url, method="GET", data=None, token=None):
 def main():
     print("💳 Testing Razorpay Online Order Completion Flow...")
 
-    # 1. Customer login
-    phone = "+919999000000"
-    req(f"{BASE}/auth/otp/request", "POST", {"phone": phone})
-    status, auth = req(f"{BASE}/auth/otp/verify", "POST", {"phone": phone, "otp": "123456"})
+    # 1. Customer login via password/identifier
+    status, auth = req(f"{BASE}/auth/login", "POST", {
+        "identifier": "rider@pravdhanstore.in",
+        "password": "PravdhanAdmin@2026!"
+    })
     token = auth["data"]["token"]
-    print("1. Customer authenticated via OTP")
+    print("1. Authenticated customer session")
 
     # 2. Get customer address
     status, addrs = req(f"{BASE}/me/addresses", "GET", token=token)
     address_id = addrs["data"][0]["id"]
 
-    # 3. Add item to cart
+    # 3. Add 5 items to cart to exceed minimum order value of Rs 100
     status, prods = req(f"{BASE}/products?pageSize=1")
     variant_id = prods["data"][0]["primaryVariant"]["id"]
-    req(f"{BASE}/cart/items", "POST", {"variantId": variant_id, "quantity": 1}, token=token)
+    req(f"{BASE}/cart/items", "POST", {"variantId": variant_id, "quantity": 5}, token=token)
 
     # 4. Place Order with UPI (Razorpay)
     status, order_res = req(f"{BASE}/orders", "POST", {
@@ -47,7 +48,7 @@ def main():
     print(f"2. Order Created: #{order_num} (Status: {order['orderStatus']}, Payment: {order['paymentStatus']})")
 
     # 5. Simulate Razorpay Online Payment
-    fake_pay_id = "pay_test_99K88R77"
+    fake_pay_id = "pay_test_RAZORPAY_SUCCESS_123"
     status, pay_res = req(f"{BASE}/orders/{order_id}/pay", "POST", {
         "gatewayPaymentId": fake_pay_id,
         "gatewayOrderId": f"rzp_order_{order_id}"
