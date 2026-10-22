@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  POSTGRES_PRISMA_URL: z.string().optional(),
+  POSTGRES_URL_NON_POOLING: z.string().optional(),
+  DATABASE_URL: z.string().optional(),
   DIRECT_URL: z.string().optional(),
   AUTH_SECRET: z.string().min(16, 'AUTH_SECRET must be at least 16 characters').default('pravdhan-store-development-secret-key-32-chars-min'),
   AUTH_URL: z.string().url().optional().default('http://localhost:3000'),
