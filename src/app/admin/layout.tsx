@@ -18,6 +18,7 @@ import {
   BarChart3,
   Users,
   Layers,
+  Wallet,
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useStore } from '@/lib/context/StoreContext';
@@ -26,7 +27,7 @@ import { RoleSwitcherModal } from '@/components/layout/RoleSwitcherModal';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { role } = useAuth();
-  const { storeSettings, orders, products } = useStore();
+  const { storeSettings, orders, products, customers } = useStore();
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -95,6 +96,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           title: 'Analytics & GMV',
           href: '/admin/analytics',
           icon: BarChart3,
+          roles: ['SUPER_ADMIN', 'ORDER_MANAGER'],
+        },
+        {
+          title: 'Customers & Wallets',
+          href: '/admin/customers',
+          icon: Wallet,
+          badge: `${customers.length}`,
+          badgeColor: 'bg-emerald-500 text-white font-bold',
           roles: ['SUPER_ADMIN', 'ORDER_MANAGER'],
         },
       ],

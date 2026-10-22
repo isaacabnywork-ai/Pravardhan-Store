@@ -31,6 +31,27 @@ export interface User {
   createdAt: string;
 }
 
+export interface WalletTransaction {
+  id: string;
+  customerId: string;
+  type: 'CREDIT' | 'DEBIT';
+  amount: number; // in Rupees
+  reason: string;
+  notes?: string;
+  adminBy: string;
+  createdAt: string;
+  balanceAfter: number;
+}
+
+export interface CustomerProfile extends User {
+  walletBalance: number; // in Rupees
+  totalSpent: number;
+  orderCount: number;
+  lastOrderDate?: string;
+  status: 'ACTIVE' | 'SUSPENDED';
+  walletHistory: WalletTransaction[];
+}
+
 export interface Subcategory {
   id: string;
   categoryId: string;

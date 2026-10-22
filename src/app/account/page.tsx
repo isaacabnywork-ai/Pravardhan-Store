@@ -33,11 +33,16 @@ import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useTheme } from '@/lib/context/ThemeContext';
+import { useStore } from '@/lib/context/StoreContext';
+import { formatPrice } from '@/lib/utils';
 
 export default function AccountPage() {
   const router = useRouter();
   const { user, logout, addAddress, deleteAddress, setDefaultAddress } = useAuth();
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
+  const { customers } = useStore();
+  const currentCust = customers.find((c) => c.phone === user?.phone || c.id === user?.id) || customers[0];
+  const customerBalance = currentCust?.walletBalance ?? 150;
 
   // Dialog & Modal states
   const [activeModal, setActiveModal] = useState<
@@ -571,9 +576,27 @@ export default function AccountPage() {
             </div>
             <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200/80 text-center space-y-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">Available Balance</span>
-              <p className="text-3xl font-black text-amber-950">₹150.00</p>
-              <p className="text-[10px] text-amber-700">Can be utilized for all express grocery orders</p>
+              <p className="text-3xl font-black text-amber-950">{formatPrice(customerBalance)}</p>
+              <p className="text-[10px] text-amber-700">Usable across all express grocery orders</p>
             </div>
+            {currentCust?.walletHistory && currentCust.walletHistory.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Recent Credits</span>
+                <div className="max-h-32 overflow-y-auto space-y-1 divide-y divide-gray-100 text-xs">
+                  {currentCust.walletHistory.slice(0, 3).map((tx) => (
+                    <div key={tx.id} className="pt-1.5 flex items-center justify-between text-[11px]">
+                      <div>
+                        <p className="font-bold text-gray-800">{tx.reason}</p>
+                        <p className="text-[9px] text-gray-400">{new Date(tx.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span className={`font-black ${tx.type === 'CREDIT' ? 'text-emerald-700' : 'text-rose-600'}`}>
+                        {tx.type === 'CREDIT' ? `+₹${tx.amount}` : `-₹${tx.amount}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => {

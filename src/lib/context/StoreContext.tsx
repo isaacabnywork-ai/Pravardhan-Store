@@ -11,6 +11,8 @@ import {
   StoreSettings,
   OrderStatus,
   ProductVariant,
+  CustomerProfile,
+  WalletTransaction,
 } from '@/types';
 import {
   INITIAL_CATEGORIES,
@@ -20,6 +22,7 @@ import {
   INITIAL_STORE_SETTINGS,
   INITIAL_ORDERS,
   INITIAL_INVENTORY_HISTORY,
+  INITIAL_CUSTOMERS,
 } from '@/lib/data/mock-data';
 
 interface StoreContextType {
@@ -30,6 +33,7 @@ interface StoreContextType {
   promotions: Promotion[];
   deliverySlots: DeliverySlot[];
   storeSettings: StoreSettings;
+  customers: CustomerProfile[];
   updateProduct: (product: Product) => void;
   addProduct: (product: Omit<Product, 'id'>) => Product;
   adjustStock: (variantId: string, quantityChange: number, reason: string, updatedBy: string) => void;
@@ -39,6 +43,10 @@ interface StoreContextType {
   updateStoreSettings: (settings: Partial<StoreSettings>) => void;
   addPromotion: (promo: Omit<Promotion, 'id' | 'usageCount'>) => void;
   togglePromotionStatus: (id: string) => void;
+  creditCustomerWallet: (customerId: string, amount: number, reason: string, notes?: string, adminBy?: string) => void;
+  debitCustomerWallet: (customerId: string, amount: number, reason: string, notes?: string, adminBy?: string) => void;
+  updateCustomerStatus: (customerId: string, status: 'ACTIVE' | 'SUSPENDED') => void;
+  getCustomerById: (customerId: string) => CustomerProfile | undefined;
   getProductById: (id: string) => Product | undefined;
   getProductBySlug: (slug: string) => Product | undefined;
 }
@@ -50,6 +58,7 @@ const ORDERS_KEY = 'pravdhan_orders_v1';
 const INVENTORY_HIST_KEY = 'pravdhan_inv_hist_v1';
 const PROMOS_KEY = 'pravdhan_promos_v1';
 const SETTINGS_KEY = 'pravdhan_settings_v2';
+const CUSTOMERS_KEY = 'pravdhan_customers_v1';
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
@@ -59,6 +68,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [promotions, setPromotions] = useState<Promotion[]>(INITIAL_PROMOTIONS);
   const [deliverySlots] = useState<DeliverySlot[]>(INITIAL_DELIVERY_SLOTS);
   const [storeSettings, setStoreSettings] = useState<StoreSettings>(INITIAL_STORE_SETTINGS);
+  const [customers, setCustomers] = useState<CustomerProfile[]>(INITIAL_CUSTOMERS);
 
   useEffect(() => {
     try {
@@ -86,6 +96,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       const s = localStorage.getItem(SETTINGS_KEY);
       if (s) setStoreSettings(JSON.parse(s));
+
+      const c = localStorage.getItem(CUSTOMERS_KEY);
+      if (c) {
+        const loaded: CustomerProfile[] = JSON.parse(c);
+        const existingIds = new Set(loaded.map((item) => item.id));
+        const merged = [...loaded, ...INITIAL_CUSTOMERS.filter((item) => !existingIds.has(item.id))];
+        setCustomers(merged);
+      }
 
       // Asynchronously sync stock levels with live Neon backend
       fetch('/api/v1/products?pageSize=100')
@@ -469,6 +487,90 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     savePromotions(updated);
   };
 
+  const creditCustomerWallet = (
+    customerId: string,
+    amount: number,
+    reason: string,
+    notes?: string,
+    adminBy?: string
+  ) => {
+    setCustomers((prev) => {
+      const updated = prev.map((cust) => {
+        if (cust.id !== customerId) return cust;
+        const newBalance = cust.walletBalance + amount;
+        const newTx: WalletTransaction = {
+          id: `wtx-${Date.now()}`,
+          customerId: cust.id,
+          type: 'CREDIT',
+          amount,
+          reason,
+          notes,
+          adminBy: adminBy || 'Vikram Mehta (Super Admin)',
+          createdAt: new Date().toISOString(),
+          balanceAfter: newBalance,
+        };
+        return {
+          ...cust,
+          walletBalance: newBalance,
+          walletHistory: [newTx, ...(cust.walletHistory || [])],
+        };
+      });
+      try {
+        localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const debitCustomerWallet = (
+    customerId: string,
+    amount: number,
+    reason: string,
+    notes?: string,
+    adminBy?: string
+  ) => {
+    setCustomers((prev) => {
+      const updated = prev.map((cust) => {
+        if (cust.id !== customerId) return cust;
+        const newBalance = Math.max(0, cust.walletBalance - amount);
+        const newTx: WalletTransaction = {
+          id: `wtx-${Date.now()}`,
+          customerId: cust.id,
+          type: 'DEBIT',
+          amount,
+          reason,
+          notes,
+          adminBy: adminBy || 'Vikram Mehta (Super Admin)',
+          createdAt: new Date().toISOString(),
+          balanceAfter: newBalance,
+        };
+        return {
+          ...cust,
+          walletBalance: newBalance,
+          walletHistory: [newTx, ...(cust.walletHistory || [])],
+        };
+      });
+      try {
+        localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const updateCustomerStatus = (customerId: string, status: 'ACTIVE' | 'SUSPENDED') => {
+    setCustomers((prev) => {
+      const updated = prev.map((cust) =>
+        cust.id === customerId ? { ...cust, status } : cust
+      );
+      try {
+        localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const getCustomerById = (id: string) => customers.find((c) => c.id === id);
+
   const getProductById = (id: string) => products.find((p) => p.id === id);
   const getProductBySlug = (slug: string) => products.find((p) => p.slug === slug);
 
@@ -482,6 +584,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         promotions,
         deliverySlots,
         storeSettings,
+        customers,
         updateProduct,
         addProduct,
         adjustStock,
@@ -491,6 +594,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         updateStoreSettings,
         addPromotion,
         togglePromotionStatus,
+        creditCustomerWallet,
+        debitCustomerWallet,
+        updateCustomerStatus,
+        getCustomerById,
         getProductById,
         getProductBySlug,
       }}
