@@ -8,6 +8,7 @@ import {
 } from '@prisma/client';
 import { NotFoundError, ValidationError, ConflictError } from '@/lib/errors';
 import { createStaffSchema, updateStaffSchema } from './schemas';
+import { notificationService } from '@/modules/notifications/service';
 import { z } from 'zod';
 
 export class OperationsService {
@@ -247,7 +248,7 @@ export class OperationsService {
   }
 
   async markOrderPreparing(orderId: string, actorId?: string) {
-    return prisma.order.update({
+    const order = await prisma.order.update({
       where: { id: orderId },
       data: {
         orderStatus: OrderStatus.PREPARING,
@@ -261,10 +262,19 @@ export class OperationsService {
         },
       },
     });
+
+    await notificationService.notifyOrderStatusChange(
+      order.userId,
+      order.orderNumber,
+      order.id,
+      OrderStatus.PREPARING
+    ).catch(() => null);
+
+    return order;
   }
 
   async markOrderReady(orderId: string, actorId?: string) {
-    return prisma.order.update({
+    const order = await prisma.order.update({
       where: { id: orderId },
       data: {
         orderStatus: OrderStatus.READY_FOR_PICKUP,
@@ -278,6 +288,15 @@ export class OperationsService {
         },
       },
     });
+
+    await notificationService.notifyOrderStatusChange(
+      order.userId,
+      order.orderNumber,
+      order.id,
+      OrderStatus.READY_FOR_PICKUP
+    ).catch(() => null);
+
+    return order;
   }
 
   /**
@@ -365,6 +384,14 @@ export class OperationsService {
           deliveryAssignments: true,
         },
       });
+
+      await notificationService.notifyOrderStatusChange(
+        updatedOrder.userId,
+        updatedOrder.orderNumber,
+        updatedOrder.id,
+        OrderStatus.OUT_FOR_DELIVERY,
+        `Rider: ${rider.name} (${rider.phone}). Share OTP ${customerOtp} upon arrival.`
+      ).catch(() => null);
 
       return {
         assignment,
@@ -470,6 +497,13 @@ export class OperationsService {
         where: { orderId: assignment.orderId },
         data: { paymentStatus: PaymentStatus.PAID },
       });
+
+      await notificationService.notifyOrderStatusChange(
+        assignment.order.userId,
+        assignment.order.orderNumber,
+        assignment.order.id,
+        OrderStatus.DELIVERED
+      ).catch(() => null);
 
       return updatedAssignment;
     });

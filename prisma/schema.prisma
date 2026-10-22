@@ -52,6 +52,7 @@ model User {
   deliveries   Order[]             @relation("StaffDeliveries")
   riderAssignments DeliveryAssignment[] @relation("RiderAssignments")
   redemptions  CouponRedemption[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -521,4 +522,30 @@ model DeliveryAssignment {
   @@index([riderId])
   @@index([status])
   @@map("delivery_assignments")
+}
+
+enum NotificationChannel {
+  IN_APP
+  SMS
+  EMAIL
+  PUSH
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  channel   NotificationChannel @default(IN_APP)
+  orderId   String?
+  isRead    Boolean             @default(false)
+  metadata  Json?
+  createdAt DateTime            @default(now())
+
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
 }
