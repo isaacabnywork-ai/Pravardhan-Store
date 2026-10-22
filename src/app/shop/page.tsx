@@ -20,7 +20,6 @@ import {
   MapPin,
   ArrowUpDown,
   LayoutGrid,
-  Sparkles,
 } from 'lucide-react';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { CartDrawer } from '@/components/cart/CartDrawer';
@@ -29,60 +28,6 @@ import { CATEGORY_DIRECTORY_SECTIONS } from '@/lib/data/categories-directory';
 import { useStore } from '@/lib/context/StoreContext';
 import { useCart } from '@/lib/context/CartContext';
 import { formatPrice } from '@/lib/utils';
-
-// Visual styling accents for the 7 primary store categories
-const CATEGORY_ACCENTS: Record<
-  string,
-  {
-    badge: string;
-    bg: string;
-    tagBg: string;
-    border: string;
-  }
-> = {
-  'fruits-vegetables': {
-    badge: 'Farm Fresh',
-    bg: 'bg-emerald-50/70 hover:bg-emerald-100/80',
-    tagBg: 'bg-emerald-700 text-white',
-    border: 'border-emerald-200/80',
-  },
-  'dairy-breakfast': {
-    badge: 'Daily Essentials',
-    bg: 'bg-sky-50/70 hover:bg-sky-100/80',
-    tagBg: 'bg-sky-700 text-white',
-    border: 'border-sky-200/80',
-  },
-  'groceries-staples': {
-    badge: 'Kitchen Staples',
-    bg: 'bg-amber-50/70 hover:bg-amber-100/80',
-    tagBg: 'bg-amber-700 text-white',
-    border: 'border-amber-200/80',
-  },
-  'snacks-munchies': {
-    badge: 'Crunchy Bites',
-    bg: 'bg-orange-50/70 hover:bg-orange-100/80',
-    tagBg: 'bg-orange-700 text-white',
-    border: 'border-orange-200/80',
-  },
-  beverages: {
-    badge: 'Chilled & Warm',
-    bg: 'bg-teal-50/70 hover:bg-teal-100/80',
-    tagBg: 'bg-teal-700 text-white',
-    border: 'border-teal-200/80',
-  },
-  'cleaning-household': {
-    badge: 'Home Hygiene',
-    bg: 'bg-purple-50/70 hover:bg-purple-100/80',
-    tagBg: 'bg-purple-700 text-white',
-    border: 'border-purple-200/80',
-  },
-  'personal-care': {
-    badge: 'Self Care',
-    bg: 'bg-rose-50/70 hover:bg-rose-100/80',
-    tagBg: 'bg-rose-700 text-white',
-    border: 'border-rose-200/80',
-  },
-};
 
 function ShopContent() {
   const router = useRouter();
@@ -1171,104 +1116,9 @@ function ShopContent() {
             )}
           </div>
         ) : (
-          <>
-            {/* Express Delivery Ribbon Banner */}
-            <div className="bg-gradient-to-r from-emerald-800 to-[#0F5132] text-white rounded-2xl p-3 sm:p-4 shadow-xs flex items-center justify-between gap-3">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[11px] font-extrabold tracking-wide uppercase text-emerald-200">
-                    Pravdhan Store Express Hub
-                  </span>
-                </div>
-                <h2 className="text-sm sm:text-base font-black tracking-tight leading-tight">
-                  ⚡ 12–15 Mins Guaranteed Delivery in Gurugram
-                </h2>
-                <p className="text-[11px] text-emerald-100 font-medium">
-                  Tap any category below to browse fresh subcategories & daily deals
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20">
-                <Sparkles className="w-6 h-6 text-emerald-300" />
-              </div>
-            </div>
-
-            {/* ================= PRIMARY CATEGORIES GRID ("Shop by Category") ================= */}
-            <section className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm sm:text-base md:text-lg font-extrabold text-gray-900 tracking-tight">
-                    Shop by Category
-                  </h2>
-                  <p className="text-[11px] text-gray-500 font-medium">
-                    Click any category to open its subcategories and product catalog
-                  </p>
-                </div>
-              </div>
-
-              {/* 7 Core Categories Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-                {categories.map((cat) => {
-                  const styling = CATEGORY_ACCENTS[cat.slug] || {
-                    badge: 'Fresh',
-                    bg: 'bg-emerald-50/70 hover:bg-emerald-100/80',
-                    tagBg: 'bg-emerald-700 text-white',
-                    border: 'border-emerald-200/80',
-                  };
-
-                  return (
-                    <Link
-                      key={cat.id}
-                      href={`/shop?category=${cat.slug}`}
-                      className={`group rounded-2xl p-2.5 sm:p-3 border ${styling.border} ${styling.bg} transition-all duration-200 shadow-2xs hover:shadow-xs flex flex-col justify-between cursor-pointer active:scale-95`}
-                    >
-                      <div className="space-y-1.5">
-                        {/* Category Image */}
-                        <div className="w-full aspect-square rounded-xl overflow-hidden bg-white shadow-2xs relative border border-black/[0.04]">
-                          <img
-                            src={cat.image}
-                            alt={cat.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                          <span
-                            className={`absolute top-1.5 left-1.5 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${styling.tagBg}`}
-                          >
-                            {styling.badge}
-                          </span>
-                        </div>
-
-                        {/* Category Name */}
-                        <h3 className="text-xs sm:text-sm font-black text-gray-900 leading-tight group-hover:text-emerald-800 transition-colors pt-0.5">
-                          {cat.name}
-                        </h3>
-                      </div>
-
-                      {/* Subcategories count & arrow pill */}
-                      <div className="mt-2 pt-1.5 border-t border-black/[0.06] flex items-center justify-between text-[10px] text-gray-600 font-semibold">
-                        <span>{cat.subcategories.length} Subcategories</span>
-                        <ChevronRight className="w-3.5 h-3.5 text-gray-500 group-hover:translate-x-0.5 group-hover:text-emerald-800 transition-all" />
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* ================= EXPLORE FULL DIRECTORY WITH PASTEL TILES ================= */}
-            <section className="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200/90 shadow-2xs space-y-4">
-              <div className="border-b border-gray-100 pb-2">
-                <h2 className="text-sm sm:text-base md:text-lg font-black text-gray-900 tracking-tight">
-                  All Aisles & Detailed Subcategories
-                </h2>
-                <p className="text-[11px] text-gray-500 font-medium">
-                  Select any subcategory to jump directly into its product feed
-                </p>
-              </div>
-
-              <ExploreCategoriesGrid sections={CATEGORY_DIRECTORY_SECTIONS} />
-            </section>
-          </>
+          <div className="bg-white p-4 sm:p-6 rounded-3xl border border-gray-200/90 shadow-2xs">
+            <ExploreCategoriesGrid sections={CATEGORY_DIRECTORY_SECTIONS} />
+          </div>
         )}
       </main>
 
