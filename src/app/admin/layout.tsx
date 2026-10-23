@@ -20,11 +20,22 @@ import {
   Layers,
   Wallet,
   Bike,
+  Globe,
+  Palette,
+  FileText,
+  Sparkles,
+  LayoutTemplate,
+  Image as ImageIcon,
+  Search,
+  Megaphone,
+  History,
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useStore } from '@/lib/context/StoreContext';
 import { RoleSwitcherModal } from '@/components/layout/RoleSwitcherModal';
 import { Role } from '@/types';
+
+type DeskId = Role | 'BUILDER';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { storeSettings, orders, products, customers } = useStore();
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [deskFilter, setDeskFilter] = useState<'ALL' | Role>('ALL');
+  const [deskFilter, setDeskFilter] = useState<'ALL' | DeskId>('ALL');
 
   const pendingOrdersCount = orders.filter(
     (o) => o.orderStatus === 'ORDER_PLACED' || o.orderStatus === 'ORDER_CONFIRMED'
@@ -76,6 +87,104 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           href: '/admin/analytics',
           icon: BarChart3,
           hint: 'Financials & GMV',
+        },
+      ],
+    },
+    {
+      id: 'BUILDER' as DeskId,
+      roleName: 'Website Builder',
+      heading: 'Website Builder CMS',
+      badge: 'Visual Studio',
+      color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+      headerBg: 'bg-emerald-500/10 text-emerald-800 border-emerald-200',
+      icon: Globe,
+      description: 'Storefront CMS & live visual editor',
+      links: [
+        {
+          title: 'CMS Overview',
+          href: '/admin/builder',
+          icon: LayoutDashboard,
+          hint: 'Dashboard & statistics',
+        },
+        {
+          title: 'Pages & Slugs',
+          href: '/admin/builder/pages',
+          icon: FileText,
+          hint: 'WordPress-style pages',
+        },
+        {
+          title: 'Visual Drag & Drop Editor',
+          href: '/admin/builder/editor',
+          icon: Sparkles,
+          hint: 'Live canvas & responsive modes',
+          badge: 'Editor',
+          badgeColor: 'bg-emerald-600 text-white font-bold',
+        },
+        {
+          title: 'Homepage Builder',
+          href: '/admin/builder/homepage',
+          icon: Store,
+          hint: 'Sequence & hero blocks',
+        },
+        {
+          title: 'Header Builder',
+          href: '/admin/builder/header',
+          icon: LayoutTemplate,
+          hint: 'Sticky header & announcement',
+        },
+        {
+          title: 'Footer Builder',
+          href: '/admin/builder/footer',
+          icon: LayoutTemplate,
+          hint: 'Multi-column & badges',
+        },
+        {
+          title: 'Theme & Global Styles',
+          href: '/admin/builder/theme',
+          icon: Palette,
+          hint: 'Colors, typography & cards',
+        },
+        {
+          title: 'Menus & Navigation',
+          href: '/admin/builder/menus',
+          icon: Menu,
+          hint: 'Dropdowns & site links',
+        },
+        {
+          title: 'Media Library',
+          href: '/admin/builder/media',
+          icon: ImageIcon,
+          hint: 'Banners, photos & SVGs',
+        },
+        {
+          title: 'SEO & Redirects',
+          href: '/admin/builder/seo',
+          icon: Search,
+          hint: 'SERP & 301/302 rules',
+        },
+        {
+          title: 'Popups & Announcement',
+          href: '/admin/builder/popups',
+          icon: Megaphone,
+          hint: 'Exit intent & promo ribbons',
+        },
+        {
+          title: 'Sections & Templates',
+          href: '/admin/builder/sections',
+          icon: Boxes,
+          hint: 'Reusable page modules',
+        },
+        {
+          title: 'Publishing & Revisions',
+          href: '/admin/builder/publishing',
+          icon: History,
+          hint: 'Drafts, checkpoints & rollbacks',
+        },
+        {
+          title: 'Website Settings',
+          href: '/admin/builder/settings',
+          icon: Settings,
+          hint: 'Maintenance & analytics',
         },
       ],
     },
@@ -349,6 +458,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="flex flex-wrap gap-1">
                 {[
                   { key: 'ALL', label: 'All Desks' },
+                  { key: 'BUILDER', label: '🌐 Website Builder' },
                   { key: 'SUPER_ADMIN', label: '👑 Admin' },
                   { key: 'STORE_MANAGER', label: '🏬 Store' },
                   { key: 'PRODUCT_MANAGER', label: '📦 Catalog' },
@@ -360,7 +470,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <button
                       key={item.key}
                       type="button"
-                      onClick={() => setDeskFilter(item.key as 'ALL' | Role)}
+                      onClick={() => setDeskFilter(item.key as 'ALL' | DeskId)}
                       className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
                         isSelected
                           ? 'bg-slate-900 text-white shadow-2xs'
