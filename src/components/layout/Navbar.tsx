@@ -46,7 +46,6 @@ import { formatPrice } from '@/lib/utils';
 import { RoleSwitcherModal } from './RoleSwitcherModal';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { SearchBar } from './SearchBar';
-import { AnnouncementBanner } from '@/components/cms/AnnouncementBanner';
 
 interface CategoryNavItem {
   id: string;
@@ -197,7 +196,6 @@ export function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200/80 shadow-2xs">
-        <AnnouncementBanner />
         {/* Main Header Container */}
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-2.5">
           <div className="flex items-center justify-between gap-2 sm:gap-4">

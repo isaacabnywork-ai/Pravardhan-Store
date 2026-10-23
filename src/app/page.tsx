@@ -22,8 +22,6 @@ import { ExploreCategoriesGrid } from '@/components/categories/ExploreCategories
 import { OfferDealsShowcase } from '@/components/home/OfferDealsShowcase';
 import { useStore } from '@/lib/context/StoreContext';
 import { useCart } from '@/lib/context/CartContext';
-import { useCms } from '@/lib/context/CmsContext';
-import { CmsBlockRenderer } from '@/components/cms/CmsBlockRenderer';
 
 const CATEGORY_THEMES: Record<string, {
   bg: string;
@@ -78,15 +76,7 @@ const CATEGORY_THEMES: Record<string, {
 export default function HomePage() {
   const { products, categories } = useStore();
   const { applyCoupon, setIsCartDrawerOpen } = useCart();
-  const { getPageBySlug } = useCms();
   const [couponClaimed, setCouponClaimed] = useState(false);
-
-  const homePageCms = getPageBySlug('home');
-  const hasCustomHomepage =
-    homePageCms &&
-    homePageCms.status === 'PUBLISHED' &&
-    homePageCms.blocks &&
-    homePageCms.blocks.length > 0;
 
   const flashDeals = products
     .filter((p) =>
@@ -111,24 +101,6 @@ export default function HomePage() {
     setIsCartDrawerOpen(true);
     setTimeout(() => setCouponClaimed(false), 3000);
   };
-
-  if (hasCustomHomepage) {
-    return (
-      <div className="min-h-screen flex flex-col bg-[#F8F9FA] pb-20 md:pb-0">
-        <Navbar />
-
-        <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-6 space-y-6 sm:space-y-8">
-          {homePageCms.blocks.map((block) => (
-            <CmsBlockRenderer key={block.id} block={block} />
-          ))}
-        </main>
-
-        <Footer />
-        <CartDrawer />
-        <MobileBottomNav />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FA] pb-20 md:pb-0">
