@@ -18,6 +18,8 @@ export interface Address {
   area: string;
   city: string;
   pincode: string;
+  completeAddress?: string;
+  mapsLink?: string;
   isDefault?: boolean;
 }
 

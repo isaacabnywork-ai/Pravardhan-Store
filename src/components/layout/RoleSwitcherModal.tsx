@@ -59,7 +59,7 @@ export function RoleSwitcherModal({ isOpen, onClose }: RoleSwitcherModalProps) {
       color: 'text-blue-700 border-blue-500',
       bgLight: 'bg-blue-50/50 hover:bg-blue-50',
       description: 'Manage products, multi-variant SKUs, pricing, stock levels, and inventory adjustments with audit trail.',
-      routeHint: 'Navigates to /admin/products',
+      routeHint: 'Navigates to /admin/product-manager',
     },
     {
       role: 'STORE_MANAGER',
@@ -70,7 +70,7 @@ export function RoleSwitcherModal({ isOpen, onClose }: RoleSwitcherModalProps) {
       color: 'text-teal-700 border-teal-500',
       bgLight: 'bg-teal-50/50 hover:bg-teal-50',
       description: 'Oversee picking, packing, inventory replenishment, and daily fulfillment for the assigned store.',
-      routeHint: 'Navigates to /admin/inventory',
+      routeHint: 'Navigates to /admin/store-manager',
     },
     {
       role: 'ORDER_MANAGER',
@@ -81,7 +81,7 @@ export function RoleSwitcherModal({ isOpen, onClose }: RoleSwitcherModalProps) {
       color: 'text-purple-700 border-purple-500',
       bgLight: 'bg-purple-50/50 hover:bg-purple-50',
       description: 'Confirm new orders, manage item picking/packing, update preparation statuses, assign delivery staff.',
-      routeHint: 'Navigates to /admin/orders',
+      routeHint: 'Navigates to /admin/order-manager',
     },
     {
       role: 'DELIVERY_STAFF',
@@ -92,7 +92,7 @@ export function RoleSwitcherModal({ isOpen, onClose }: RoleSwitcherModalProps) {
       color: 'text-amber-700 border-amber-500',
       bgLight: 'bg-amber-50/50 hover:bg-amber-50',
       description: 'View assigned orders, customer delivery addresses & time slots, mark "Out for Delivery" and "Delivered".',
-      routeHint: 'Navigates to /admin/delivery',
+      routeHint: 'Navigates to /admin/rider',
     },
     {
       role: 'SUPER_ADMIN',
@@ -103,7 +103,7 @@ export function RoleSwitcherModal({ isOpen, onClose }: RoleSwitcherModalProps) {
       color: 'text-rose-700 border-rose-500',
       bgLight: 'bg-rose-50/50 hover:bg-rose-50',
       description: 'Full oversight: Business analytics, store settings (min order ₹100, ₹0 fee), promotions, orders, inventory.',
-      routeHint: 'Navigates to /admin',
+      routeHint: 'Navigates to /admin/super-admin',
     },
   ];
 
@@ -113,15 +113,15 @@ export function RoleSwitcherModal({ isOpen, onClose }: RoleSwitcherModalProps) {
     if (r === 'CUSTOMER') {
       router.push('/');
     } else if (r === 'PRODUCT_MANAGER') {
-      router.push('/admin/products');
+      router.push('/admin/product-manager');
     } else if (r === 'STORE_MANAGER') {
-      router.push('/admin/inventory');
+      router.push('/admin/store-manager');
     } else if (r === 'ORDER_MANAGER') {
-      router.push('/admin/orders');
+      router.push('/admin/order-manager');
     } else if (r === 'DELIVERY_STAFF') {
-      router.push('/admin/delivery');
+      router.push('/admin/rider');
     } else {
-      router.push('/admin');
+      router.push('/admin/super-admin');
     }
   };
 

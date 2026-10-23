@@ -19,6 +19,7 @@ import {
   ChevronRight,
   CheckCircle,
   Zap,
+  Store,
 } from 'lucide-react';
 import { useStore } from '@/lib/context/StoreContext';
 import { formatPrice } from '@/lib/utils';
@@ -212,6 +213,133 @@ export default function AdminDashboardPage() {
               </span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Role Desks & Dedicated Portals Station */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <span>Department & Role Workstation Desks</span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                5 Desks
+              </span>
+            </h2>
+            <p className="text-xs text-slate-500">
+              Dedicated pages configured for specific operational roles
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* 1. Store Manager */}
+          <Link
+            href="/admin/store-manager"
+            className="p-4 rounded-2xl bg-white border border-teal-200 hover:border-teal-400 hover:shadow-md transition-all group flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-200">
+                  <Store className="w-4 h-4" />
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">
+                  Dark Store Ops
+                </span>
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 group-hover:text-teal-700 transition-colors">
+                Store Manager Desk
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                Store operations, live facility status, shift roster & Mandi intake.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-teal-700">
+              <span>Open Desk</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {/* 2. Product Manager */}
+          <Link
+            href="/admin/product-manager"
+            className="p-4 rounded-2xl bg-white border border-blue-200 hover:border-blue-400 hover:shadow-md transition-all group flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="p-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200">
+                  <Boxes className="w-4 h-4" />
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                  Catalog & SKUs
+                </span>
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 group-hover:text-blue-700 transition-colors">
+                Product Manager Desk
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                Multi-variant SKUs, margins, price adjustments & promotions.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-700">
+              <span>Open Desk</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {/* 3. Order Manager */}
+          <Link
+            href="/admin/order-manager"
+            className="p-4 rounded-2xl bg-white border border-purple-200 hover:border-purple-400 hover:shadow-md transition-all group flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="p-2 rounded-xl bg-purple-50 text-purple-700 border border-purple-200">
+                  <PackageCheck className="w-4 h-4" />
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                  Fulfillment
+                </span>
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 group-hover:text-purple-700 transition-colors">
+                Order Manager Desk
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                Picking lists, packing stations, dispatch SLA & rider assignments.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-700">
+              <span>Open Desk</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {/* 4. Rider Delivery Desk */}
+          <Link
+            href="/admin/rider"
+            className="p-4 rounded-2xl bg-white border border-amber-200 hover:border-amber-400 hover:shadow-md transition-all group flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="p-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
+                  <Truck className="w-4 h-4" />
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                  Fleet & POD
+                </span>
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 group-hover:text-amber-700 transition-colors">
+                Rider Delivery Desk
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                Assigned consignments, GPS routes, customer calls & photo POD.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-700">
+              <span>Open Desk</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
         </div>
       </div>
 

@@ -1633,6 +1633,15 @@ export const INITIAL_USERS: User[] = [
     createdAt: '2026-01-15T10:00:00.000Z',
   },
   {
+    id: 'user-store-mgr',
+    name: 'Anil Gupta (Store Mgr)',
+    phone: '9844556677',
+    email: 'anil.store@pravdhanstore.in',
+    role: 'STORE_MANAGER',
+    addresses: [],
+    createdAt: '2026-01-10T10:00:00.000Z',
+  },
+  {
     id: 'user-prod-mgr',
     name: 'Priya Verma (Product Mgr)',
     phone: '9811223344',

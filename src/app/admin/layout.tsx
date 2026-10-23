@@ -19,10 +19,12 @@ import {
   Users,
   Layers,
   Wallet,
+  Bike,
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useStore } from '@/lib/context/StoreContext';
 import { RoleSwitcherModal } from '@/components/layout/RoleSwitcherModal';
+import { Role } from '@/types';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -30,106 +32,180 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { storeSettings, orders, products, customers } = useStore();
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [deskFilter, setDeskFilter] = useState<'ALL' | Role>('ALL');
 
   const pendingOrdersCount = orders.filter(
     (o) => o.orderStatus === 'ORDER_PLACED' || o.orderStatus === 'ORDER_CONFIRMED'
   ).length;
 
   const lowStockCount = products.flatMap((p) => p.variants).filter((v) => v.stock <= 5).length;
+  const activeDeliveriesCount = orders.filter((o) => o.orderStatus === 'OUT_FOR_DELIVERY').length;
 
-  const navGroups = [
+  // Differentiated Role Desks with distinct headings and dedicated pages
+  const roleDesks = [
     {
-      group: 'Fulfillment & Ops',
+      id: 'SUPER_ADMIN' as Role,
+      roleName: 'Super Admin',
+      heading: 'Super Admin Desk',
+      badge: 'Executive',
+      color: 'text-rose-600 bg-rose-50 border-rose-200',
+      headerBg: 'bg-rose-500/10 text-rose-800 border-rose-200',
+      icon: LayoutDashboard,
+      description: 'System-wide control & analytics',
       links: [
         {
-          title: 'Command Center',
+          title: 'Executive Center',
           href: '/admin',
           icon: LayoutDashboard,
-          roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER', 'ORDER_MANAGER', 'DELIVERY_STAFF'],
+          hint: 'Global overview',
         },
         {
-          title: 'Orders & Dispatch',
-          href: '/admin/orders',
-          icon: PackageCheck,
-          badge: pendingOrdersCount > 0 ? `${pendingOrdersCount} new` : undefined,
-          badgeColor: 'bg-emerald-500 text-white font-bold',
-          roles: ['SUPER_ADMIN', 'ORDER_MANAGER'],
-        },
-        {
-          title: 'Delivery & Fleet',
-          href: '/admin/delivery',
-          icon: Truck,
-          roles: ['SUPER_ADMIN', 'DELIVERY_STAFF', 'ORDER_MANAGER'],
-        },
-      ],
-    },
-    {
-      group: 'Catalog & Inventory',
-      links: [
-        {
-          title: 'Products & SKUs',
-          href: '/admin/products',
-          icon: Layers,
-          badge: `${products.length}`,
-          roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER'],
-        },
-        {
-          title: 'Stock Ledger',
-          href: '/admin/inventory',
-          icon: Boxes,
-          badge: lowStockCount > 0 ? `${lowStockCount} alert` : undefined,
-          badgeColor: 'bg-amber-500 text-white font-bold',
-          roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER'],
-        },
-        {
-          title: 'Promotions & Coupons',
-          href: '/admin/promotions',
-          icon: Tag,
-          roles: ['SUPER_ADMIN', 'PRODUCT_MANAGER'],
-        },
-      ],
-    },
-    {
-      group: 'Intelligence & Growth',
-      links: [
-        {
-          title: 'Analytics & GMV',
-          href: '/admin/analytics',
-          icon: BarChart3,
-          roles: ['SUPER_ADMIN', 'ORDER_MANAGER'],
-        },
-        {
-          title: 'Customers & Wallets',
-          href: '/admin/customers',
-          icon: Wallet,
-          badge: `${customers.length}`,
-          badgeColor: 'bg-emerald-500 text-white font-bold',
-          roles: ['SUPER_ADMIN', 'ORDER_MANAGER'],
-        },
-      ],
-    },
-    {
-      group: 'Administration',
-      links: [
-        {
-          title: 'Staff & Team',
+          title: 'Staff & Team Roles',
           href: '/admin/staff',
           icon: Users,
-          roles: ['SUPER_ADMIN'],
+          hint: 'RBAC permissions',
         },
         {
           title: 'Store Settings',
           href: '/admin/settings',
           icon: Settings,
-          roles: ['SUPER_ADMIN'],
+          hint: 'Hub & delivery rules',
+        },
+        {
+          title: 'Analytics & Revenue',
+          href: '/admin/analytics',
+          icon: BarChart3,
+          hint: 'Financials & GMV',
+        },
+      ],
+    },
+    {
+      id: 'STORE_MANAGER' as Role,
+      roleName: 'Store Manager',
+      heading: 'Store Manager Desk',
+      badge: 'Store Operations',
+      color: 'text-teal-600 bg-teal-50 border-teal-200',
+      headerBg: 'bg-teal-500/10 text-teal-800 border-teal-200',
+      icon: Store,
+      description: 'Dark store facility & stock intake',
+      links: [
+        {
+          title: 'Store Operations',
+          href: '/admin/store-manager',
+          icon: Store,
+          hint: 'Facility status & shifts',
+          badge: 'Live',
+          badgeColor: 'bg-teal-500 text-white font-bold',
+        },
+        {
+          title: 'Stock Ledger & Inwarding',
+          href: '/admin/inventory',
+          icon: Boxes,
+          hint: 'Mandi / supplier intake',
+          badge: lowStockCount > 0 ? `${lowStockCount} alert` : undefined,
+          badgeColor: 'bg-amber-500 text-white font-bold',
+        },
+      ],
+    },
+    {
+      id: 'PRODUCT_MANAGER' as Role,
+      roleName: 'Product Manager',
+      heading: 'Product Manager Desk',
+      badge: 'Catalog & Pricing',
+      color: 'text-blue-600 bg-blue-50 border-blue-200',
+      headerBg: 'bg-blue-500/10 text-blue-800 border-blue-200',
+      icon: Layers,
+      description: 'Master catalog, SKUs & deals',
+      links: [
+        {
+          title: 'Catalog Desk',
+          href: '/admin/product-manager',
+          icon: Layers,
+          hint: 'SKU metrics & pricing',
+        },
+        {
+          title: 'Products & SKUs',
+          href: '/admin/products',
+          icon: Store,
+          hint: 'Multi-variant catalog',
+          badge: `${products.length}`,
+        },
+        {
+          title: 'Promotions & Coupons',
+          href: '/admin/promotions',
+          icon: Tag,
+          hint: 'Discount campaigns',
+        },
+      ],
+    },
+    {
+      id: 'ORDER_MANAGER' as Role,
+      roleName: 'Order Manager',
+      heading: 'Order Manager Desk',
+      badge: 'Fulfillment & Picking',
+      color: 'text-purple-600 bg-purple-50 border-purple-200',
+      headerBg: 'bg-purple-500/10 text-purple-800 border-purple-200',
+      icon: PackageCheck,
+      description: 'Picking floor & packing stations',
+      links: [
+        {
+          title: 'Fulfillment Desk',
+          href: '/admin/order-manager',
+          icon: PackageCheck,
+          hint: 'Order stages funnel',
+        },
+        {
+          title: 'Live Orders & Dispatch',
+          href: '/admin/orders',
+          icon: PackageCheck,
+          hint: 'Item picking checklist',
+          badge: pendingOrdersCount > 0 ? `${pendingOrdersCount} new` : undefined,
+          badgeColor: 'bg-emerald-500 text-white font-bold',
+        },
+        {
+          title: 'Customers & Wallets',
+          href: '/admin/customers',
+          icon: Wallet,
+          hint: 'User orders & balance',
+          badge: `${customers.length}`,
+        },
+      ],
+    },
+    {
+      id: 'DELIVERY_STAFF' as Role,
+      roleName: 'Delivery Staff',
+      heading: 'Rider & Fleet Desk',
+      badge: 'Field Executive',
+      color: 'text-amber-600 bg-amber-50 border-amber-200',
+      headerBg: 'bg-amber-500/10 text-amber-800 border-amber-200',
+      icon: Bike,
+      description: 'Active drops, POD photo & OTP',
+      links: [
+        {
+          title: 'Rider Delivery Station',
+          href: '/admin/rider',
+          icon: Bike,
+          hint: 'Active consignments & POD',
+          badge: activeDeliveriesCount > 0 ? `${activeDeliveriesCount} out` : undefined,
+          badgeColor: 'bg-amber-500 text-white font-bold',
+        },
+        {
+          title: 'Fleet & Dispatch Records',
+          href: '/admin/delivery',
+          icon: Truck,
+          hint: 'All rider drop logs',
         },
       ],
     },
   ];
 
+  const visibleDesks = deskFilter === 'ALL'
+    ? roleDesks
+    : roleDesks.filter((d) => d.id === deskFilter);
+
   return (
     <div className="min-h-screen bg-slate-100/70 flex flex-col font-sans">
-      {/* Top Admin Header Bar - Clean and Responsive on Mobile & Desktop */}
+      {/* Top Admin Header Bar */}
       <header className="sticky top-0 z-40 w-full h-14 sm:h-16 bg-slate-900 text-white border-b border-slate-800 px-3 sm:px-6 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
@@ -140,7 +216,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Menu className="w-5 h-5" />
           </button>
 
-          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group min-w-0">
+          <Link href="/admin" className="flex items-center gap-2.5 sm:gap-3 group min-w-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center font-bold text-white shadow-md shadow-emerald-950/20 flex-shrink-0">
               <Store className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
@@ -155,7 +231,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </span>
               </div>
               <p className="text-[10px] text-slate-400 font-medium truncate">
-                Admin Portal
+                Multi-Role Operations Portal
               </p>
             </div>
           </Link>
@@ -184,12 +260,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Role Switcher Pill */}
           <button
             onClick={() => setIsRoleModalOpen(true)}
-            className="flex items-center gap-1.5 sm:gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold text-emerald-300 transition-all shadow-xs"
+            className="flex items-center gap-1.5 sm:gap-2 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold text-emerald-300 transition-all shadow-xs cursor-pointer"
+            title="Switch User Role Persona"
           >
             <ShieldAlert className="w-3.5 h-3.5 text-emerald-400" />
             <span className="text-[11px] sm:text-xs">
               {role === 'SUPER_ADMIN'
                 ? 'Super Admin'
+                : role === 'STORE_MANAGER'
+                ? 'Store Mgr'
                 : role === 'PRODUCT_MANAGER'
                 ? 'Product Mgr'
                 : role === 'ORDER_MANAGER'
@@ -211,11 +290,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         />
       )}
 
-      {/* Main Full-Width Body */}
+      {/* Main Full-Width Body with Sticky Sidebar */}
       <div className="flex-1 flex w-full relative items-start">
-        {/* Navigation Sidebar Drawer */}
+        {/* Navigation Sidebar Drawer (Sticky on Desktop) */}
         <aside
-          className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white border-r border-slate-200/90 flex flex-col justify-between shadow-2xl transition-transform duration-200 lg:sticky lg:top-14 sm:lg:top-16 lg:h-[calc(100vh-3.5rem)] sm:lg:h-[calc(100vh-4rem)] lg:z-30 lg:shadow-none lg:translate-x-0 shrink-0 ${
+          className={`fixed inset-y-0 left-0 z-50 w-72 sm:w-80 max-w-[85vw] bg-white border-r border-slate-200/90 flex flex-col justify-between shadow-2xl transition-transform duration-200 lg:sticky lg:top-14 sm:lg:top-16 lg:h-[calc(100vh-3.5rem)] sm:lg:h-[calc(100vh-4rem)] lg:z-30 lg:shadow-none lg:translate-x-0 shrink-0 ${
             isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
@@ -227,7 +306,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div>
                 <p className="font-extrabold text-xs text-white">Pravdhan Store</p>
-                <p className="text-[10px] text-emerald-400 font-bold uppercase">Navigation Menu</p>
+                <p className="text-[10px] text-emerald-400 font-bold uppercase">Role Portals & Desks</p>
               </div>
             </div>
             <button
@@ -238,94 +317,171 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
           </div>
 
-          <div className="p-4 space-y-6 overflow-y-auto flex-1">
-            {/* Dark Store Hub Info Card */}
-            <div className="p-3.5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-sm border border-slate-800">
-              <div className="flex items-center justify-between text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
-                <span>Active Dark Store</span>
-                <span className="bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded">
-                  Live
+          {/* Scrollable Navigation Area */}
+          <div className="p-3.5 sm:p-4 space-y-5 overflow-y-auto flex-1">
+            {/* Dark Store Facility Card */}
+            <div className="p-3 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-xs border border-slate-800">
+              <div className="flex items-center justify-between text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5">
+                <span>Active Dark Store #01</span>
+                <span className="bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded text-[9px]">
+                  Live Hub
                 </span>
               </div>
               <p className="text-xs font-bold text-white">{storeSettings.storeName}</p>
-              <p className="text-[11px] text-slate-300 mt-0.5">{storeSettings.serviceArea}</p>
-              <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-[10px] text-slate-300">
-                <span>Min Order: <strong className="text-white">₹{storeSettings.minimumOrderValue}</strong></span>
-                <span>Delivery: <strong className="text-emerald-300">₹{storeSettings.defaultDeliveryCharge}</strong></span>
+              <p className="text-[11px] text-slate-300 mt-0.5 truncate">{storeSettings.serviceArea}</p>
+            </div>
+
+            {/* Role Desk Filter Pills (Allows filtering or viewing all differentiated desks) */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                  Role Desk Filter:
+                </span>
+                {deskFilter !== 'ALL' && (
+                  <button
+                    onClick={() => setDeskFilter('ALL')}
+                    className="text-[10px] font-bold text-teal-700 hover:underline"
+                  >
+                    View All
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {[
+                  { key: 'ALL', label: 'All Desks' },
+                  { key: 'SUPER_ADMIN', label: '👑 Admin' },
+                  { key: 'STORE_MANAGER', label: '🏬 Store' },
+                  { key: 'PRODUCT_MANAGER', label: '📦 Catalog' },
+                  { key: 'ORDER_MANAGER', label: '⚡ Orders' },
+                  { key: 'DELIVERY_STAFF', label: '🛵 Rider' },
+                ].map((item) => {
+                  const isSelected = deskFilter === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => setDeskFilter(item.key as 'ALL' | Role)}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                        isSelected
+                          ? 'bg-slate-900 text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Nav Groups */}
-            <div className="space-y-5">
-              {navGroups.map((group) => (
-                <div key={group.group} className="space-y-1">
-                  <p className="px-3 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                    {group.group}
-                  </p>
-                  <div className="space-y-0.5">
-                    {group.links.map((link) => {
-                      const isActive = pathname === link.href;
-                      const Icon = link.icon;
-                      const hasAccess = link.roles.includes(role);
+            {/* Differentiated Role Desks Navigation */}
+            <div className="space-y-6 pt-1">
+              {visibleDesks.map((desk) => {
+                const DeskIcon = desk.icon;
+                const isCurrentRoleDesk = role === desk.id;
 
-                      return (
-                        <Link
-                          key={link.href}
-                          href={link.href}
-                          onClick={() => setIsMobileSidebarOpen(false)}
-                          className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                            isActive
-                              ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-700/20'
-                              : hasAccess
-                              ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
-                              : 'text-slate-400 hover:bg-slate-50 opacity-60'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <Icon
-                              className={`w-4 h-4 ${
-                                isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-700'
-                              }`}
-                            />
-                            <span>{link.title}</span>
-                          </div>
-                          {link.badge && (
-                            <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full ${
-                                isActive
-                                  ? 'bg-white/25 text-white'
-                                  : link.badgeColor || 'bg-slate-100 text-slate-700'
-                              }`}
-                            >
-                              {link.badge}
-                            </span>
-                          )}
-                        </Link>
-                      );
-                    })}
+                return (
+                  <div
+                    key={desk.id}
+                    className={`rounded-2xl transition-all ${
+                      deskFilter === 'ALL'
+                        ? 'p-2 border border-slate-200/80 bg-slate-50/40'
+                        : 'space-y-1'
+                    }`}
+                  >
+                    {/* Role Heading with Clear Badge & Icon */}
+                    <div className="flex items-center justify-between px-2 py-1.5 mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`p-1.5 rounded-lg border text-xs ${desk.color}`}>
+                          <DeskIcon className="w-3.5 h-3.5" />
+                        </span>
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-wider text-slate-800">
+                            {desk.heading}
+                          </p>
+                          <p className="text-[9px] text-slate-400 font-medium">
+                            {desk.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {isCurrentRoleDesk && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          Active
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Desk Links */}
+                    <div className="space-y-0.5">
+                      {desk.links.map((link) => {
+                        const isActive = pathname === link.href;
+                        const Icon = link.icon;
+
+                        return (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setIsMobileSidebarOpen(false)}
+                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                              isActive
+                                ? 'bg-slate-900 text-white shadow-xs'
+                                : 'text-slate-700 hover:bg-white hover:text-slate-900 hover:shadow-2xs'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <Icon
+                                className={`w-3.5 h-3.5 shrink-0 ${
+                                  isActive ? 'text-emerald-400' : 'text-slate-400'
+                                }`}
+                              />
+                              <span className="truncate">{link.title}</span>
+                            </div>
+
+                            {link.badge && (
+                              <span
+                                className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${
+                                  isActive
+                                    ? 'bg-white/20 text-white'
+                                    : link.badgeColor || 'bg-slate-200 text-slate-800'
+                                }`}
+                              >
+                                {link.badge}
+                              </span>
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Sidebar Footer with Role Switch Info */}
-          <div className="p-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
-            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/80 text-xs">
-              <div className="flex items-center justify-between font-bold text-amber-900 mb-1">
-                <span>Testing Mode</span>
-                <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded">
-                  {role}
+          <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 shrink-0">
+            <button
+              onClick={() => setIsRoleModalOpen(true)}
+              className="w-full text-left p-2.5 bg-white rounded-xl border border-slate-200 hover:border-slate-300 text-xs shadow-2xs transition-all flex items-center justify-between group"
+            >
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Active Persona:
+                </span>
+                <span className="font-extrabold text-slate-800 flex items-center gap-1.5 mt-0.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  {role.replace(/_/g, ' ')}
                 </span>
               </div>
-              <p className="text-[11px] text-amber-800 leading-snug">
-                Switch roles above to test Super Admin, Manager, and Rider views.
-              </p>
-            </div>
+              <span className="text-[11px] font-bold text-teal-700 group-hover:underline">
+                Switch ➜
+              </span>
+            </button>
           </div>
         </aside>
 
-        {/* Content Area - Full Width with Mobile-Friendly Padding */}
+        {/* Content Area - Full Width */}
         <main className="flex-1 min-w-0 p-3.5 sm:p-6 lg:p-8 xl:p-10 overflow-y-auto">
           {role === 'CUSTOMER' && (
             <div className="mb-5 p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
@@ -334,14 +490,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div>
                   <p className="text-xs font-bold">Customer Persona Active</p>
                   <p className="text-[11px] text-amber-800">
-                    Switch to a staff role to test back-office order fulfillment, stock edits, or wallet management.
+                    Switch to a staff role (Store Manager, Product Manager, Order Manager, or Rider) to test operations.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsRoleModalOpen(true)}
-                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-xs whitespace-nowrap self-start sm:self-auto transition-colors"
+                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-xs whitespace-nowrap self-start sm:self-auto transition-colors cursor-pointer"
               >
                 Switch to Staff Role
               </button>
