@@ -12,6 +12,7 @@ interface AuthContextType {
   logout: () => void;
   switchRole: (role: Role) => void;
   addAddress: (address: Omit<Address, 'id' | 'userId'>) => void;
+  updateAddress: (id: string, address: Partial<Address>) => void;
   deleteAddress: (id: string) => void;
   setDefaultAddress: (id: string) => void;
 }
@@ -140,6 +141,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     saveUser(updatedUser);
   };
 
+  const updateAddress = (id: string, updatedFields: Partial<Address>) => {
+    if (!user) return;
+
+    fetch(`/api/v1/me/addresses/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedFields),
+    }).catch(() => null);
+
+    const updatedAddresses = user.addresses.map((a) => {
+      if (a.id === id) {
+        return { ...a, ...updatedFields };
+      }
+      if (updatedFields.isDefault) {
+        return { ...a, isDefault: false };
+      }
+      return a;
+    });
+
+    const updatedUser = {
+      ...user,
+      addresses: updatedAddresses,
+    };
+    saveUser(updatedUser);
+  };
+
   const deleteAddress = (id: string) => {
     if (!user) return;
 
@@ -176,6 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         switchRole,
         addAddress,
+        updateAddress,
         deleteAddress,
         setDefaultAddress,
       }}
