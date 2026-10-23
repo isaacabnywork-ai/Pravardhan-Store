@@ -1,9 +1,8 @@
 import { NextRequest } from 'next/server';
 import { customerService } from '@/modules/customer/service';
-import { verifyOtpSchema } from '@/modules/customer/schemas';
+import { verifyOtpSchema } from '@/lib/validation';
 import { AUTH_COOKIE_NAME } from '@/lib/auth';
 import { apiSuccess, apiError } from '@/lib/api-response';
-import { ValidationError } from '@/lib/errors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +10,7 @@ export async function POST(request: NextRequest) {
     const parsed = verifyOtpSchema.safeParse(body);
 
     if (!parsed.success) {
-      throw new ValidationError('Invalid verification payload', parsed.error.format());
+      return apiError(parsed.error);
     }
 
     const { user, token, isNewCustomer } = await customerService.verifyOtp(

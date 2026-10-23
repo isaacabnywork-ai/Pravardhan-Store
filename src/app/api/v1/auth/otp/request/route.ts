@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server';
 import { customerService } from '@/modules/customer/service';
-import { requestOtpSchema } from '@/modules/customer/schemas';
+import { requestOtpSchema } from '@/lib/validation';
 import { apiSuccess, apiError } from '@/lib/api-response';
-import { ValidationError } from '@/lib/errors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,7 +9,7 @@ export async function POST(request: NextRequest) {
     const parsed = requestOtpSchema.safeParse(body);
 
     if (!parsed.success) {
-      throw new ValidationError('Invalid phone number', parsed.error.format());
+      return apiError(parsed.error);
     }
 
     const result = await customerService.requestOtp(parsed.data.phone);

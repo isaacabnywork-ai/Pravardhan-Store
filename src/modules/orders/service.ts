@@ -101,8 +101,8 @@ export class OrderService {
           grandTotal,
           paymentMethod: data.paymentMethod,
           paymentStatus:
-            data.paymentMethod === PaymentMethod.COD
-              ? PaymentStatus.PENDING
+            data.paymentMethod === PaymentMethod.WALLET
+              ? PaymentStatus.PAID
               : PaymentStatus.PENDING,
           orderStatus: OrderStatus.PLACED,
           notes: data.notes,
@@ -124,7 +124,10 @@ export class OrderService {
             create: {
               status: OrderStatus.PLACED,
               label: 'Order Placed',
-              note: `Order placed via ${data.paymentMethod}`,
+              note:
+                data.paymentMethod === PaymentMethod.WALLET
+                  ? 'Paid instantly via Pravdhan Money wallet'
+                  : `Order placed via ${data.paymentMethod}`,
               actorId: userId,
             },
           },
@@ -194,12 +197,14 @@ export class OrderService {
           orderId: order.id,
           paymentMethod: data.paymentMethod,
           paymentStatus:
-            data.paymentMethod === PaymentMethod.COD
-              ? PaymentStatus.PENDING
+            data.paymentMethod === PaymentMethod.WALLET
+              ? PaymentStatus.PAID
               : PaymentStatus.PENDING,
           amount: grandTotal,
           gatewayOrderId:
-            data.paymentMethod === PaymentMethod.COD
+            data.paymentMethod === PaymentMethod.WALLET
+              ? `WALLET-${order.orderNumber}`
+              : data.paymentMethod === PaymentMethod.COD
               ? `COD-${order.orderNumber}`
               : `rzp_order_${order.id}`,
         },

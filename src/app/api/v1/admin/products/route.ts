@@ -1,9 +1,8 @@
 import { NextRequest } from 'next/server';
 import { catalogService } from '@/modules/catalog/service';
-import { createProductSchema } from '@/modules/catalog/schemas';
+import { createProductSchema } from '@/lib/validation';
 import { requireRole } from '@/modules/auth/permissions';
 import { apiSuccess, apiError } from '@/lib/api-response';
-import { ValidationError } from '@/lib/errors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +11,7 @@ export async function POST(request: NextRequest) {
     const parsed = createProductSchema.safeParse(body);
 
     if (!parsed.success) {
-      throw new ValidationError('Invalid product payload', parsed.error.format());
+      return apiError(parsed.error);
     }
 
     const product = await catalogService.createProduct(parsed.data, session.userId);

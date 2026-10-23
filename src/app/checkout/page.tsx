@@ -63,7 +63,15 @@ export default function CheckoutPage() {
     setIsLocationModalOpen,
   } = useCart();
 
-  const { products, deliverySlots, storeSettings, promotions, createOrder } = useStore();
+  const {
+    products,
+    deliverySlots,
+    storeSettings,
+    promotions,
+    createOrder,
+    customers,
+    debitCustomerWallet,
+  } = useStore();
 
   // Modals & States
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -94,6 +102,26 @@ export default function CheckoutPage() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderError, setOrderError] = useState('');
   const [pendingOrder, setPendingOrder] = useState<{ liveOrder: any; frontendOrder: Order } | null>(null);
+
+  // Active Customer & Pravdhan Money Wallet Balance
+  const currentCustomer = useMemo(() => {
+    if (!customers || customers.length === 0) return null;
+    if (user?.id) {
+      const matchById = customers.find((c) => c.id === user.id);
+      if (matchById) return matchById;
+    }
+    if (user?.phone) {
+      const cleanUserPhone = user.phone.replace(/\D/g, '').slice(-10);
+      const matchByPhone = customers.find(
+        (c) => c.phone.replace(/\D/g, '').slice(-10) === cleanUserPhone
+      );
+      if (matchByPhone) return matchByPhone;
+    }
+    return customers[0] || null;
+  }, [customers, user]);
+
+  const walletBalance = currentCustomer?.walletBalance ?? 150;
+  const isWalletSufficient = walletBalance >= grandTotal;
 
   const checkoutSectionRef = useRef<HTMLDivElement>(null);
 
@@ -202,6 +230,13 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (paymentMethod === 'WALLET' && walletBalance < grandTotal) {
+      setOrderError(
+        `Insufficient Pravdhan Money balance. Available: ₹${walletBalance}, Required: ₹${grandTotal}. Please choose another payment method or add money to your wallet.`
+      );
+      return;
+    }
+
     setIsPlacingOrder(true);
     setOrderError('');
 
@@ -211,7 +246,7 @@ export default function CheckoutPage() {
     let liveOrder = {
       id: generatedOrderId,
       orderNumber: generatedOrderNumber,
-      paymentStatus: paymentMethod === 'COD' ? 'PENDING' : 'PENDING',
+      paymentStatus: paymentMethod === 'WALLET' ? 'PAID' : 'PENDING',
     };
 
     try {
@@ -298,7 +333,7 @@ export default function CheckoutPage() {
       handlingFee,
       grandTotal,
       paymentMethod,
-      paymentStatus: paymentMethod === 'COD' ? 'PENDING' : 'PENDING',
+      paymentStatus: paymentMethod === 'WALLET' ? 'PAID' : 'PENDING',
       orderStatus: 'ORDER_PLACED',
       statusHistory: [
         {
@@ -309,9 +344,12 @@ export default function CheckoutPage() {
             minute: '2-digit',
           }) + ', Today',
           completed: true,
-          note: paymentMethod === 'COD'
-            ? 'Order confirmed with Cash on Delivery'
-            : 'Online payment awaiting gateway confirmation',
+          note:
+            paymentMethod === 'COD'
+              ? 'Order confirmed with Cash on Delivery'
+              : paymentMethod === 'WALLET'
+              ? 'Order paid instantly using Pravdhan Money wallet'
+              : 'Online payment awaiting gateway confirmation',
         },
         {
           status: 'ORDER_CONFIRMED',
@@ -353,6 +391,26 @@ export default function CheckoutPage() {
       setPendingOrder({ liveOrder, frontendOrder });
       setIsPlacingOrder(false);
       setIsRazorpayModalOpen(true);
+      return;
+    }
+
+    if (paymentMethod === 'WALLET') {
+      // Debit from customer wallet in store context
+      if (currentCustomer?.id) {
+        debitCustomerWallet(
+          currentCustomer.id,
+          grandTotal,
+          `Order #${frontendOrder.orderNumber} Payment`,
+          `Paid via Pravdhan Money wallet at checkout`,
+          'Pravdhan Store Checkout'
+        );
+      }
+
+      createOrder(frontendOrder);
+      clearCart();
+      setIsPlacingOrder(false);
+      showToast('Payment successful using Pravdhan Money!');
+      router.push(`/account/orders/${liveOrder.id}`);
       return;
     }
 
@@ -1068,72 +1126,155 @@ export default function CheckoutPage() {
             <div className="space-y-2.5">
               {[
                 {
+                  id: 'WALLET' as PaymentMethod,
+                  title: 'Pravdhan Money',
+                  subtitle: isWalletSufficient
+                    ? 'Fast 1-click checkout using your store wallet balance'
+                    : `Available balance: ₹${walletBalance} (Need ₹${grandTotal - walletBalance} more)`,
+                  icon: Wallet,
+                  balanceBadge: walletBalance,
+                  badge: isWalletSufficient ? 'Instant 1-Click' : 'Low Balance',
+                  isLowBalance: !isWalletSufficient,
+                  isWallet: true,
+                },
+                {
                   id: 'UPI' as PaymentMethod,
                   title: 'Pay Online (UPI, Cards, NetBanking)',
                   subtitle: 'Google Pay, PhonePe, Paytm, Cards & NetBanking',
                   icon: CreditCard,
+                  balanceBadge: null,
                   badge: 'Instant',
+                  isLowBalance: false,
+                  isWallet: false,
                 },
                 {
                   id: 'COD' as PaymentMethod,
                   title: 'Cash on Delivery (COD)',
                   subtitle: 'Pay cash or scan QR at your doorstep',
                   icon: Banknote,
+                  balanceBadge: null,
                   badge: null,
+                  isLowBalance: false,
+                  isWallet: false,
                 },
                 {
                   id: 'CARD' as PaymentMethod,
                   title: 'Credit / Debit Card',
                   subtitle: 'Visa, MasterCard, RuPay, Amex via Razorpay',
-                  icon: Wallet,
+                  icon: CreditCard,
+                  balanceBadge: null,
                   badge: 'Instant',
+                  isLowBalance: false,
+                  isWallet: false,
                 },
               ].map((opt) => {
                 const isSelected = paymentMethod === opt.id;
                 return (
                   <div
                     key={opt.id}
-                    onClick={() => setPaymentMethod(opt.id)}
-                    className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
+                    onClick={() => {
+                      setPaymentMethod(opt.id);
+                      setOrderError('');
+                    }}
+                    className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
                       isSelected
                         ? 'border-emerald-600 bg-emerald-50/70 shadow-xs ring-1 ring-emerald-500'
                         : 'border-slate-200/90 bg-white hover:bg-slate-50'
                     }`}
                   >
-                    {/* Left Icon */}
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected ? 'bg-emerald-700 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      <opt.icon className="w-5 h-5" />
+                    <div className="flex items-center justify-between gap-3">
+                      {/* Left Icon */}
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                          opt.isWallet
+                            ? isSelected
+                              ? 'bg-amber-600 text-white shadow-xs'
+                              : 'bg-amber-100 text-amber-700'
+                            : isSelected
+                            ? 'bg-emerald-700 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        <opt.icon className="w-5 h-5" />
+                      </div>
+
+                      {/* Middle Details */}
+                      <div className="flex-1 min-w-0 pr-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-black text-slate-900 leading-tight">
+                            {opt.title}
+                          </span>
+                          {opt.balanceBadge !== null && (
+                            <span className="text-[11px] bg-amber-50 text-amber-900 border border-amber-300 font-extrabold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 flex items-center gap-1 shadow-2xs">
+                              <span className="text-[10px] font-semibold text-amber-700">Available:</span>
+                              <span className="font-black text-amber-950">₹{opt.balanceBadge}</span>
+                            </span>
+                          )}
+                          {opt.badge && (
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0 ${
+                                opt.isLowBalance
+                                  ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {opt.badge}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                          {opt.subtitle}
+                        </p>
+                      </div>
+
+                      {/* Right Radio Indicator */}
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                          isSelected
+                            ? 'border-emerald-600 bg-emerald-600'
+                            : 'border-slate-300 bg-white'
+                        }`}
+                      >
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
                     </div>
 
-                    {/* Middle Details */}
-                    <div className="flex-1 min-w-0 pr-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-black text-slate-900 leading-tight">
-                          {opt.title}
-                        </span>
-                        {opt.badge && (
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
-                            {opt.badge}
-                          </span>
+                    {/* Inline Wallet helper when selected */}
+                    {isSelected && opt.isWallet && (
+                      <div className="mt-2.5 pt-2.5 border-t border-slate-200/80">
+                        {isWalletSufficient ? (
+                          <div className="flex items-center justify-between gap-2 text-[11px] text-emerald-800 bg-emerald-100/60 p-2 rounded-xl border border-emerald-200/70">
+                            <span className="flex items-center gap-1.5 font-bold">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                              ₹{grandTotal} will be deducted from your Pravdhan Money balance.
+                            </span>
+                            <span className="text-[10px] text-emerald-700 font-medium whitespace-nowrap">
+                              Remaining: ₹{walletBalance - grandTotal}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="p-2.5 bg-amber-50/90 border border-amber-200 rounded-xl text-amber-900 text-[11px] leading-relaxed">
+                            <div className="flex items-start gap-2">
+                              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                              <div className="flex-1">
+                                <p className="font-bold text-amber-950">
+                                  Wallet balance is short by ₹{grandTotal - walletBalance}
+                                </p>
+                                <p className="text-amber-800 text-[10px] mt-0.5">
+                                  Your available Pravdhan Money balance is ₹{walletBalance}, but the order total is ₹{grandTotal}. You can choose Pay Online (UPI / Card) or Cash on Delivery below, or recharge your wallet in your account.
+                                </p>
+                                <Link
+                                  href="/account"
+                                  className="inline-flex items-center gap-1 mt-1 text-[11px] font-black text-emerald-700 underline hover:text-emerald-800"
+                                >
+                                  Recharge Pravdhan Money in Account &rarr;
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
-                        {opt.subtitle}
-                      </p>
-                    </div>
-
-                    {/* Right Radio Indicator */}
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                        isSelected ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300 bg-white'
-                      }`}
-                    >
-                      {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                    </div>
+                    )}
                   </div>
                 );
               })}
@@ -1170,11 +1311,21 @@ export default function CheckoutPage() {
 
           <button
             onClick={handlePlaceOrder}
-            disabled={isPlacingOrder || !isMinimumOrderMet}
+            disabled={
+              isPlacingOrder ||
+              !isMinimumOrderMet ||
+              (paymentMethod === 'WALLET' && walletBalance < grandTotal)
+            }
             className="flex-1 py-3.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white rounded-xl font-black text-sm shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isPlacingOrder ? (
               <span>Placing Order...</span>
+            ) : paymentMethod === 'WALLET' ? (
+              walletBalance < grandTotal ? (
+                <span>Insufficient Wallet Balance • ₹{grandTotal}</span>
+              ) : (
+                <span>Pay via Pravdhan Money • ₹{grandTotal}</span>
+              )
             ) : paymentMethod === 'COD' ? (
               <span>Place Order (COD) • ₹{grandTotal}</span>
             ) : (

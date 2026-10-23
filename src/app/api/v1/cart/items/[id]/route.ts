@@ -1,9 +1,8 @@
 import { NextRequest } from 'next/server';
 import { cartService } from '@/modules/cart/service';
-import { updateCartItemSchema, CART_SESSION_COOKIE } from '@/modules/cart/schemas';
+import { updateCartItemSchema, CART_SESSION_COOKIE } from '@/lib/validation';
 import { getSessionFromRequest } from '@/lib/auth';
 import { apiSuccess, apiError } from '@/lib/api-response';
-import { ValidationError } from '@/lib/errors';
 
 export async function PATCH(
   request: NextRequest,
@@ -18,7 +17,7 @@ export async function PATCH(
     const parsed = updateCartItemSchema.safeParse(body);
 
     if (!parsed.success) {
-      throw new ValidationError('Invalid quantity', parsed.error.format());
+      return apiError(parsed.error);
     }
 
     const cart = await cartService.getOrCreateCart(session?.userId, sessionId);

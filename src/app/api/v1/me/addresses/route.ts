@@ -1,9 +1,8 @@
 import { NextRequest } from 'next/server';
 import { customerService } from '@/modules/customer/service';
-import { addressSchema } from '@/modules/customer/schemas';
+import { addressSchema } from '@/lib/validation';
 import { requireAuth } from '@/modules/auth/permissions';
 import { apiSuccess, apiError } from '@/lib/api-response';
-import { ValidationError } from '@/lib/errors';
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +21,7 @@ export async function POST(request: NextRequest) {
     const parsed = addressSchema.safeParse(body);
 
     if (!parsed.success) {
-      throw new ValidationError('Invalid address payload', parsed.error.format());
+      return apiError(parsed.error);
     }
 
     const address = await customerService.createAddress(session.userId, parsed.data);

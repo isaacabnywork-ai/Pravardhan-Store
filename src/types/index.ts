@@ -30,6 +30,7 @@ export interface User {
   email?: string;
   role: Role;
   addresses: Address[];
+  walletBalance?: number;
   createdAt: string;
 }
 
@@ -155,7 +156,7 @@ export interface DeliverySlot {
   bookedCount: number;
 }
 
-export type PaymentMethod = 'UPI' | 'CARD' | 'COD';
+export type PaymentMethod = 'UPI' | 'CARD' | 'COD' | 'WALLET';
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 
 export type OrderStatus =

@@ -305,6 +305,7 @@ enum PaymentMethod {
   COD
   UPI
   CARD
+  WALLET
 }
 
 enum PaymentStatus {

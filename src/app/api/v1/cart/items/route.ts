@@ -1,9 +1,8 @@
 import { NextRequest } from 'next/server';
 import { cartService } from '@/modules/cart/service';
-import { addToCartSchema, CART_SESSION_COOKIE } from '@/modules/cart/schemas';
+import { addToCartSchema, CART_SESSION_COOKIE } from '@/lib/validation';
 import { getSessionFromRequest } from '@/lib/auth';
 import { apiSuccess, apiError } from '@/lib/api-response';
-import { ValidationError } from '@/lib/errors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +13,7 @@ export async function POST(request: NextRequest) {
     const parsed = addToCartSchema.safeParse(body);
 
     if (!parsed.success) {
-      throw new ValidationError('Invalid add to cart payload', parsed.error.format());
+      return apiError(parsed.error);
     }
 
     if (parsed.data.sessionId) {

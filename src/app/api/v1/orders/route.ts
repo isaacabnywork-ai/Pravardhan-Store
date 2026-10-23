@@ -1,9 +1,8 @@
 import { NextRequest } from 'next/server';
 import { orderService } from '@/modules/orders/service';
-import { createOrderSchema } from '@/modules/orders/schemas';
+import { createOrderSchema } from '@/lib/validation';
 import { requireAuth } from '@/modules/auth/permissions';
 import { apiSuccess, apiError } from '@/lib/api-response';
-import { ValidationError } from '@/lib/errors';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +11,7 @@ export async function POST(request: NextRequest) {
     const parsed = createOrderSchema.safeParse(body);
 
     if (!parsed.success) {
-      throw new ValidationError('Invalid order checkout payload', parsed.error.format());
+      return apiError(parsed.error);
     }
 
     const order = await orderService.createOrder(session.userId, parsed.data);

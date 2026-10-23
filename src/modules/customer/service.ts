@@ -5,6 +5,7 @@ import { NotFoundError, UnauthorizedError, ValidationError, ForbiddenError } fro
 import { addressSchema, updateProfileSchema } from './schemas';
 import { Role } from '@prisma/client';
 import { z } from 'zod';
+import { smsService } from '@/lib/services/sms';
 
 export function normalizePhoneNumber(raw: string): string {
   const digits = raw.replace(/\D/g, '');
@@ -22,95 +23,18 @@ export function normalizePhoneNumber(raw: string): string {
 
 export class CustomerService {
   /**
-   * Request OTP for phone login or registration
+   * Request OTP for phone login or registration via SMS service
    */
   async requestOtp(rawPhone: string) {
-    const phone = normalizePhoneNumber(rawPhone);
-
-    // Rate limiting: max 3 active OTP requests in last 10 minutes
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-    const recentRequests = await prisma.otpChallenge.count({
-      where: {
-        phone,
-        createdAt: { gte: tenMinutesAgo },
-      },
-    });
-
-    if (recentRequests >= 4) {
-      throw new ValidationError(
-        'Too many OTP requests. Please wait a few minutes before trying again.'
-      );
-    }
-
-    // In development or test sandbox, default to 123456 or generate random 6 digits
-    const isDev = process.env.NODE_ENV !== 'production';
-    const otpCode = isDev || phone.endsWith('000000') || phone.endsWith('43210')
-      ? '123456'
-      : Math.floor(100000 + Math.random() * 900000).toString();
-
-    const salt = await bcrypt.genSalt(10);
-    const codeHash = await bcrypt.hash(otpCode, salt);
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-
-    await prisma.otpChallenge.create({
-      data: {
-        phone,
-        codeHash,
-        expiresAt,
-      },
-    });
-
-    // Mask phone for response (e.g. +91 ******3210)
-    const masked = phone.slice(0, 3) + ' ******' + phone.slice(-4);
-
-    return {
-      success: true,
-      phone: masked,
-      message: `Verification code sent to ${masked}`,
-      // For sandbox verification in non-production, return debug code
-      ...(isDev && { devCode: otpCode }),
-    };
+    return smsService.requestOtp(rawPhone);
   }
 
   /**
    * Verify OTP and establish secure session
    */
   async verifyOtp(rawPhone: string, code: string) {
-    const phone = normalizePhoneNumber(rawPhone);
-
-    const challenge = await prisma.otpChallenge.findFirst({
-      where: {
-        phone,
-        isUsed: false,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!challenge) {
-      throw new UnauthorizedError('Invalid or expired OTP. Please request a new code.');
-    }
-
-    if (challenge.attempts >= 3) {
-      throw new UnauthorizedError('Too many failed attempts. This OTP is now locked.');
-    }
-
-    // Increment attempt count
-    await prisma.otpChallenge.update({
-      where: { id: challenge.id },
-      data: { attempts: { increment: 1 } },
-    });
-
-    const isMatch = await bcrypt.compare(code, challenge.codeHash);
-    if (!isMatch) {
-      throw new UnauthorizedError('Invalid OTP code. Please check and try again.');
-    }
-
-    // Mark as used
-    await prisma.otpChallenge.update({
-      where: { id: challenge.id },
-      data: { isUsed: true },
-    });
+    const verified = await smsService.verifyOtp(rawPhone, code);
+    const phone = verified.phone;
 
     // Find or create customer
     let user = await prisma.user.findFirst({
