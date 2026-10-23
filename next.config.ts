@@ -13,6 +13,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/orders/:id',
+        destination: '/account/orders/:id',
+      },
+      {
+        source: '/order/:id',
+        destination: '/account/orders/:id',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

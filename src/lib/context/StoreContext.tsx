@@ -62,14 +62,70 @@ const SETTINGS_KEY = 'pravdhan_settings_v2';
 const CUSTOMERS_KEY = 'pravdhan_customers_v1';
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const p = localStorage.getItem(PRODUCTS_KEY);
+        if (p) {
+          const loaded: Product[] = JSON.parse(p);
+          const existingIds = new Set(loaded.map((item) => item.id));
+          return [...loaded, ...INITIAL_PRODUCTS.filter((item) => !existingIds.has(item.id))];
+        }
+      } catch {}
+    }
+    return INITIAL_PRODUCTS;
+  });
   const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const o = localStorage.getItem(ORDERS_KEY);
+        if (o) {
+          const loaded: Order[] = JSON.parse(o);
+          const existingIds = new Set(loaded.map((item) => item.id));
+          return [...loaded, ...INITIAL_ORDERS.filter((item) => !existingIds.has(item.id))];
+        }
+      } catch {}
+    }
+    return INITIAL_ORDERS;
+  });
   const [inventoryHistory, setInventoryHistory] = useState<InventoryHistory[]>(INITIAL_INVENTORY_HISTORY);
   const [promotions, setPromotions] = useState<Promotion[]>(INITIAL_PROMOTIONS);
   const [deliverySlots] = useState<DeliverySlot[]>(INITIAL_DELIVERY_SLOTS);
   const [storeSettings, setStoreSettings] = useState<StoreSettings>(INITIAL_STORE_SETTINGS);
-  const [customers, setCustomers] = useState<CustomerProfile[]>(INITIAL_CUSTOMERS);
+  const [customers, setCustomers] = useState<CustomerProfile[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const c = localStorage.getItem(CUSTOMERS_KEY);
+        if (c) {
+          const loaded: CustomerProfile[] = JSON.parse(c);
+          const existingIds = new Set(loaded.map((item) => item.id));
+          return [...loaded, ...INITIAL_CUSTOMERS.filter((item) => !existingIds.has(item.id))];
+        }
+      } catch {}
+    }
+    return INITIAL_CUSTOMERS;
+  });
+
+  useEffect(() => {
+    // Cross-tab real-time sync for orders and customers
+    const handleStorageSync = (e: StorageEvent) => {
+      if (e.key === ORDERS_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setOrders(parsed);
+        } catch {}
+      }
+      if (e.key === CUSTOMERS_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setCustomers(parsed);
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageSync);
+    return () => window.removeEventListener('storage', handleStorageSync);
+  }, []);
 
   useEffect(() => {
     try {
@@ -152,10 +208,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 deliveryAddress: o.deliveryAddress,
                 deliverySlot: {
                   id: 'slot-instant',
-                  label: o.deliverySlot || 'Instant (10-15 mins)',
-                  timeSlot: o.deliverySlot || 'Instant (10-15 mins)',
                   dateType: 'TODAY' as const,
+                  dateLabel: 'Today',
+                  dateString: new Date().toISOString().split('T')[0],
+                  timeSlot: o.deliverySlot || 'Instant (10-15 mins)',
                   isAvailable: true,
+                  capacity: 50,
+                  bookedCount: 1,
                 },
                 items: (o.items || []).map((i: any) => ({
                   productId: i.productId,

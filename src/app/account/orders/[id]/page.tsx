@@ -1,8 +1,8 @@
 'use client';
 
-import React, { use } from 'react';
+import React, { use, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { notFound, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   PackageCheck,
   CheckCircle2,
@@ -17,12 +17,13 @@ import {
   User,
   ShoppingBag,
   Camera,
+  ShoppingBasket,
 } from 'lucide-react';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { useStore } from '@/lib/context/StoreContext';
 import { formatPrice, formatDateTime } from '@/lib/utils';
-import { OrderStatus } from '@/types';
+import { Order, OrderStatus } from '@/types';
 
 export default function OrderTrackingPage({
   params,
@@ -31,13 +32,147 @@ export default function OrderTrackingPage({
 }) {
   const router = useRouter();
   const resolvedParams = use(params);
+  const targetId = resolvedParams.id;
   const { orders, storeSettings } = useStore();
 
-  const order = orders.find((o) => o.id === resolvedParams.id);
+  const [mounted, setMounted] = useState(false);
+  const [localOrder, setLocalOrder] = useState<Order | null>(null);
+  const [apiOrder, setApiOrder] = useState<Order | null>(null);
+  const [isSearchingApi, setIsSearchingApi] = useState(false);
 
-  if (!order) {
-    notFound();
-  }
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 1. Direct search in StoreContext orders (by ID or Order Number)
+  const storeOrder = useMemo(() => {
+    if (!orders || orders.length === 0 || !targetId) return null;
+    return (
+      orders.find(
+        (o) =>
+          o.id === targetId ||
+          o.orderNumber === targetId ||
+          o.orderNumber.toLowerCase() === targetId.toLowerCase()
+      ) || null
+    );
+  }, [orders, targetId]);
+
+  // 2. Direct localStorage search & cross-tab sync
+  useEffect(() => {
+    const checkLocalStorage = () => {
+      if (typeof window === 'undefined' || !targetId) return;
+      try {
+        const raw = localStorage.getItem('pravdhan_orders_v1');
+        if (raw) {
+          const list: Order[] = JSON.parse(raw);
+          const found = list.find(
+            (o) =>
+              o.id === targetId ||
+              o.orderNumber === targetId ||
+              o.orderNumber.toLowerCase() === targetId.toLowerCase()
+          );
+          if (found) {
+            setLocalOrder(found);
+          }
+        }
+      } catch {}
+    };
+
+    checkLocalStorage();
+
+    // Re-check whenever an order update occurs in another tab or window regains focus
+    window.addEventListener('storage', checkLocalStorage);
+    window.addEventListener('focus', checkLocalStorage);
+    return () => {
+      window.removeEventListener('storage', checkLocalStorage);
+      window.removeEventListener('focus', checkLocalStorage);
+    };
+  }, [targetId]);
+
+  // 3. Fallback backend API search
+  useEffect(() => {
+    if (!storeOrder && !localOrder && targetId) {
+      setIsSearchingApi(true);
+      fetch(`/api/v1/orders/${targetId}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((res) => {
+          if (res && res.data) {
+            const o = res.data;
+            const mapped: Order = {
+              id: o.id,
+              orderNumber: o.orderNumber,
+              userId: o.userId || 'user-cust-01',
+              customerName: o.customerName || 'Customer',
+              customerPhone: o.customerPhone || '',
+              deliveryAddress: o.deliveryAddress,
+              deliverySlot: {
+                id: 'slot-instant',
+                dateType: 'TODAY' as const,
+                dateLabel: 'Today',
+                dateString: new Date().toISOString().split('T')[0],
+                timeSlot: o.deliverySlot || 'Instant (10-15 mins)',
+                isAvailable: true,
+                capacity: 50,
+                bookedCount: 1,
+              },
+              items: (o.items || []).map((i: any) => ({
+                productId: i.productId,
+                variantId: i.variantId,
+                productName: i.productName,
+                variantTitle: i.variantTitle,
+                brand: i.brand,
+                unit: i.unit,
+                purchasedPrice: Math.round((i.purchasedPrice || 0) / 100),
+                purchasedMrp: Math.round((i.purchasedMrp || 0) / 100),
+                quantity: i.quantity,
+                image: i.image,
+              })),
+              subtotal: Math.round((o.subtotal || 0) / 100),
+              discount: Math.round((o.discount || 0) / 100),
+              couponCode: o.couponCode,
+              couponDiscount: Math.round((o.couponDiscount || 0) / 100),
+              deliveryCharge: Math.round((o.deliveryFee || 0) / 100),
+              deliveryTip: Math.round((o.deliveryTip || 0) / 100),
+              handlingFee: Math.round((o.handlingFee || 0) / 100),
+              grandTotal: Math.round((o.grandTotal || 0) / 100),
+              paymentMethod: o.paymentMethod,
+              paymentStatus: o.paymentStatus,
+              orderStatus:
+                o.orderStatus === 'PLACED'
+                  ? 'ORDER_PLACED'
+                  : o.orderStatus === 'CONFIRMED'
+                  ? 'ORDER_CONFIRMED'
+                  : o.orderStatus === 'PREPARING'
+                  ? 'BEING_PREPARED'
+                  : o.orderStatus === 'READY_FOR_PICKUP'
+                  ? 'READY_FOR_DELIVERY'
+                  : o.orderStatus,
+              statusHistory: (o.statusHistory || []).map((h: any) => ({
+                status: h.status,
+                label: h.label,
+                timestamp: new Date(h.createdAt).toLocaleTimeString('en-IN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+                note: h.note,
+                completed: true,
+              })),
+              deliveryStaffName: o.rider?.name || o.deliveryStaffName,
+              deliveryProofPhoto: o.deliveryProofPhoto,
+              deliveryProofTimestamp: o.deliveryProofTimestamp,
+              createdAt: o.createdAt,
+              updatedAt: o.updatedAt,
+            };
+            setApiOrder(mapped);
+          }
+        })
+        .catch(() => null)
+        .finally(() => setIsSearchingApi(false));
+    }
+  }, [storeOrder, localOrder, targetId]);
+
+  // Prefer the freshest version: storeOrder if available, or localOrder, or apiOrder
+  const order: Order | null = storeOrder || localOrder || apiOrder;
 
   const statusSequence: { status: OrderStatus; label: string; icon: any }[] = [
     { status: 'ORDER_PLACED', label: 'Order Placed', icon: PackageCheck },
@@ -47,6 +182,63 @@ export default function OrderTrackingPage({
     { status: 'OUT_FOR_DELIVERY', label: 'Out for Delivery', icon: Truck },
     { status: 'DELIVERED', label: 'Delivered', icon: MapPin },
   ];
+
+  // Loading skeleton while mounting or searching
+  if (!mounted || (!order && isSearchingApi)) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-8">
+        <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-4 sm:py-6 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-slate-200 animate-pulse" />
+            <div className="h-6 w-48 bg-slate-200 rounded-lg animate-pulse" />
+          </div>
+          <div className="h-28 bg-white rounded-3xl border border-slate-200 p-6 animate-pulse" />
+          <div className="h-64 bg-white rounded-3xl border border-slate-200 p-6 animate-pulse" />
+        </main>
+        <Footer />
+        <MobileBottomNav />
+      </div>
+    );
+  }
+
+  // Graceful fallback if order is not found anywhere
+  if (!order) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-8">
+        <main className="flex-1 max-w-xl w-full mx-auto px-4 py-16 text-center space-y-6">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shadow-xs">
+            <PackageCheck className="w-10 h-10" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Order Details Not Found
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+              We couldn&apos;t find an active order matching <span className="font-mono font-bold text-slate-700">#{targetId}</span>. It may have been updated, or you may be browsing under a different session.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link
+              href="/account/orders"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow-md transition-all text-center flex items-center justify-center gap-2"
+            >
+              <PackageCheck className="w-4 h-4" />
+              <span>View All My Orders</span>
+            </Link>
+            <Link
+              href="/"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold text-xs sm:text-sm shadow-xs transition-all text-center flex items-center justify-center gap-2"
+            >
+              <ShoppingBasket className="w-4 h-4" />
+              <span>Return to Store</span>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+        <MobileBottomNav />
+      </div>
+    );
+  }
 
   const currentStatusIndex = statusSequence.findIndex((s) => s.status === order.orderStatus);
 
@@ -98,7 +290,7 @@ export default function OrderTrackingPage({
               </span>
             </div>
             <p className="text-xs text-slate-500">
-              Placed on {formatDateTime(order.createdAt)} • Slot: {order.deliverySlot.dateLabel} ({order.deliverySlot.timeSlot})
+              Placed on {formatDateTime(order.createdAt)} • Slot: {order.deliverySlot?.dateLabel || 'Today'} ({order.deliverySlot?.timeSlot || 'Express Delivery'})
             </p>
           </div>
 
