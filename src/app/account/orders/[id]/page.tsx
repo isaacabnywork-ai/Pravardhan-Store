@@ -18,6 +18,8 @@ import {
   ShoppingBag,
   Camera,
   ShoppingBasket,
+  X,
+  Sparkles,
 } from 'lucide-react';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
@@ -39,6 +41,8 @@ export default function OrderTrackingPage({
   const [localOrder, setLocalOrder] = useState<Order | null>(null);
   const [apiOrder, setApiOrder] = useState<Order | null>(null);
   const [isSearchingApi, setIsSearchingApi] = useState(false);
+  const [showDeliveredModal, setShowDeliveredModal] = useState(false);
+  const [hasPromptedModal, setHasPromptedModal] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -174,6 +178,14 @@ export default function OrderTrackingPage({
   // Prefer the freshest version: storeOrder if available, or localOrder, or apiOrder
   const order: Order | null = storeOrder || localOrder || apiOrder;
 
+  // Automatically trigger delivered celebration modal once when order is delivered
+  useEffect(() => {
+    if (order && order.orderStatus === 'DELIVERED' && !hasPromptedModal) {
+      setShowDeliveredModal(true);
+      setHasPromptedModal(true);
+    }
+  }, [order?.orderStatus, hasPromptedModal]);
+
   const statusSequence: { status: OrderStatus; label: string; icon: any }[] = [
     { status: 'ORDER_PLACED', label: 'Order Placed', icon: PackageCheck },
     { status: 'ORDER_CONFIRMED', label: 'Order Confirmed', icon: CheckCircle2 },
@@ -294,17 +306,19 @@ export default function OrderTrackingPage({
             </p>
           </div>
 
-          <button
-            onClick={() => window.print()}
-            className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-xs font-bold text-slate-700"
-          >
-            <Printer className="w-4 h-4 text-slate-500" />
-            <span>Print Invoice</span>
-          </button>
+          {order.orderStatus === 'DELIVERED' && (
+            <button
+              onClick={() => window.print()}
+              className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-xs font-bold text-slate-700 cursor-pointer shadow-2xs"
+            >
+              <Printer className="w-4 h-4 text-slate-500" />
+              <span>Print Invoice</span>
+            </button>
+          )}
         </div>
 
         {/* 17. Status Timeline Card */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
+        <div className="bg-white p-5 sm:p-7 rounded-3xl border border-slate-200 shadow-xs space-y-6">
           <div className="border-b border-slate-100 pb-3">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Truck className="w-5 h-5 text-emerald-700" />
@@ -316,56 +330,67 @@ export default function OrderTrackingPage({
           </div>
 
           {/* Stepped Timeline */}
-          <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-2.5 sm:before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+          <div className="space-y-1 pt-1">
             {statusSequence.map((step, idx) => {
-              const isPast = idx < currentStatusIndex;
-              const isCurrent = idx === currentStatusIndex;
+              const isDelivered = order.orderStatus === 'DELIVERED';
+              const isCompleted = isDelivered ? idx <= currentStatusIndex : idx < currentStatusIndex;
+              const isCurrent = !isDelivered && idx === currentStatusIndex;
 
-              const historyItem = order.statusHistory.find((h) => h.status === step.status);
+              const historyItem = order.statusHistory?.find((h) => h.status === step.status);
 
               return (
-                <div key={step.status} className="relative flex items-start gap-4">
-                  {/* Step Marker Dot / Icon */}
-                  <div
-                    className={`absolute -left-6 sm:-left-8 top-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      isPast
-                        ? 'bg-emerald-600 text-white ring-4 ring-emerald-100'
-                        : isCurrent
-                        ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-200 animate-pulse'
-                        : 'bg-white border-2 border-slate-300 text-slate-300'
-                    }`}
-                  >
-                    {isPast ? (
-                      <CheckCircle2 className="w-4 h-4" />
-                    ) : isCurrent ? (
-                      <span className="w-2 h-2 rounded-full bg-slate-950" />
-                    ) : (
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                <div key={step.status} className="flex items-start gap-3.5 sm:gap-4 relative">
+                  {/* Left Column: Marker Dot + Connecting Line */}
+                  <div className="flex flex-col items-center shrink-0 w-8">
+                    <div
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                        isCompleted
+                          ? 'bg-emerald-600 text-white shadow-xs ring-4 ring-emerald-100'
+                          : isCurrent
+                          ? 'bg-amber-500 text-slate-950 shadow-xs ring-4 ring-amber-100 animate-pulse'
+                          : 'bg-white border-2 border-slate-300 text-slate-300'
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                      ) : isCurrent ? (
+                        <span className="w-2.5 h-2.5 rounded-full bg-slate-950" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-slate-300" />
+                      )}
+                    </div>
+
+                    {idx < statusSequence.length - 1 && (
+                      <div
+                        className={`w-0.5 flex-1 min-h-[38px] sm:min-h-[44px] my-1 rounded-full transition-colors ${
+                          idx < currentStatusIndex || isDelivered ? 'bg-emerald-500' : 'bg-slate-200'
+                        }`}
+                      />
                     )}
                   </div>
 
-                  {/* Step Details */}
-                  <div className="flex-1 min-w-0">
+                  {/* Right Column: Step Details */}
+                  <div className="flex-1 min-w-0 pt-0.5 pb-5">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span
-                        className={`text-sm font-bold ${
-                          isCurrent
-                            ? 'text-amber-800 font-black'
-                            : isPast
+                        className={`text-xs sm:text-sm font-bold ${
+                          isCompleted
                             ? 'text-slate-900'
-                            : 'text-slate-400'
+                            : isCurrent
+                            ? 'text-amber-800 font-black'
+                            : 'text-slate-400 font-medium'
                         }`}
                       >
                         {step.label}
                       </span>
                       {historyItem && historyItem.timestamp && (
-                        <span className="text-[11px] font-semibold text-slate-500">
+                        <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500">
                           {historyItem.timestamp}
                         </span>
                       )}
                     </div>
                     {historyItem?.note && (
-                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 leading-relaxed">
                         {historyItem.note}
                       </p>
                     )}
@@ -499,32 +524,32 @@ export default function OrderTrackingPage({
           </div>
         </div>
 
-        {/* Ordered Items with Historical Prices (Spec Section 42) */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+        {/* Ordered Items with Historical Prices */}
+        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
           <h3 className="font-bold text-base text-slate-900 pb-2 border-b border-slate-100">
             Purchased Items ({order.items.length})
           </h3>
 
           <div className="divide-y divide-slate-100">
             {order.items.map((item, idx) => (
-              <div key={idx} className="py-3 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-3">
+              <div key={idx} className="py-3 flex items-start sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                   <img
                     src={item.image}
                     alt={item.productName}
-                    className="w-12 h-12 object-cover rounded-xl border border-slate-200 flex-shrink-0"
+                    className="w-12 h-12 object-cover rounded-xl border border-slate-200 shrink-0"
                   />
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">{item.brand}</p>
-                    <p className="font-bold text-slate-900 text-sm">{item.productName}</p>
-                    <p className="text-slate-500 text-xs">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase truncate">{item.brand}</p>
+                    <p className="font-bold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-2">{item.productName}</p>
+                    <p className="text-slate-500 text-[11px] sm:text-xs mt-0.5">
                       Variant: <span className="font-semibold text-slate-800">{item.variantTitle}</span> • Qty: {item.quantity}
                     </p>
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span className="text-sm font-black text-slate-900">
+                <div className="text-right shrink-0">
+                  <span className="text-xs sm:text-sm font-black text-slate-900 block">
                     {formatPrice(item.purchasedPrice * item.quantity)}
                   </span>
                   {item.purchasedMrp > item.purchasedPrice && (
@@ -532,16 +557,18 @@ export default function OrderTrackingPage({
                       {formatPrice(item.purchasedMrp * item.quantity)}
                     </span>
                   )}
-                  <span className="text-[10px] text-emerald-700 font-semibold block">
-                    {formatPrice(item.purchasedPrice)} each
-                  </span>
+                  {item.quantity > 1 && (
+                    <span className="text-[10px] text-emerald-700 font-semibold block">
+                      {formatPrice(item.purchasedPrice)} each
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
           </div>
 
           {/* Bill Calculation */}
-          <div className="pt-4 border-t border-slate-200 max-w-xs ml-auto text-xs space-y-1.5">
+          <div className="pt-4 border-t border-slate-200 w-full sm:max-w-xs sm:ml-auto text-xs space-y-1.5">
             <div className="flex justify-between text-slate-600">
               <span>Subtotal</span>
               <span>{formatPrice(order.subtotal)}</span>
@@ -583,6 +610,74 @@ export default function OrderTrackingPage({
           </div>
         </div>
       </main>
+
+      {/* Order Delivered Celebratory Modal */}
+      {showDeliveredModal && order && order.orderStatus === 'DELIVERED' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 text-center space-y-5 relative">
+            <button
+              onClick={() => setShowDeliveredModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Celebration Icon */}
+            <div className="w-16 h-16 mx-auto rounded-3xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700 shadow-md">
+              <CheckCircle2 className="w-9 h-9" />
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 inline-flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Verified Handover</span>
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight pt-1">
+                Order Delivered!
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xs mx-auto">
+                Your order <strong className="text-slate-900 font-mono">#{order.orderNumber}</strong> has been successfully delivered and handed over at your doorstep.
+              </p>
+            </div>
+
+            {/* Proof photo thumbnail if available */}
+            {order.deliveryProofPhoto && (
+              <div className="rounded-2xl overflow-hidden border border-slate-200 max-h-48 shadow-inner relative">
+                <img
+                  src={order.deliveryProofPhoto}
+                  alt="Doorstep Delivery Proof"
+                  className="w-full h-44 object-cover"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-slate-950/80 p-1.5 text-white text-[10px] font-mono flex items-center justify-between backdrop-blur-xs">
+                  <span>Photo Proof</span>
+                  <span>{order.deliveryProofTimestamp ? formatDateTime(order.deliveryProofTimestamp) : 'Just now'}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="space-y-2.5 pt-1">
+              <button
+                onClick={() => {
+                  window.print();
+                }}
+                className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white rounded-2xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Invoice</span>
+              </button>
+
+              <button
+                onClick={() => setShowDeliveredModal(false)}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold text-xs transition-colors cursor-pointer"
+              >
+                Close & View Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
       <MobileBottomNav />

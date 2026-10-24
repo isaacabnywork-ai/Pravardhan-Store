@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -20,11 +20,37 @@ import {
   Layers,
   Wallet,
   Bike,
+  Bell,
+  BellRing,
+  ShoppingBag,
+  CheckCheck,
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useStore } from '@/lib/context/StoreContext';
 import { RoleSwitcherModal } from '@/components/layout/RoleSwitcherModal';
 import { Role } from '@/types';
+
+interface AdminOrderNotif {
+  id: string;
+  orderNumber: string;
+  grandTotal: number;
+  customerName: string;
+  customerPhone?: string;
+  paymentMethod?: string;
+  timestamp: number;
+  read: boolean;
+}
+
+function formatTimeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 10) return 'Just now';
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -33,6 +59,162 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [deskFilter, setDeskFilter] = useState<'ALL' | Role>('ALL');
+  const [notifications, setNotifications] = useState<AdminOrderNotif[]>([]);
+  const [isNotifDropdownOpen, setIsNotifDropdownOpen] = useState(false);
+  const [activeOrderToast, setActiveOrderToast] = useState<AdminOrderNotif | null>(null);
+  const notifDropdownRef = useRef<HTMLDivElement>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Initialize notifications from localStorage or from recent orders
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('pravdhan_admin_notifications');
+      if (stored) {
+        setNotifications(JSON.parse(stored));
+      } else if (orders.length > 0) {
+        const recentOrders = orders.slice(0, 5).map((o) => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          grandTotal: o.grandTotal,
+          customerName: o.customerName || 'Customer',
+          customerPhone: o.customerPhone,
+          paymentMethod: o.paymentMethod,
+          timestamp: new Date(o.createdAt).getTime() || Date.now(),
+          read: true,
+        }));
+        setNotifications(recentOrders);
+        localStorage.setItem('pravdhan_admin_notifications', JSON.stringify(recentOrders));
+      }
+    } catch {}
+  }, [orders]);
+
+  const playOrderChime = () => {
+    try {
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Note 1: D5 (587.33 Hz)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(587.33, now);
+      gain1.gain.setValueAtTime(0, now);
+      gain1.gain.linearRampToValueAtTime(0.2, now + 0.05);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.3);
+
+      // Note 2: A5 (880 Hz)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(880, now + 0.12);
+      gain2.gain.setValueAtTime(0, now + 0.12);
+      gain2.gain.linearRampToValueAtTime(0.3, now + 0.18);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.65);
+    } catch {
+      // Audio autoplay might be restricted before user interaction
+    }
+  };
+
+  const handleIncomingOrder = (orderData: Partial<AdminOrderNotif>) => {
+    if (!orderData || !orderData.id) return;
+    const newNotif: AdminOrderNotif = {
+      id: orderData.id,
+      orderNumber: orderData.orderNumber || 'ORD-NEW',
+      grandTotal: orderData.grandTotal || 0,
+      customerName: orderData.customerName || 'Customer',
+      customerPhone: orderData.customerPhone,
+      paymentMethod: orderData.paymentMethod || 'Online',
+      timestamp: orderData.timestamp || Date.now(),
+      read: false,
+    };
+
+    setNotifications((prev) => {
+      if (prev.some((n) => n.id === newNotif.id)) return prev;
+      const updated = [newNotif, ...prev].slice(0, 30);
+      try {
+        localStorage.setItem('pravdhan_admin_notifications', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    playOrderChime();
+    setActiveOrderToast(newNotif);
+
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => {
+      setActiveOrderToast(null);
+    }, 8000);
+  };
+
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'pravdhan_new_order_event' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          handleIncomingOrder(parsed);
+        } catch {}
+      }
+    };
+
+    const handleCustomEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<AdminOrderNotif>;
+      if (customEvent.detail) {
+        handleIncomingOrder(customEvent.detail);
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('pravdhan_new_order', handleCustomEvent);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('pravdhan_new_order', handleCustomEvent);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target as Node)) {
+        setIsNotifDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const markAllAsRead = () => {
+    setNotifications((prev) => {
+      const updated = prev.map((n) => ({ ...n, read: true }));
+      try {
+        localStorage.setItem('pravdhan_admin_notifications', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const markAsRead = (id: string) => {
+    setNotifications((prev) => {
+      const updated = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+      try {
+        localStorage.setItem('pravdhan_admin_notifications', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const pendingOrdersCount = orders.filter(
     (o) => o.orderStatus === 'ORDER_PLACED' || o.orderStatus === 'ORDER_CONFIRMED'
@@ -257,6 +439,109 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="hidden sm:inline">Storefront</span>
           </Link>
 
+          {/* Real-time Order Notification Bell & Dropdown */}
+          <div className="relative" ref={notifDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsNotifDropdownOpen((prev) => !prev)}
+              className="relative p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors flex items-center justify-center cursor-pointer"
+              title="Order Notifications"
+              aria-label="Order Notifications"
+            >
+              <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4.5 min-w-[1.125rem] px-1 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-black text-white ring-2 ring-slate-900 shadow-xs animate-pulse">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Dropdown Menu */}
+            {isNotifDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <BellRing className="w-4 h-4 text-emerald-400" />
+                    <span className="font-extrabold text-xs sm:text-sm tracking-tight">Order Alerts</span>
+                    {unreadCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        {unreadCount} new
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={markAllAsRead}
+                      className="text-[11px] font-bold text-slate-400 hover:text-emerald-400 flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <CheckCheck className="w-3.5 h-3.5" />
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                  {notifications.length === 0 ? (
+                    <div className="py-8 text-center text-slate-400 text-xs">
+                      <PackageCheck className="w-8 h-8 mx-auto text-slate-300 mb-2 opacity-60" />
+                      No new order notifications yet
+                    </div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        onClick={() => markAsRead(notif.id)}
+                        className={`p-3.5 transition-colors flex items-start gap-3 hover:bg-slate-50 cursor-pointer ${
+                          !notif.read ? 'bg-emerald-50/60' : ''
+                        }`}
+                      >
+                        <div
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                            !notif.read
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-slate-100 text-slate-500'
+                          }`}
+                        >
+                          <ShoppingBag className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-black text-xs text-slate-900 truncate">
+                              {notif.orderNumber}
+                            </span>
+                            <span className="text-[10px] text-slate-400 shrink-0">
+                              {formatTimeAgo(notif.timestamp)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600 font-medium truncate mt-0.5">
+                            ₹{notif.grandTotal} • {notif.customerName}
+                          </p>
+                          <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                            Paid via {notif.paymentMethod || 'Online'}
+                          </p>
+                        </div>
+                        {!notif.read && (
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 self-center" />
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
+                  <Link
+                    href="/admin/orders"
+                    onClick={() => setIsNotifDropdownOpen(false)}
+                    className="text-xs font-bold text-emerald-700 hover:text-emerald-800 transition-colors inline-flex items-center gap-1"
+                  >
+                    Go to Orders Operations Desk ➜
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Role Switcher Pill */}
           <button
             onClick={() => setIsRoleModalOpen(true)}
@@ -280,6 +565,60 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
       </header>
+
+      {/* Real-Time Floating Order Notification Toast Banner */}
+      {activeOrderToast && (
+        <aside
+          aria-label="Real-time order notification"
+          className="fixed top-18 right-3 sm:right-6 z-50 max-w-sm sm:max-w-md w-[calc(100vw-1.5rem)] bg-slate-900/95 backdrop-blur-md text-white rounded-2xl p-4 shadow-2xl border-2 border-emerald-500 ring-4 ring-emerald-500/20 animate-in slide-in-from-top-4 duration-300"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center shrink-0 text-white shadow-md shadow-emerald-950/40">
+              <BellRing className="w-5 h-5 animate-bounce" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
+                    New Customer Order!
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveOrderToast(null)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                  aria-label="Dismiss toast"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-sm font-extrabold text-white mt-1 truncate">
+                Order {activeOrderToast.orderNumber} • ₹{activeOrderToast.grandTotal}
+              </p>
+              <p className="text-xs text-slate-300 mt-0.5 truncate">
+                Customer: {activeOrderToast.customerName} ({activeOrderToast.paymentMethod})
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <Link
+                  href="/admin/orders"
+                  onClick={() => setActiveOrderToast(null)}
+                  className="flex-1 text-center py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm"
+                >
+                  Open in Dispatch Desk
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setActiveOrderToast(null)}
+                  className="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      )}
 
       {/* Mobile Drawer Backdrop */}
       {isMobileSidebarOpen && (

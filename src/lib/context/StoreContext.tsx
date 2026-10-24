@@ -555,6 +555,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     // 2. Add to orders
     saveOrders([newOrder, ...orders]);
+
+    // 3. Broadcast real-time new order event for Admin Panel notification
+    try {
+      if (typeof window !== 'undefined') {
+        const orderPayload = {
+          id: newOrder.id,
+          orderNumber: newOrder.orderNumber,
+          grandTotal: newOrder.grandTotal,
+          customerName: newOrder.customerName || 'Customer',
+          customerPhone: newOrder.customerPhone || '',
+          paymentMethod: newOrder.paymentMethod,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem('pravdhan_new_order_event', JSON.stringify(orderPayload));
+        window.dispatchEvent(new CustomEvent('pravdhan_new_order', { detail: orderPayload }));
+      }
+    } catch {}
   };
 
   const addPromotion = (promo: Omit<Promotion, 'id' | 'usageCount'>) => {
