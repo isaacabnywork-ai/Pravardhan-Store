@@ -86,7 +86,7 @@ export function CartDrawer() {
       role="dialog"
       aria-modal="true"
       aria-label="Shopping Cart Drawer"
-      className="fixed inset-0 z-50 overflow-hidden animate-in fade-in duration-200"
+      className="fixed inset-0 z-[70] overflow-hidden animate-in fade-in duration-200"
     >
       {/* Backdrop */}
       <div
@@ -94,10 +94,10 @@ export function CartDrawer() {
         onClick={() => setIsCartDrawerOpen(false)}
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-8 sm:pl-10">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-4 sm:pl-10">
         <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col border-l border-gray-200">
           {/* Header */}
-          <div className="p-4 bg-[#0F5132] text-white flex items-center justify-between border-b border-[#054A29]">
+          <div className="p-4 bg-[#105132] text-white flex items-center justify-between border-b border-[#0c4027]">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-amber-300">
                 <ShoppingBag className="w-4 h-4" />

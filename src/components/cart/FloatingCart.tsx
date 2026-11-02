@@ -7,7 +7,7 @@ import { useCart } from '@/lib/context/CartContext';
 
 export function FloatingCart() {
   const pathname = usePathname();
-  const { totalItemsCount, items, openCartWithLocationCheck, isCartDrawerOpen } = useCart();
+  const { totalItemsCount, items, setIsCartDrawerOpen, isCartDrawerOpen } = useCart();
   const [hasJustAdded, setHasJustAdded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const prevCount = useRef(totalItemsCount);
@@ -53,7 +53,7 @@ export function FloatingCart() {
     >
       <button
         type="button"
-        onClick={() => openCartWithLocationCheck()}
+        onClick={() => setIsCartDrawerOpen(true)}
         aria-label={`View cart with ${totalItemsCount} ${
           totalItemsCount === 1 ? 'item' : 'items'
         }`}

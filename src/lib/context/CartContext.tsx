@@ -105,10 +105,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const openCartWithLocationCheck = (onConfirmedCallback?: () => void) => {
+    setIsCartDrawerOpen(true);
     if (onConfirmedCallback) {
       setOnLocationConfirmAction(() => onConfirmedCallback);
     }
-    setIsLocationModalOpen(true);
   };
 
   const saveItems = (newItems: CartItem[]) => {
