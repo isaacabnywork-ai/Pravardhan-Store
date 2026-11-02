@@ -151,7 +151,6 @@ export function Navbar() {
     isLocationModalOpen,
     setIsLocationModalOpen,
     selectedZone,
-    openCartWithLocationCheck,
   } = useCart();
   const { storeSettings, products, categories } = useStore();
   const { resolvedTheme, toggleTheme } = useTheme();
@@ -324,8 +323,8 @@ export function Navbar() {
                 aria-label={`Open shopping cart with ${totalItemsCount} ${
                   totalItemsCount === 1 ? 'item' : 'items'
                 } totaling ${formatPrice(grandTotal)}`}
-                onClick={() => openCartWithLocationCheck(() => router.push('/checkout'))}
-                className="flex items-center gap-2.5 bg-[#0F5132] hover:bg-[#054A29] text-white px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold shadow-sm shadow-[#0F5132]/25 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-[#0F5132] focus-visible:outline-none cursor-pointer"
+                onClick={() => router.push('/checkout')}
+                className="flex items-center gap-2.5 bg-[#105132] hover:bg-[#0c4027] text-white px-3.5 sm:px-4 py-2 rounded-full text-xs font-bold shadow-sm shadow-[#105132]/25 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-[#105132] focus-visible:outline-none cursor-pointer"
               >
                 <div className="relative">
                   <ShoppingBag className="w-4 h-4" />

@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ChevronRight, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/lib/context/CartContext';
 
 export function FloatingCart() {
   const pathname = usePathname();
-  const { totalItemsCount, items, setIsCartDrawerOpen, isCartDrawerOpen } = useCart();
+  const router = useRouter();
+  const { totalItemsCount, items, setIsCartDrawerOpen } = useCart();
   const [hasJustAdded, setHasJustAdded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const prevCount = useRef(totalItemsCount);
@@ -32,8 +33,8 @@ export function FloatingCart() {
     return null;
   }
 
-  // Hide if no items in cart or if cart drawer is already open
-  if (totalItemsCount === 0 || isCartDrawerOpen) {
+  // Hide if no items in cart
+  if (totalItemsCount === 0) {
     return null;
   }
 
@@ -41,6 +42,11 @@ export function FloatingCart() {
   const latestItem = items[items.length - 1] || items[0];
   const hasMultiple = items.length > 1;
   const previousItem = hasMultiple ? items[items.length - 2] : null;
+
+  const handleGoToCheckout = () => {
+    setIsCartDrawerOpen(false);
+    router.push('/checkout');
+  };
 
   return (
     <aside
@@ -53,7 +59,7 @@ export function FloatingCart() {
     >
       <button
         type="button"
-        onClick={() => setIsCartDrawerOpen(true)}
+        onClick={handleGoToCheckout}
         aria-label={`View cart with ${totalItemsCount} ${
           totalItemsCount === 1 ? 'item' : 'items'
         }`}
