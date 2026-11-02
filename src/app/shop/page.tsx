@@ -22,7 +22,6 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
-import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ExploreCategoriesGrid } from '@/components/categories/ExploreCategoriesGrid';
 import { CATEGORY_DIRECTORY_SECTIONS } from '@/lib/data/categories-directory';
 import { useStore } from '@/lib/context/StoreContext';
@@ -927,7 +926,6 @@ function ShopContent() {
           </div>
         )}
 
-        <CartDrawer />
         <MobileBottomNav />
       </div>
     );
@@ -1199,7 +1197,6 @@ function ShopContent() {
         </div>
       )}
 
-      <CartDrawer />
       <MobileBottomNav />
     </div>
   );

@@ -21,7 +21,6 @@ import {
   Check,
 } from 'lucide-react';
 import { Footer } from '@/components/layout/Footer';
-import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { useStore } from '@/lib/context/StoreContext';
 import { useCart } from '@/lib/context/CartContext';
@@ -508,7 +507,6 @@ export default function ProductDetailPage({
       </div>
 
       <Footer />
-      <CartDrawer />
     </div>
   );
 }

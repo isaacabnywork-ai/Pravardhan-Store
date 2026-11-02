@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { OfferDealsShowcase } from '@/components/home/OfferDealsShowcase';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
@@ -136,7 +135,6 @@ export default function DealsPage() {
       </main>
 
       <Footer />
-      <CartDrawer />
       <MobileBottomNav />
     </div>
   );

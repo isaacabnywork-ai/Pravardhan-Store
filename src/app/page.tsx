@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { CartDrawer } from '@/components/cart/CartDrawer';
 import { ProductCard } from '@/components/products/ProductCard';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import { HeroBannerCarousel } from '@/components/home/HeroBannerCarousel';
@@ -392,7 +391,6 @@ export default function HomePage() {
       </main>
 
       <Footer />
-      <CartDrawer />
       <MobileBottomNav />
     </div>
   );
