@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Footer } from '@/components/layout/Footer';
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
+import { DeliveryLiveMap } from '@/components/orders/DeliveryLiveMap';
 import { useStore } from '@/lib/context/StoreContext';
 import { formatPrice, formatDateTime } from '@/lib/utils';
 import { Order, OrderStatus } from '@/types';
@@ -257,35 +258,11 @@ export default function OrderTrackingPage({
   return (
     <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-8">
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-4 sm:py-6 space-y-6">
-        {/* Top App Bar with Back Button */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => router.push('/account/orders')}
-              aria-label="Back to orders"
-              className="w-9 h-9 rounded-full bg-white hover:bg-gray-100 border border-slate-200/80 flex items-center justify-center text-gray-800 transition-colors cursor-pointer shadow-xs"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight">
-                Order Tracking
-              </h1>
-              <p className="text-[11px] text-slate-500">
-                Order #{order.orderNumber}
-              </p>
-            </div>
-          </div>
-
-          <Link
-            href="/account/orders"
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-800 bg-white hover:bg-gray-50 px-3 py-1.5 rounded-xl border border-slate-200/80 shadow-xs transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>All Orders</span>
-          </Link>
-        </div>
+        {/* ================= 1. LIVE DELIVERY MAP AT THE TOP ================= */}
+        <DeliveryLiveMap
+          order={order}
+          onGoBack={() => router.push('/account/orders')}
+        />
 
         {/* Top Order Overview Banner */}
         <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
