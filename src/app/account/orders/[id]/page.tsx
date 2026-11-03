@@ -184,6 +184,14 @@ export default function OrderTrackingPage({
     }
   }, [order?.orderStatus, hasPromptedModal]);
 
+  // Clean handler to dismiss celebration modal before opening browser print preview
+  const handlePrintInvoice = () => {
+    setShowDeliveredModal(false);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
   const statusSequence: { status: OrderStatus; label: string; icon: any }[] = [
     { status: 'ORDER_PLACED', label: 'Order Placed', icon: PackageCheck },
     { status: 'ORDER_CONFIRMED', label: 'Order Confirmed', icon: CheckCircle2 },
@@ -253,8 +261,8 @@ export default function OrderTrackingPage({
   const currentStatusIndex = statusSequence.findIndex((s) => s.status === order.orderStatus);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-8">
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-4 sm:py-6 space-y-6">
+    <div className="min-h-screen flex flex-col bg-slate-100/60 pb-20 md:pb-8 print:bg-white print:pb-0 print:min-h-0">
+      <main className="print:hidden flex-1 max-w-5xl w-full mx-auto px-4 py-4 sm:py-6 space-y-6">
         {/* ================= 1. LIVE DELIVERY MAP AT THE TOP ================= */}
         <DeliveryLiveMap
           order={order}
@@ -282,7 +290,7 @@ export default function OrderTrackingPage({
 
           {order.orderStatus === 'DELIVERED' && (
             <button
-              onClick={() => window.print()}
+              onClick={handlePrintInvoice}
               className="self-start sm:self-auto flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-xs font-bold text-slate-700 cursor-pointer shadow-2xs"
             >
               <Printer className="w-4 h-4 text-slate-500" />
@@ -571,9 +579,235 @@ export default function OrderTrackingPage({
         </div>
       </main>
 
+      {/* ========================================================================= */}
+      {/* PRINT-ONLY OFFICIAL TAX INVOICE                                           */}
+      {/* ========================================================================= */}
+      <div className="hidden print:block w-full max-w-4xl mx-auto p-6 bg-white text-slate-900 font-sans print:m-0 print:p-6 print:max-w-none text-xs">
+        {/* Header */}
+        <div className="border-b-2 border-slate-900 pb-4 mb-4">
+          <div className="flex justify-between items-start gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-black tracking-tight text-emerald-800 uppercase">
+                  {storeSettings.storeName || 'Pravdhan Store'}
+                </span>
+              </div>
+              <p className="text-slate-600 font-medium text-[11px] mt-0.5">
+                12-Minute Express Grocery & Daily Essentials
+              </p>
+              <p className="text-slate-500 text-[10px] mt-1 max-w-sm">
+                Fulfillment Dark Store Hub #01, Sector 14, Model Town, Gurugram, Haryana - 122001
+              </p>
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[10px] text-slate-600 mt-2 font-mono">
+                <span><strong>GSTIN:</strong> 06AAACP1234F1Z5</span>
+                <span><strong>FSSAI Lic. No:</strong> 10824999000123</span>
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[10px] text-slate-500 mt-0.5">
+                <span>Support: {storeSettings.supportEmail || 'care@pravdhanstore.in'}</span>
+                <span>Phone: {storeSettings.supportPhone || '+91 124 456 7890'}</span>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <span className="inline-block px-3 py-1 bg-slate-900 text-white font-black text-xs uppercase tracking-wider rounded">
+                TAX INVOICE
+              </span>
+              <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wide">
+                Original for Recipient
+              </p>
+              <div className="mt-2 space-y-0.5 text-[11px]">
+                <div>
+                  <span className="text-slate-500">Invoice No: </span>
+                  <span className="font-mono font-bold text-slate-900">INV-{order.orderNumber}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Order ID: </span>
+                  <span className="font-mono font-bold text-slate-900">#{order.orderNumber}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Invoice Date: </span>
+                  <span className="font-medium text-slate-800">{formatDateTime(order.createdAt)}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Payment Status: </span>
+                  <span className="font-bold text-emerald-700 uppercase">{order.paymentStatus}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Customer & Delivery Details */}
+        <div className="grid grid-cols-2 gap-4 pb-4 mb-4 border-b border-slate-200">
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+            <h4 className="font-bold text-slate-500 text-[10px] uppercase tracking-wider mb-1.5">
+              Billed & Delivered To:
+            </h4>
+            <p className="font-bold text-slate-900 text-xs">{order.customerName}</p>
+            {order.customerPhone && (
+              <p className="text-slate-600 font-mono text-[11px] mt-0.5">{order.customerPhone}</p>
+            )}
+            <p className="text-slate-700 text-[11px] mt-1.5 leading-relaxed">
+              {order.deliveryAddress
+                ? `${order.deliveryAddress.houseNumber ? `${order.deliveryAddress.houseNumber}, ` : ''}${order.deliveryAddress.street ? `${order.deliveryAddress.street}, ` : ''}${order.deliveryAddress.area ? `${order.deliveryAddress.area}, ` : ''}${order.deliveryAddress.city ? `${order.deliveryAddress.city} - ` : ''}${order.deliveryAddress.pincode || ''}`
+                : 'Sector 14, Model Town, Gurugram, Haryana'}
+            </p>
+          </div>
+
+          <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+            <h4 className="font-bold text-slate-500 text-[10px] uppercase tracking-wider mb-1.5">
+              Fulfillment & Dispatch:
+            </h4>
+            <div className="space-y-1 text-[11px]">
+              <div>
+                <span className="text-slate-500">Dispatch Hub: </span>
+                <span className="font-medium text-slate-800">Pravdhan Dark Store #01 (Sector 14)</span>
+              </div>
+              <div>
+                <span className="text-slate-500">Delivery Slot: </span>
+                <span className="font-medium text-slate-800">
+                  {order.deliverySlot?.dateLabel || 'Today'} ({order.deliverySlot?.timeSlot || 'Express 12-15 Mins'})
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500">Payment Mode: </span>
+                <span className="font-bold text-slate-800">{order.paymentMethod}</span>
+              </div>
+              <div>
+                <span className="text-slate-500">Delivered By: </span>
+                <span className="font-medium text-slate-800">{order.deliveryStaffName || 'Assigned Express Partner'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Itemized Table */}
+        <div className="mb-4">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-900 text-white text-[10px] uppercase tracking-wider">
+                <th className="py-2 px-2.5 text-center w-8">#</th>
+                <th className="py-2 px-2.5">Item Description</th>
+                <th className="py-2 px-2.5">Unit / Size</th>
+                <th className="py-2 px-2.5 text-center">Qty</th>
+                <th className="py-2 px-2.5 text-right">MRP</th>
+                <th className="py-2 px-2.5 text-right">Rate</th>
+                <th className="py-2 px-2.5 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 text-[11px]">
+              {order.items.map((item, idx) => (
+                <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                  <td className="py-2 px-2.5 text-center font-mono text-slate-500">{idx + 1}</td>
+                  <td className="py-2 px-2.5 font-medium text-slate-900">
+                    <div>{item.productName}</div>
+                    {item.brand && <div className="text-[10px] text-slate-400 uppercase font-semibold">{item.brand}</div>}
+                  </td>
+                  <td className="py-2 px-2.5 text-slate-600">{item.unit || item.variantTitle || '-'}</td>
+                  <td className="py-2 px-2.5 text-center font-bold text-slate-800">{item.quantity}</td>
+                  <td className="py-2 px-2.5 text-right text-slate-400 line-through font-mono">
+                    {formatPrice(item.purchasedMrp || item.purchasedPrice)}
+                  </td>
+                  <td className="py-2 px-2.5 text-right font-medium text-slate-800 font-mono">
+                    {formatPrice(item.purchasedPrice)}
+                  </td>
+                  <td className="py-2 px-2.5 text-right font-bold text-slate-900 font-mono">
+                    {formatPrice(item.purchasedPrice * item.quantity)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Calculation & Tax Summary */}
+        <div className="grid grid-cols-2 gap-6 pt-3 border-t-2 border-slate-900">
+          <div className="space-y-3">
+            <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-emerald-950 text-[11px]">
+              <p className="font-bold flex items-center gap-1.5 text-emerald-800">
+                <span>✓</span> Verified Electronic Cash Memo & Tax Invoice
+              </p>
+              <p className="text-[10px] text-emerald-700 mt-1 leading-relaxed">
+                All groceries and FMCG goods supplied are inclusive of GST as applicable under CGST/SGST Act. FSSAI hygiene standards compliant.
+              </p>
+            </div>
+
+            <div className="text-[10px] text-slate-500 space-y-0.5">
+              <p>• Goods once sold are backed by 72-hour doorstep return/refund policy.</p>
+              <p>• For queries or complaints, reach us via in-app help or {storeSettings.supportEmail || 'care@pravdhanstore.in'}</p>
+              <p className="font-mono text-[9px] text-slate-400 mt-2">
+                This is a computer generated invoice and does not require a physical signature.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 text-[11px]">
+            <div className="flex justify-between text-slate-600">
+              <span>Items Total (MRP):</span>
+              <span className="font-mono font-medium">
+                {formatPrice(
+                  order.items.reduce((acc, i) => acc + (i.purchasedMrp || i.purchasedPrice) * i.quantity, 0)
+                )}
+              </span>
+            </div>
+
+            {(order.discount || 0) > 0 && (
+              <div className="flex justify-between text-emerald-700 font-medium">
+                <span>Total Product Savings:</span>
+                <span className="font-mono">- {formatPrice(order.discount || 0)}</span>
+              </div>
+            )}
+
+            <div className="flex justify-between text-slate-600">
+              <span>Delivery Partner Fee:</span>
+              <span className="font-mono font-medium">
+                {(order.deliveryCharge || 0) > 0 ? formatPrice(order.deliveryCharge || 0) : 'FREE'}
+              </span>
+            </div>
+
+            <div className="flex justify-between text-slate-600">
+              <span>Handling & Packaging Fee:</span>
+              <span className="font-mono font-medium">{formatPrice(order.handlingFee || 5)}</span>
+            </div>
+
+            {Boolean(order.deliveryTip && order.deliveryTip > 0) && (
+              <div className="flex justify-between text-slate-600">
+                <span>Delivery Partner Tip:</span>
+                <span className="font-mono font-medium">{formatPrice(order.deliveryTip || 0)}</span>
+              </div>
+            )}
+
+            <div className="border-t border-slate-300 pt-2 mt-2 flex justify-between text-sm font-black text-slate-900">
+              <span>Grand Total:</span>
+              <span className="font-mono text-base text-emerald-800">{formatPrice(order.grandTotal)}</span>
+            </div>
+
+            <div className="bg-slate-100 p-2.5 rounded border border-slate-200 mt-2 flex justify-between items-center text-[11px]">
+              <div>
+                <span className="text-slate-500 block text-[10px] uppercase font-bold">Paid via</span>
+                <span className="font-bold text-slate-800">{order.paymentMethod}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-emerald-700 block text-[10px] uppercase font-bold">Payment Status</span>
+                <span className="font-black text-emerald-800 font-mono">{order.paymentStatus}</span>
+              </div>
+            </div>
+
+            <div className="pt-4 text-right">
+              <div className="inline-block text-center border-t border-slate-400 pt-1 px-4">
+                <p className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">
+                  For {storeSettings.storeName || 'Pravdhan Store'}
+                </p>
+                <p className="text-[9px] text-slate-500 mt-0.5">Authorized Signatory</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Order Delivered Celebratory Modal */}
       {showDeliveredModal && order && order.orderStatus === 'DELIVERED' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+        <div className="print:hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 text-center space-y-5 relative">
             <button
               onClick={() => setShowDeliveredModal(false)}
@@ -619,9 +853,7 @@ export default function OrderTrackingPage({
             {/* Actions */}
             <div className="space-y-2.5 pt-1">
               <button
-                onClick={() => {
-                  window.print();
-                }}
+                onClick={handlePrintInvoice}
                 className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 active:scale-98 text-white rounded-2xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
@@ -639,8 +871,10 @@ export default function OrderTrackingPage({
         </div>
       )}
 
-      <Footer />
-      <MobileBottomNav />
+      <div className="print:hidden">
+        <Footer />
+        <MobileBottomNav />
+      </div>
     </div>
   );
 }

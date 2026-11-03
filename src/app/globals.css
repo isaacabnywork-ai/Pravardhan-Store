@@ -221,3 +221,28 @@ html.dark aside[aria-label="Subcategories"] {
   background-color: #111827 !important;
   border-color: #1f2937 !important;
 }
+
+/* ========================================================================= */
+/* PRINT MEDIA OPTIMIZATIONS                                                 */
+/* ========================================================================= */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  .print\:block {
+    display: block !important;
+  }
+}

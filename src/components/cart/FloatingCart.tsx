@@ -51,7 +51,7 @@ export function FloatingCart() {
   return (
     <aside
       aria-label="View cart navigation island"
-      className={`fixed left-1/2 -translate-x-1/2 z-40 transition-all duration-300 pointer-events-auto select-none ${
+      className={`fixed left-1/2 -translate-x-1/2 z-40 transition-all duration-300 pointer-events-auto select-none print:hidden ${
         isProductPage
           ? 'bottom-20 sm:bottom-22'
           : 'bottom-[74px] md:bottom-8'
