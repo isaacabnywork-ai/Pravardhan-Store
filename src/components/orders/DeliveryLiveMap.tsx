@@ -6,15 +6,8 @@ import {
   Maximize2,
   Minimize2,
   Crosshair,
-  Zap,
-  Home,
-  Store,
-  Bike,
-  ShoppingBag,
-  ChevronRight,
-  ShieldCheck,
 } from 'lucide-react';
-import { Order, OrderStatus } from '@/types';
+import { Order } from '@/types';
 
 interface DeliveryLiveMapProps {
   order: Order;
@@ -25,62 +18,6 @@ export function DeliveryLiveMap({ order, onGoBack }: DeliveryLiveMapProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRecentering, setIsRecentering] = useState(false);
 
-  // Compute dynamic ETA and status headline based on order status
-  const getEtaAndHeadline = (status: OrderStatus) => {
-    switch (status) {
-      case 'ORDER_PLACED':
-        return {
-          eta: '12-15 mins',
-          headline: 'Order placed & verified',
-          subtext: 'Sending to dark store for quick packing',
-        };
-      case 'ORDER_CONFIRMED':
-        return {
-          eta: '12 mins',
-          headline: 'Store confirmed your order',
-          subtext: 'Picker is allocating fresh inventory',
-        };
-      case 'BEING_PREPARED':
-        return {
-          eta: '7-10 mins',
-          headline: 'Your order is getting packed',
-          subtext: 'Bags sealed and ready for dispatch',
-        };
-      case 'READY_FOR_DELIVERY':
-        return {
-          eta: '7 mins',
-          headline: 'Order packed & ready for pickup',
-          subtext: 'Assigning nearest express rider',
-        };
-      case 'OUT_FOR_DELIVERY':
-        return {
-          eta: '3-5 mins',
-          headline: 'Rider is on the way!',
-          subtext: 'Heading towards your delivery doorstep',
-        };
-      case 'DELIVERED':
-        return {
-          eta: 'Delivered',
-          headline: 'Order delivered at doorstep',
-          subtext: 'Verified handover complete',
-        };
-      case 'CANCELLED':
-        return {
-          eta: 'Cancelled',
-          headline: 'Order cancelled',
-          subtext: 'Amount refunded to source',
-        };
-      default:
-        return {
-          eta: '10-12 mins',
-          headline: 'Order in progress',
-          subtext: 'Express delivery in progress',
-        };
-    }
-  };
-
-  const { eta, headline } = getEtaAndHeadline(order.orderStatus);
-
   const handleRecenter = () => {
     setIsRecentering(true);
     setTimeout(() => setIsRecentering(false), 1200);
@@ -88,12 +25,11 @@ export function DeliveryLiveMap({ order, onGoBack }: DeliveryLiveMapProps) {
 
   const localityName = (order.deliveryAddress?.area || 'Sector 14, Model Town').toUpperCase();
   const addressLabel = order.deliveryAddress?.label || 'Home';
-  const isDelivered = order.orderStatus === 'DELIVERED';
   const isOutForDelivery = order.orderStatus === 'OUT_FOR_DELIVERY';
 
   return (
     <div className="w-full relative overflow-hidden rounded-3xl shadow-sm border border-slate-200/90 bg-slate-50 transition-all duration-300">
-      {/* ================= 1. LIVE INTERACTIVE VECTOR MAP ================= */}
+      {/* ================= LIVE INTERACTIVE VECTOR MAP ================= */}
       <div
         className={`w-full relative overflow-hidden transition-all duration-500 ease-in-out ${
           isExpanded ? 'h-[440px] sm:h-[500px]' : 'h-72 sm:h-84 md:h-96'
@@ -258,7 +194,7 @@ export function DeliveryLiveMap({ order, onGoBack }: DeliveryLiveMapProps) {
             />
           </g>
 
-          {/* ================= 2. PINS ON MAP ================= */}
+          {/* ================= PINS ON MAP ================= */}
           {/* Origin Pin: Dark Store #01 */}
           <g filter="url(#pinShadow)">
             {/* Ground shadow base */}
@@ -330,7 +266,7 @@ export function DeliveryLiveMap({ order, onGoBack }: DeliveryLiveMapProps) {
           </g>
         </svg>
 
-        {/* ================= 3. FLOATING OVERLAY MAP BUTTONS ================= */}
+        {/* ================= FLOATING OVERLAY MAP BUTTONS ================= */}
         {/* Top-Left: Back Button */}
         <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
           <button
@@ -343,7 +279,7 @@ export function DeliveryLiveMap({ order, onGoBack }: DeliveryLiveMapProps) {
           </button>
         </div>
 
-        {/* Top-Right: Fullscreen & Re-center Buttons (Matching Screenshot) */}
+        {/* Top-Right: Fullscreen & Re-center Buttons */}
         <div className="absolute top-4 right-4 z-20 flex flex-col items-center gap-2.5">
           {/* Expand/Collapse Map Toggle */}
           <button
@@ -372,61 +308,6 @@ export function DeliveryLiveMap({ order, onGoBack }: DeliveryLiveMapProps) {
           >
             <Crosshair className={`w-5 h-5 stroke-[2.2] ${isRecentering ? 'animate-spin' : ''}`} />
           </button>
-        </div>
-      </div>
-
-      {/* ================= 4. ARRIVAL & LIVE STATUS CARD ================= */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xs border-t border-slate-200/90 relative -mt-4 z-10 mx-2 sm:mx-3 mb-2">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <span className="text-xs sm:text-sm font-semibold text-slate-500 block">
-              Arriving in
-            </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-3xl sm:text-4xl font-black text-purple-700 tracking-tight">
-                {eta}
-              </span>
-            </div>
-            <h3 className="text-base sm:text-lg font-black text-slate-900 mt-1">
-              {headline}
-            </h3>
-          </div>
-
-          <div className="flex flex-col items-end gap-1.5 shrink-0">
-            <span className="px-3 py-1 rounded-full bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs">
-              <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>On time</span>
-            </span>
-            <span className="text-[11px] font-semibold text-slate-400">
-              12-min express dispatch
-            </span>
-          </div>
-        </div>
-
-        {/* Delivery Address & Item Snippet (Matching Reference Design) */}
-        <div className="mt-4 p-3 sm:p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 flex items-center justify-between gap-3 hover:bg-slate-100/70 transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-700 border border-amber-500/30 flex items-center justify-center shrink-0">
-            <ShoppingBag className="w-5 h-5 stroke-[2.2]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-900">
-                {order.items.length} {order.items.length === 1 ? 'Item' : 'Items'}
-              </span>
-              {order.discount > 0 && (
-                <span className="text-xs font-bold text-emerald-600">
-                  • ₹{order.discount} saved
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-slate-500 truncate mt-0.5">
-              Delivering to {order.deliveryAddress?.label || 'Home'}:{' '}
-              {order.deliveryAddress?.houseNumber ? `${order.deliveryAddress.houseNumber}, ` : ''}
-              {order.deliveryAddress?.street || ''}, {order.deliveryAddress?.area || ''},{' '}
-              {order.deliveryAddress?.city || ''}
-            </p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
         </div>
       </div>
     </div>

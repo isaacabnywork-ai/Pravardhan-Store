@@ -6,14 +6,11 @@ import { useRouter } from 'next/navigation';
 import {
   PackageCheck,
   CheckCircle2,
-  Clock,
   MapPin,
   Phone,
-  ArrowLeft,
   Truck,
   ShieldCheck,
   Printer,
-  ChevronRight,
   User,
   ShoppingBag,
   Camera,
@@ -434,71 +431,29 @@ export default function OrderTrackingPage({
           )}
         </div>
 
-        {/* Address and Items Breakdown */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Delivery Address */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
-            <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-emerald-700" />
-              Delivery Location
-            </h3>
-            <p className="text-xs font-bold text-slate-800 mt-2">
-              {order.deliveryAddress.name} ({order.deliveryAddress.label})
+        {/* Delivery Location */}
+        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-2">
+          <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+            <MapPin className="w-4 h-4 text-emerald-700" />
+            Delivery Location
+          </h3>
+          <p className="text-xs font-bold text-slate-800 mt-2">
+            {order.deliveryAddress.name} ({order.deliveryAddress.label})
+          </p>
+          <p className="text-xs text-slate-600 leading-snug">
+            {order.deliveryAddress.houseNumber}, {order.deliveryAddress.street}
+          </p>
+          {order.deliveryAddress.landmark && (
+            <p className="text-[11px] text-slate-400">
+              Landmark: {order.deliveryAddress.landmark}
             </p>
-            <p className="text-xs text-slate-600 leading-snug">
-              {order.deliveryAddress.houseNumber}, {order.deliveryAddress.street}
-            </p>
-            {order.deliveryAddress.landmark && (
-              <p className="text-[11px] text-slate-400">
-                Landmark: {order.deliveryAddress.landmark}
-              </p>
-            )}
-            <p className="text-[11px] text-slate-600 font-semibold">
-              {order.deliveryAddress.area}, {order.deliveryAddress.city} - {order.deliveryAddress.pincode}
-            </p>
-            <p className="text-xs text-slate-800 font-bold pt-1">
-              Ph: +91 {order.deliveryAddress.phone}
-            </p>
-          </div>
-
-          {/* Delivery Slot */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
-            <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-emerald-700" />
-              Delivery Window
-            </h3>
-            <p className="text-xs font-bold text-slate-800 mt-2">
-              {order.deliverySlot.dateLabel}
-            </p>
-            <p className="text-sm font-black text-emerald-800">
-              {order.deliverySlot.timeSlot}
-            </p>
-            <p className="text-[11px] text-slate-500">
-              Dispatched directly from Pravdhan Hub 1 ({storeSettings.serviceArea})
-            </p>
-          </div>
-
-          {/* Payment Info */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-2">
-            <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-700" />
-              Payment Summary
-            </h3>
-            <div className="text-xs space-y-1 pt-1">
-              <div className="flex justify-between text-slate-600">
-                <span>Method:</span>
-                <span className="font-bold text-slate-900">{order.paymentMethod}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Status:</span>
-                <span className="font-bold text-emerald-700">{order.paymentStatus}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Total Paid:</span>
-                <span className="font-black text-slate-900">{formatPrice(order.grandTotal)}</span>
-              </div>
-            </div>
-          </div>
+          )}
+          <p className="text-[11px] text-slate-600 font-semibold">
+            {order.deliveryAddress.area}, {order.deliveryAddress.city} - {order.deliveryAddress.pincode}
+          </p>
+          <p className="text-xs text-slate-800 font-bold pt-1">
+            Ph: +91 {order.deliveryAddress.phone}
+          </p>
         </div>
 
         {/* Ordered Items with Historical Prices */}
@@ -583,6 +538,34 @@ export default function OrderTrackingPage({
             <div className="pt-2 border-t border-slate-200 flex justify-between font-black text-sm text-slate-900">
               <span>Grand Total</span>
               <span className="text-base text-emerald-800">{formatPrice(order.grandTotal)}</span>
+            </div>
+          </div>
+
+          {/* Merged Payment Summary below Purchased Items */}
+          <div className="pt-4 border-t border-slate-200">
+            <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-slate-900">Payment Summary</h4>
+                  <p className="text-[11px] text-slate-500">
+                    Paid via <span className="font-bold text-slate-800">{order.paymentMethod}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 text-xs">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Payment Status</span>
+                  <span className="font-bold text-emerald-700">{order.paymentStatus}</span>
+                </div>
+                <div className="border-l border-slate-200 pl-4">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Paid</span>
+                  <span className="font-black text-sm text-slate-900">{formatPrice(order.grandTotal)}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
