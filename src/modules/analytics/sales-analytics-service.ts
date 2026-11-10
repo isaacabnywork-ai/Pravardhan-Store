@@ -43,7 +43,7 @@ export class SalesAnalyticsService {
       },
     });
 
-    let totalOrders = orders.length;
+    const totalOrders = orders.length;
     let completedOrders = 0;
     let cancelledOrders = 0;
     let returnedOrders = 0;
