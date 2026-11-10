@@ -3,6 +3,7 @@ import { OrderStatus, PaymentMethod, PaymentStatus, InventoryChangeType, CashCol
 import { cartService } from '@/modules/cart/service';
 import { notificationService } from '@/modules/notifications/service';
 import { NotFoundError, ValidationError, ConflictError, ForbiddenError } from '@/lib/errors';
+import { calculateNetCodObligation } from '@/modules/operations/financial-reconciliation-helper';
 import { createOrderSchema } from './schemas';
 import { z } from 'zod';
 
@@ -210,9 +211,11 @@ export class OrderService {
         },
       });
 
-      // Mandatory Invariant (Batch 9.6 Rule B): Expected COD cash must equal order grand total
-      // minus any persisted non-COD payment allocations (e.g. Wallet or Online).
-      // Integer paise arithmetic, non-negative invariant: expected COD cash = max(0, grandTotal - nonCodAllocations)
+      // Mandatory Invariants (Batch 9.8 COND-9.7-01, COND-9.7-02, COND-9.7-03):
+      // 1. Expected COD cash deducts ONLY successfully applied, active non-COD allocations (paymentStatus === PAID).
+      // 2. Over-allocations (nonCodAllocations > grandTotal) reject the transaction via ValidationError.
+      // 3. Zero-cash orders (expectedCodPaise === 0) do NOT create a physical CashCollection record,
+      //    preventing false collection/settlement history and operational count pollution.
       if (data.paymentMethod === PaymentMethod.COD) {
         // Query any non-COD payments allocated to this order
         const nonCodPayments = await tx.payment.findMany({
@@ -221,38 +224,37 @@ export class OrderService {
             paymentMethod: { not: PaymentMethod.COD },
           },
         });
-        const nonCodAllocationsPaise = nonCodPayments.reduce((sum, p) => sum + p.amount, 0);
-        const expectedCodPaise = Math.max(0, grandTotal - nonCodAllocationsPaise);
 
-        // Resolve default staff/rider reference for pending ledger line
-        let assignedRiderId = order.deliveryStaffId;
-        if (!assignedRiderId) {
-          const fallbackRider = await tx.user.findFirst({
-            where: { role: Role.DELIVERY_STAFF, isActive: true },
-            select: { id: true },
+        const { expectedCodPaise, isFullyPrepaid, validNonCodAllocationsPaise } =
+          calculateNetCodObligation(grandTotal, nonCodPayments, { throwOnOverAllocation: true });
+
+        // COND-9.7-02: Only instantiate physical cash collection if there is actual physical cash to collect (> 0)
+        if (!isFullyPrepaid && expectedCodPaise > 0) {
+          // Resolve default staff/rider reference for pending ledger line
+          let assignedRiderId = order.deliveryStaffId;
+          if (!assignedRiderId) {
+            const fallbackRider = await tx.user.findFirst({
+              where: { role: Role.DELIVERY_STAFF, isActive: true },
+              select: { id: true },
+            });
+            assignedRiderId = fallbackRider?.id || userId;
+          }
+
+          await tx.cashCollection.create({
+            data: {
+              orderId: order.id,
+              riderId: assignedRiderId,
+              storeId: store.id,
+              expectedAmount: expectedCodPaise,
+              collectedAmount: 0,
+              collectionStatus: CashCollectionStatus.PENDING,
+              settlementStatus: SettlementStatus.UNSETTLED,
+              notes: validNonCodAllocationsPaise > 0
+                ? `Split payment: ₹${Math.round(validNonCodAllocationsPaise / 100)} prepaid via non-COD, ₹${Math.round(expectedCodPaise / 100)} expected in physical cash`
+                : 'Pending cash collection created upon order checkout',
+            },
           });
-          assignedRiderId = fallbackRider?.id || userId;
         }
-
-        // If order is fully covered by non-COD allocations, expected COD is 0
-        const isFullyCovered = expectedCodPaise === 0 && nonCodAllocationsPaise > 0;
-
-        await tx.cashCollection.create({
-          data: {
-            orderId: order.id,
-            riderId: assignedRiderId,
-            storeId: store.id,
-            expectedAmount: expectedCodPaise,
-            collectedAmount: 0,
-            collectionStatus: isFullyCovered ? CashCollectionStatus.COLLECTED : CashCollectionStatus.PENDING,
-            settlementStatus: isFullyCovered ? SettlementStatus.SETTLED : SettlementStatus.UNSETTLED,
-            notes: isFullyCovered
-              ? 'Order fully funded via non-COD payment allocations; zero physical cash collection required'
-              : nonCodAllocationsPaise > 0
-              ? `Split payment: ₹${Math.round(nonCodAllocationsPaise / 100)} prepaid via non-COD, ₹${Math.round(expectedCodPaise / 100)} expected in cash`
-              : 'Pending cash collection created upon order checkout',
-          },
-        });
       }
 
       // Clear the customer's cart

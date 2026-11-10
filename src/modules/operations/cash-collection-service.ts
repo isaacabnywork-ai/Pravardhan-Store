@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { CashCollectionStatus, SettlementStatus } from '@prisma/client';
 import { ValidationError, NotFoundError, ConflictError } from '@/lib/errors';
+import { calculateNetCodObligation } from './financial-reconciliation-helper';
 
 export interface RecordCashCollectionParams {
   orderId: string;
@@ -225,9 +226,13 @@ export class CashCollectionService {
   /**
    * Safe, idempotent backfill utility for historical COD orders lacking CashCollection entries.
    * Creates UNVERIFIED / PENDING ledger records with expected amount and zero collected amount.
-   * Batch 9.6 invariant: Calculates net outstanding COD cash as order.grandTotal minus any
-   * persisted non-COD payment allocations (e.g. Wallet/Online payments).
-   * Does NOT fabricate collected cash.
+   * 
+   * Batch 9.8 Invariants (COND-9.7-01, COND-9.7-02, COND-9.7-03):
+   * 1. Uses calculateNetCodObligation to filter strictly for active, PAID non-COD allocations.
+   * 2. Zero-cash orders (expectedCodPaise === 0) are skipped (NOT instantiated as physical collections),
+   *    preventing false collection/settlement history and operational count pollution.
+   * 3. Over-allocated historical orders are isolated in exceptions list rather than fabricated/clamped.
+   * 4. Does NOT fabricate collected cash.
    */
   async backfillHistoricalCodOrders(defaultStaffId?: string) {
     const codOrdersWithoutLedger = await prisma.order.findMany({
@@ -257,30 +262,45 @@ export class CashCollectionService {
     });
 
     let createdCount = 0;
+    let skippedFullyPrepaidCount = 0;
+    const isolatedOverAllocatedOrders: { orderId: string; orderNumber: string; grandTotal: number; nonCodAllocations: number }[] = [];
+
     for (const order of codOrdersWithoutLedger) {
+      // Calculate net COD obligation using shared financial helper without throwing
+      const calculation = calculateNetCodObligation(order.grandTotal, order.payments || [], {
+        throwOnOverAllocation: false,
+      });
+
+      // COND-9.7-03: Isolate over-allocated historical records for manual reconciliation
+      if (calculation.isOverAllocated) {
+        isolatedOverAllocatedOrders.push({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          grandTotal: order.grandTotal,
+          nonCodAllocations: calculation.validNonCodAllocationsPaise,
+        });
+        continue;
+      }
+
+      // COND-9.7-02: Zero-cash orders (fully prepaid) do NOT create a physical collection record
+      if (calculation.isFullyPrepaid || calculation.expectedCodPaise === 0) {
+        skippedFullyPrepaidCount++;
+        continue;
+      }
+
       const assignedRider = order.deliveryStaffId || defaultStaffId || order.userId;
-
-      // Batch 9.6: Calculate non-COD allocations in paise
-      const nonCodAllocationsPaise = (order.payments || [])
-        .filter((p) => p.paymentMethod !== 'COD')
-        .reduce((sum, p) => sum + p.amount, 0);
-
-      const netExpectedPaise = Math.max(0, order.grandTotal - nonCodAllocationsPaise);
-      const isFullyPrepaid = netExpectedPaise === 0 && nonCodAllocationsPaise > 0;
 
       await prisma.cashCollection.create({
         data: {
           orderId: order.id,
           riderId: assignedRider,
           storeId: order.storeId,
-          expectedAmount: netExpectedPaise,
+          expectedAmount: calculation.expectedCodPaise,
           collectedAmount: 0,
-          collectionStatus: isFullyPrepaid ? CashCollectionStatus.COLLECTED : CashCollectionStatus.PENDING,
-          settlementStatus: isFullyPrepaid ? SettlementStatus.SETTLED : SettlementStatus.UNSETTLED,
-          notes: isFullyPrepaid
-            ? `Historical backfill for Order #${order.orderNumber} (Status: ${order.orderStatus}). Fully funded by non-COD allocation.`
-            : nonCodAllocationsPaise > 0
-            ? `Historical backfill for Order #${order.orderNumber} (Status: ${order.orderStatus}). Split payment: ₹${Math.round(nonCodAllocationsPaise / 100)} non-COD, ₹${Math.round(netExpectedPaise / 100)} expected COD cash.`
+          collectionStatus: CashCollectionStatus.PENDING,
+          settlementStatus: SettlementStatus.UNSETTLED,
+          notes: calculation.validNonCodAllocationsPaise > 0
+            ? `Historical backfill for Order #${order.orderNumber} (Status: ${order.orderStatus}). Split payment: ₹${Math.round(calculation.validNonCodAllocationsPaise / 100)} prepaid non-COD, ₹${Math.round(calculation.expectedCodPaise / 100)} expected physical COD cash.`
             : `Historical backfill for Order #${order.orderNumber} (Status: ${order.orderStatus}). Requires manual financial reconciliation.`,
         },
       });
@@ -290,6 +310,9 @@ export class CashCollectionService {
     return {
       totalFound: codOrdersWithoutLedger.length,
       createdCount,
+      skippedFullyPrepaidCount,
+      isolatedOverAllocatedCount: isolatedOverAllocatedOrders.length,
+      isolatedOverAllocatedOrders,
     };
   }
 }
