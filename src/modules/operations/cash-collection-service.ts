@@ -225,6 +225,8 @@ export class CashCollectionService {
   /**
    * Safe, idempotent backfill utility for historical COD orders lacking CashCollection entries.
    * Creates UNVERIFIED / PENDING ledger records with expected amount and zero collected amount.
+   * Batch 9.6 invariant: Calculates net outstanding COD cash as order.grandTotal minus any
+   * persisted non-COD payment allocations (e.g. Wallet/Online payments).
    * Does NOT fabricate collected cash.
    */
   async backfillHistoricalCodOrders(defaultStaffId?: string) {
@@ -243,6 +245,14 @@ export class CashCollectionService {
         grandTotal: true,
         orderNumber: true,
         orderStatus: true,
+        payments: {
+          select: {
+            id: true,
+            paymentMethod: true,
+            paymentStatus: true,
+            amount: true,
+          },
+        },
       },
     });
 
@@ -250,16 +260,28 @@ export class CashCollectionService {
     for (const order of codOrdersWithoutLedger) {
       const assignedRider = order.deliveryStaffId || defaultStaffId || order.userId;
 
+      // Batch 9.6: Calculate non-COD allocations in paise
+      const nonCodAllocationsPaise = (order.payments || [])
+        .filter((p) => p.paymentMethod !== 'COD')
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const netExpectedPaise = Math.max(0, order.grandTotal - nonCodAllocationsPaise);
+      const isFullyPrepaid = netExpectedPaise === 0 && nonCodAllocationsPaise > 0;
+
       await prisma.cashCollection.create({
         data: {
           orderId: order.id,
           riderId: assignedRider,
           storeId: order.storeId,
-          expectedAmount: order.grandTotal,
+          expectedAmount: netExpectedPaise,
           collectedAmount: 0,
-          collectionStatus: CashCollectionStatus.PENDING,
-          settlementStatus: SettlementStatus.UNSETTLED,
-          notes: `Historical backfill for Order #${order.orderNumber} (Status: ${order.orderStatus}). Requires manual financial reconciliation.`,
+          collectionStatus: isFullyPrepaid ? CashCollectionStatus.COLLECTED : CashCollectionStatus.PENDING,
+          settlementStatus: isFullyPrepaid ? SettlementStatus.SETTLED : SettlementStatus.UNSETTLED,
+          notes: isFullyPrepaid
+            ? `Historical backfill for Order #${order.orderNumber} (Status: ${order.orderStatus}). Fully funded by non-COD allocation.`
+            : nonCodAllocationsPaise > 0
+            ? `Historical backfill for Order #${order.orderNumber} (Status: ${order.orderStatus}). Split payment: ₹${Math.round(nonCodAllocationsPaise / 100)} non-COD, ₹${Math.round(netExpectedPaise / 100)} expected COD cash.`
+            : `Historical backfill for Order #${order.orderNumber} (Status: ${order.orderStatus}). Requires manual financial reconciliation.`,
         },
       });
       createdCount++;
