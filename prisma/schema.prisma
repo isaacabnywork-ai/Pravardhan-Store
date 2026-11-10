@@ -51,6 +51,7 @@ model User {
   orders       Order[]
   deliveries   Order[]             @relation("StaffDeliveries")
   riderAssignments DeliveryAssignment[] @relation("RiderAssignments")
+  cashCollections  CashCollection[]    @relation("RiderCashCollections")
   redemptions  CouponRedemption[]
   notifications Notification[]
 
@@ -423,6 +424,7 @@ model Order {
   payments           Payment[]
   redemptions        CouponRedemption[]
   deliveryAssignments DeliveryAssignment[]
+  cashCollections    CashCollection[]
 
   @@index([userId])
   @@index([storeId])
@@ -549,4 +551,45 @@ model Notification {
   @@index([isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+enum CashCollectionStatus {
+  PENDING
+  COLLECTED
+  SHORT_COLLECTED
+  EXCESS_COLLECTED
+  FAILED
+}
+
+enum SettlementStatus {
+  UNSETTLED
+  SETTLED
+  DISCREPANCY
+}
+
+model CashCollection {
+  id                 String               @id @default(cuid())
+  orderId            String
+  riderId            String
+  storeId            String
+  expectedAmount     Int                  // in paise
+  collectedAmount    Int                  @default(0) // in paise
+  collectionStatus   CashCollectionStatus @default(PENDING)
+  settlementStatus   SettlementStatus     @default(UNSETTLED)
+  collectedAt        DateTime?
+  settledAt          DateTime?
+  handoverToStaffId  String?
+  notes              String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  order              Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  rider              User                 @relation("RiderCashCollections", fields: [riderId], references: [id])
+
+  @@index([orderId])
+  @@index([riderId])
+  @@index([storeId])
+  @@index([collectionStatus])
+  @@index([settlementStatus])
+  @@map("cash_collections")
 }

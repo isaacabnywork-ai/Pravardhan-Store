@@ -7,7 +7,7 @@
     "build": "node scripts/db-sync.js && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "tsx tests/analytics.test.mjs"
+    "test": "tsx tests/analytics.test.mjs && tsx tests/batch-9-hardening.test.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -43,14 +43,34 @@ export class FinancialAnalyticsService {
     let codPendingDeliveryCount = 0;
     let codPendingDeliveryPaise = 0;
 
+    // Cash collection ledger verification:
+    // Query persisted CashCollection records for this store/period to reconcile actual collected cash
+    const cashCollections = await prisma.cashCollection.findMany({
+      where: query.storeId ? { storeId: query.storeId } : undefined,
+      select: {
+        orderId: true,
+        expectedAmount: true,
+        collectedAmount: true,
+        collectionStatus: true,
+      },
+    });
+
+    const cashCollectionMap = new Map(cashCollections.map((c) => [c.orderId, c]));
+
     for (const order of orders) {
       if (order.orderStatus === OrderStatus.CANCELLED) {
         continue;
       }
 
       if (order.paymentMethod === PaymentMethod.COD) {
-        if (order.orderStatus === OrderStatus.DELIVERED) {
-          // Invariant 1: Only delivered COD is collected cash
+        const persistedCollection = cashCollectionMap.get(order.id);
+
+        if (persistedCollection && persistedCollection.collectedAmount > 0) {
+          // Mandatory Invariant: Trace to persisted CashCollection record
+          codDeliveredCollectedCount++;
+          codDeliveredCollectedPaise += persistedCollection.collectedAmount;
+        } else if (order.orderStatus === OrderStatus.DELIVERED) {
+          // Fallback if legacy record exists before CashCollection logging
           codDeliveredCollectedCount++;
           codDeliveredCollectedPaise += order.grandTotal;
         } else {
