@@ -217,11 +217,14 @@ export class OrderService {
       // 3. Zero-cash orders (expectedCodPaise === 0) do NOT create a physical CashCollection record,
       //    preventing false collection/settlement history and operational count pollution.
       if (data.paymentMethod === PaymentMethod.COD) {
-        // Query any non-COD payments allocated to this order
+        // Query any non-COD payments allocated to this order including their processed refunds
         const nonCodPayments = await tx.payment.findMany({
           where: {
             orderId: order.id,
             paymentMethod: { not: PaymentMethod.COD },
+          },
+          include: {
+            refunds: true,
           },
         });
 

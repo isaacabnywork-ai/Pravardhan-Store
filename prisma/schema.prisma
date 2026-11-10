@@ -316,6 +316,21 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+enum RefundReason {
+  CUSTOMER_CANCELLATION
+  ADMIN_INITIATED
+  ITEM_OUT_OF_STOCK
+  QUALITY_DISPUTE
+  RETURN_ON_DELIVERY
+  OTHER
+}
+
 model Cart {
   id         String     @id @default(cuid())
   userId     String?    @unique
@@ -422,6 +437,7 @@ model Order {
   items              OrderItem[]
   statusHistory      OrderStatusHistory[]
   payments           Payment[]
+  refunds            Refund[]
   redemptions        CouponRedemption[]
   deliveryAssignments DeliveryAssignment[]
   cashCollections    CashCollection[]
@@ -487,10 +503,39 @@ model Payment {
   updatedAt          DateTime      @updatedAt
 
   order              Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds            Refund[]
 
   @@index([orderId])
   @@index([gatewayOrderId])
   @@map("payments")
+}
+
+model Refund {
+  id                 String       @id @default(cuid())
+  orderId            String
+  paymentId          String
+  amount             Int          // in paise
+  status             RefundStatus @default(PENDING)
+  reason             RefundReason @default(CUSTOMER_CANCELLATION)
+  gatewayRefundId    String?      // e.g. Razorpay refund ID 'rfnd_xxxx'
+  idempotencyKey     String?      @unique
+  notes              String?
+  rawGatewayResponse Json?
+  processedAt        DateTime?
+  failedAt           DateTime?
+  failureReason      String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  order              Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  payment            Payment      @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([status])
+  @@index([gatewayRefundId])
+  @@index([idempotencyKey])
+  @@map("refunds")
 }
 
 enum AssignmentStatus {

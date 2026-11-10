@@ -28,6 +28,13 @@ export class FinancialAnalyticsService {
             paymentMethod: true,
             paymentStatus: true,
             gatewayPaymentId: true,
+            refunds: {
+              select: {
+                id: true,
+                amount: true,
+                status: true,
+              },
+            },
           },
         },
       },
@@ -88,6 +95,16 @@ export class FinancialAnalyticsService {
           if (payment.paymentStatus === PaymentStatus.PAID) {
             razorpayCapturedCount++;
             razorpayCapturedAmountPaise += payment.amount;
+
+            // Batch 10: Account for partial or full refunds persisted against this payment
+            const processedRefunds = (payment.refunds || [])
+              .filter((r) => r.status === 'PROCESSED')
+              .reduce((sum, r) => sum + r.amount, 0);
+
+            if (processedRefunds > 0) {
+              razorpayRefundedCount += (payment.refunds || []).filter((r) => r.status === 'PROCESSED').length;
+              razorpayRefundedAmountPaise += processedRefunds;
+            }
           } else if (payment.paymentStatus === PaymentStatus.REFUNDED) {
             razorpayRefundedCount++;
             razorpayRefundedAmountPaise += payment.amount;

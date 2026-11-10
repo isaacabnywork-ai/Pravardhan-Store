@@ -256,6 +256,14 @@ export class CashCollectionService {
             paymentMethod: true,
             paymentStatus: true,
             amount: true,
+            refunds: {
+              select: {
+                id: true,
+                paymentId: true,
+                amount: true,
+                status: true,
+              },
+            },
           },
         },
       },

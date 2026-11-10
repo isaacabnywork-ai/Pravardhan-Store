@@ -1,5 +1,12 @@
-import { PaymentMethod, PaymentStatus } from '@prisma/client';
+import { PaymentMethod, PaymentStatus, RefundStatus } from '@prisma/client';
 import { ValidationError } from '@/lib/errors';
+
+export interface RefundAllocationRecord {
+  id?: string;
+  paymentId: string;
+  amount: number; // in integer paise
+  status: RefundStatus | string;
+}
 
 export interface PaymentAllocationRecord {
   id?: string;
@@ -7,27 +14,33 @@ export interface PaymentAllocationRecord {
   paymentMethod: PaymentMethod | string;
   paymentStatus: PaymentStatus | string;
   amount: number; // in integer paise
+  refunds?: RefundAllocationRecord[];
 }
 
 export interface CalculationResult {
   payableOrderAmountPaise: number;
-  validNonCodAllocationsPaise: number;
+  grossNonCodAllocationsPaise: number;
+  totalRefundedPaise: number;
+  validNonCodAllocationsPaise: number; // Net applied non-COD payment
   expectedCodPaise: number;
   isFullyPrepaid: boolean;
   appliedPayments: PaymentAllocationRecord[];
 }
 
 /**
- * Calculates the valid active non-COD payment allocations and net COD obligation
+ * Calculates the net active non-COD payment allocations and outstanding COD obligation
  * in strict integer paise.
  * 
- * Invariants (Batch 9.8):
- * 1. Only paymentMethod !== 'COD' AND paymentStatus === 'PAID' reduce COD obligation.
- * 2. PENDING, FAILED, and REFUNDED payments are excluded from deduction.
- * 3. Over-allocation (nonCodAllocations > payableTotal) is never silently clamped to 0:
+ * Invariants (Batch 10 COND-9.9-01):
+ * 1. Qualifying non-COD payments: paymentMethod !== 'COD' AND paymentStatus === 'PAID'.
+ * 2. Net applied payment per record = gross amount - successfully PROCESSED refunds.
+ *    (Pending or failed refunds do not reduce the applied payment).
+ * 3. If a payment is fully refunded (status === 'REFUNDED' or netApplied <= 0), it contributes 0.
+ * 4. Expected COD = max(0, payableOrderAmount - sum(netAppliedNonCod)).
+ * 5. Over-allocation (sum(netAppliedNonCod) > payableOrderAmount):
  *    - In order creation mode: throws ValidationError.
- *    - In backfill mode (throwOnOverAllocation = false): returns isOverAllocated: true.
- * 4. Zero-cash (expectedCodPaise === 0): Flagged as isFullyPrepaid = true.
+ *    - In backfill mode: returns isOverAllocated: true.
+ * 6. Zero-cash (expectedCodPaise === 0): Flagged as isFullyPrepaid = true.
  */
 export function calculateNetCodObligation(
   payableOrderAmountPaise: number,
@@ -38,9 +51,10 @@ export function calculateNetCodObligation(
     throw new ValidationError('Order payable amount cannot be negative');
   }
 
-  // Deduct only distinct, successfully applied active non-COD payments
   const seenPaymentIds = new Set<string>();
   const appliedPayments: PaymentAllocationRecord[] = [];
+  let grossNonCodAllocationsPaise = 0;
+  let totalRefundedPaise = 0;
   let validNonCodAllocationsPaise = 0;
 
   for (const payment of payments) {
@@ -48,7 +62,7 @@ export function calculateNetCodObligation(
       throw new ValidationError('Payment allocation amount cannot be negative');
     }
 
-    // Deduplication guard if IDs are present
+    // Deduplication guard
     if (payment.id) {
       if (seenPaymentIds.has(payment.id)) {
         continue;
@@ -60,8 +74,19 @@ export function calculateNetCodObligation(
     const isPaid = payment.paymentStatus === PaymentStatus.PAID || payment.paymentStatus === 'PAID';
 
     if (isNonCod && isPaid) {
-      validNonCodAllocationsPaise += payment.amount;
-      appliedPayments.push(payment);
+      // Calculate processed refunds against this payment
+      const processedRefundsPaise = (payment.refunds || [])
+        .filter((r) => r.status === RefundStatus.PROCESSED || r.status === 'PROCESSED')
+        .reduce((sum, r) => sum + r.amount, 0);
+
+      const netAppliedPaymentPaise = Math.max(0, payment.amount - processedRefundsPaise);
+
+      if (netAppliedPaymentPaise > 0) {
+        grossNonCodAllocationsPaise += payment.amount;
+        totalRefundedPaise += processedRefundsPaise;
+        validNonCodAllocationsPaise += netAppliedPaymentPaise;
+        appliedPayments.push(payment);
+      }
     }
   }
 
@@ -69,7 +94,7 @@ export function calculateNetCodObligation(
   const isOverAllocated = validNonCodAllocationsPaise > payableOrderAmountPaise;
   if (isOverAllocated && options.throwOnOverAllocation) {
     throw new ValidationError(
-      `Financial integrity violation: Non-COD payment allocations (₹${Math.round(
+      `Financial integrity violation: Net applied non-COD payment allocations (₹${Math.round(
         validNonCodAllocationsPaise / 100
       )}) exceed order payable amount (₹${Math.round(payableOrderAmountPaise / 100)})`
     );
@@ -80,6 +105,8 @@ export function calculateNetCodObligation(
 
   return {
     payableOrderAmountPaise,
+    grossNonCodAllocationsPaise,
+    totalRefundedPaise,
     validNonCodAllocationsPaise,
     expectedCodPaise,
     isFullyPrepaid,

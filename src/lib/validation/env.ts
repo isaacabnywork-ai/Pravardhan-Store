@@ -57,13 +57,27 @@ export function validateEnv(): ServerEnv {
 
   const result = serverEnvSchema.safeParse(process.env);
   if (!result.success) {
+    const isProduction = process.env.NODE_ENV === 'production';
     console.error('❌ [Config Error] Invalid environment configuration:', result.error.format());
-    // In build or edge environments, provide safe defaults
+
+    // In production, strictly fail closed on invalid critical environment
+    if (isProduction) {
+      throw new Error(`Production environment validation failed: ${JSON.stringify(result.error.format())}`);
+    }
+
+    // In development or test, provide safe local defaults
     cachedEnv = serverEnvSchema.parse({
       DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/pravdhan_store?schema=public',
       ...process.env,
     });
   } else {
+    // If in live production runtime (not static build phase), verify mandatory secrets are not default
+    const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' || process.env.npm_lifecycle_event === 'build';
+    if (result.data.NODE_ENV === 'production' && !isBuildPhase) {
+      if (result.data.AUTH_SECRET === 'pravdhan-store-dev-secret-32-chars-long-minimum') {
+        throw new Error('Production security violation: AUTH_SECRET cannot use insecure development default value.');
+      }
+    }
     cachedEnv = result.data;
   }
 
