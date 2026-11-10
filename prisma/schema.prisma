@@ -583,9 +583,10 @@ model CashCollection {
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 
-  order              Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order              Order                @relation(fields: [orderId], references: [id], onDelete: Restrict)
   rider              User                 @relation("RiderCashCollections", fields: [riderId], references: [id])
 
+  @@unique([orderId])
   @@index([orderId])
   @@index([riderId])
   @@index([storeId])

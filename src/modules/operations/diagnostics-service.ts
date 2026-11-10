@@ -89,27 +89,49 @@ export class DiagnosticsService {
       });
     }
 
-    // 4. S3 Object Storage (Cloudinary / S3)
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-    if (!cloudName || !apiKey || !apiSecret) {
-      providers.push({
-        name: 'S3/Cloudinary Storage',
-        category: 'storage',
-        status: 'NOT_CONFIGURED',
-        details: 'Storage credentials missing. Production POD storage strictly fails closed.',
-        isCritical: true,
-      });
+    // 4. Object Storage (S3 / Cloudinary)
+    const storageProvider = (process.env.STORAGE_PROVIDER as 'S3' | 'CLOUDINARY') || 'S3';
+    if (storageProvider === 'S3') {
+      const bucket = process.env.STORAGE_BUCKET || process.env.AWS_S3_BUCKET;
+      const accessKey = process.env.STORAGE_API_KEY || process.env.AWS_ACCESS_KEY_ID;
+      if (!bucket || !accessKey) {
+        providers.push({
+          name: 'AWS S3 Storage',
+          category: 'storage',
+          status: 'NOT_CONFIGURED',
+          details: 'STORAGE_BUCKET / AWS_S3_BUCKET is not configured. Production POD fails closed.',
+          isCritical: true,
+        });
+      } else {
+        providers.push({
+          name: 'AWS S3 Storage',
+          category: 'storage',
+          status: 'CONFIGURED',
+          details: 'S3-compatible bucket and credentials configured for proof of delivery.',
+          isCritical: true,
+        });
+      }
     } else {
-      providers.push({
-        name: 'S3/Cloudinary Storage',
-        category: 'storage',
-        status: 'CONFIGURED',
-        details: 'Object storage credentials configured with signature validation',
-        isCritical: true,
-      });
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+      const apiKey = process.env.CLOUDINARY_API_KEY;
+
+      if (!cloudName || !apiKey) {
+        providers.push({
+          name: 'Cloudinary Storage',
+          category: 'storage',
+          status: 'NOT_CONFIGURED',
+          details: 'Storage credentials missing. Production POD storage strictly fails closed.',
+          isCritical: true,
+        });
+      } else {
+        providers.push({
+          name: 'Cloudinary Storage',
+          category: 'storage',
+          status: 'CONFIGURED',
+          details: 'Cloudinary object storage credentials configured with signature validation',
+          isCritical: true,
+        });
+      }
     }
 
     // 5. Firebase Cloud Messaging (FCM)

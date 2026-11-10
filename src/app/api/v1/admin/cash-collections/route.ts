@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { cashCollectionService } from '@/modules/operations/cash-collection-service';
 import { requireRole, validateStoreScope } from '@/modules/auth/permissions';
 import { apiSuccess, apiError } from '@/lib/api-response';
+import { ForbiddenError } from '@/lib/errors';
 import { z } from 'zod';
 
 const recordCollectionSchema = z.object({
@@ -19,7 +20,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = recordCollectionSchema.parse(body);
 
+    // Store isolation
     validateStoreScope(session, parsed.storeId);
+
+    // Rider isolation: If caller is DELIVERY_STAFF, riderId must match their authenticated userId
+    if (session.role === 'DELIVERY_STAFF' && session.userId !== parsed.riderId) {
+      throw new ForbiddenError('Riders can only submit cash collections for their own assignments');
+    }
 
     const record = await cashCollectionService.recordCollection(parsed);
     return apiSuccess(record);

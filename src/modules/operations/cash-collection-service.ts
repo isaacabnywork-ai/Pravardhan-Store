@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { CashCollectionStatus, SettlementStatus } from '@prisma/client';
-import { ValidationError, NotFoundError } from '@/lib/errors';
+import { ValidationError, NotFoundError, ConflictError } from '@/lib/errors';
 
 export interface RecordCashCollectionParams {
   orderId: string;
@@ -13,17 +13,19 @@ export interface RecordCashCollectionParams {
 
 export class CashCollectionService {
   /**
-   * Records or updates physical cash collected by a delivery rider at customer doorstep
+   * Concurrency-safe cash collection logging with atomic transaction scope
    * Invariants:
    * 1. Delivered status never automatically implies cash was collected.
    * 2. Expected COD and actual collected cash must remain distinct.
    * 3. Discrepancies (short / excess) must be recorded explicitly.
+   * 4. Once settled, a record cannot be modified.
+   * 5. Atomic single-attempt collection prevents race conditions.
    */
   async recordCollection(params: RecordCashCollectionParams) {
     const { orderId, riderId, storeId, expectedAmountPaise, collectedAmountPaise, notes } = params;
 
-    if (collectedAmountPaise < 0) {
-      throw new ValidationError('Collected amount cannot be negative');
+    if (collectedAmountPaise < 0 || expectedAmountPaise < 0) {
+      throw new ValidationError('Monetary values cannot be negative');
     }
 
     let status: CashCollectionStatus = CashCollectionStatus.COLLECTED;
@@ -35,63 +37,91 @@ export class CashCollectionService {
       status = CashCollectionStatus.EXCESS_COLLECTED;
     }
 
-    const existing = await prisma.cashCollection.findFirst({
-      where: { orderId },
-    });
+    return prisma.$transaction(async (tx) => {
+      // 1. Check existing record inside atomic transaction
+      const existing = await tx.cashCollection.findUnique({
+        where: { orderId },
+      });
 
-    if (existing) {
-      return prisma.cashCollection.update({
-        where: { id: existing.id },
+      if (existing) {
+        if (existing.settlementStatus === SettlementStatus.SETTLED) {
+          throw new ConflictError('Cannot alter cash collection: Order collection is already settled');
+        }
+
+        return tx.cashCollection.update({
+          where: { id: existing.id },
+          data: {
+            riderId,
+            collectedAmount: collectedAmountPaise,
+            collectionStatus: status,
+            collectedAt: new Date(),
+            notes: notes || existing.notes,
+          },
+        });
+      }
+
+      // 2. Validate order exists and belongs to store
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, storeId: true, paymentMethod: true },
+      });
+
+      if (!order) {
+        throw new NotFoundError('Order');
+      }
+
+      if (order.storeId !== storeId) {
+        throw new ValidationError('Store ID does not match order location');
+      }
+
+      return tx.cashCollection.create({
         data: {
+          orderId,
           riderId,
+          storeId,
+          expectedAmount: expectedAmountPaise,
           collectedAmount: collectedAmountPaise,
           collectionStatus: status,
+          settlementStatus: SettlementStatus.UNSETTLED,
           collectedAt: new Date(),
-          notes: notes || existing.notes,
+          notes,
         },
       });
-    }
-
-    return prisma.cashCollection.create({
-      data: {
-        orderId,
-        riderId,
-        storeId,
-        expectedAmount: expectedAmountPaise,
-        collectedAmount: collectedAmountPaise,
-        collectionStatus: status,
-        settlementStatus: SettlementStatus.UNSETTLED,
-        collectedAt: new Date(),
-        notes,
-      },
     });
   }
 
   /**
    * Settles physical cash collected by rider upon handover to store cash manager
+   * Enforces that settled records cannot be settled twice.
    */
   async settleCollection(collectionId: string, staffId: string, notes?: string) {
-    const collection = await prisma.cashCollection.findUnique({
-      where: { id: collectionId },
-    });
+    return prisma.$transaction(async (tx) => {
+      const collection = await tx.cashCollection.findUnique({
+        where: { id: collectionId },
+      });
 
-    if (!collection) {
-      throw new NotFoundError('Cash collection record');
-    }
+      if (!collection) {
+        throw new NotFoundError('Cash collection record');
+      }
 
-    const isDiscrepancy =
-      collection.collectionStatus === CashCollectionStatus.SHORT_COLLECTED ||
-      collection.collectionStatus === CashCollectionStatus.EXCESS_COLLECTED ||
-      collection.collectionStatus === CashCollectionStatus.FAILED;
+      if (collection.settlementStatus === SettlementStatus.SETTLED) {
+        throw new ConflictError('This collection has already been settled and closed.');
+      }
 
-    return prisma.cashCollection.update({
-      where: { id: collectionId },
-      data: {
-        settlementStatus: isDiscrepancy ? SettlementStatus.DISCREPANCY : SettlementStatus.SETTLED,
-        settledAt: new Date(),
-        handoverToStaffId: staffId,
-        notes: notes ? `${collection.notes ? collection.notes + ' | ' : ''}${notes}` : collection.notes,
-      },
+      const isDiscrepancy =
+        collection.collectionStatus === CashCollectionStatus.SHORT_COLLECTED ||
+        collection.collectionStatus === CashCollectionStatus.EXCESS_COLLECTED ||
+        collection.collectionStatus === CashCollectionStatus.FAILED;
+
+      return tx.cashCollection.update({
+        where: { id: collectionId },
+        data: {
+          settlementStatus: isDiscrepancy ? SettlementStatus.DISCREPANCY : SettlementStatus.SETTLED,
+          settledAt: new Date(),
+          handoverToStaffId: staffId,
+          notes: notes ? `${collection.notes ? collection.notes + ' | ' : ''}${notes}` : collection.notes,
+        },
+      });
     });
   }
 

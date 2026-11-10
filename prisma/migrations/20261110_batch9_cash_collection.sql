@@ -35,16 +35,17 @@ CREATE TABLE IF NOT EXISTS "cash_collections" (
   CONSTRAINT "cash_collections_pkey" PRIMARY KEY ("id")
 );
 
--- 4. Create Indexes
+-- 4. Create Indexes & Unique Constraints
+CREATE UNIQUE INDEX IF NOT EXISTS "cash_collections_orderId_key" ON "cash_collections"("orderId");
 CREATE INDEX IF NOT EXISTS "cash_collections_orderId_idx" ON "cash_collections"("orderId");
 CREATE INDEX IF NOT EXISTS "cash_collections_riderId_idx" ON "cash_collections"("riderId");
 CREATE INDEX IF NOT EXISTS "cash_collections_storeId_idx" ON "cash_collections"("storeId");
 CREATE INDEX IF NOT EXISTS "cash_collections_collectionStatus_idx" ON "cash_collections"("collectionStatus");
 CREATE INDEX IF NOT EXISTS "cash_collections_settlementStatus_idx" ON "cash_collections"("settlementStatus");
 
--- 5. Foreign Key Constraints (with ON DELETE CASCADE for order cascade safety)
+-- 5. Foreign Key Constraints (with ON DELETE RESTRICT for immutable financial ledger protection)
 DO $$ BEGIN
-  ALTER TABLE "cash_collections" ADD CONSTRAINT "cash_collections_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  ALTER TABLE "cash_collections" ADD CONSTRAINT "cash_collections_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;

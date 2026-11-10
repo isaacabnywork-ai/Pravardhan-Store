@@ -36,14 +36,29 @@ export function maskPhoneNumber(e164: string): string {
 }
 
 export class SmsService {
-  private readonly authKey = env.MSG91_AUTH_KEY;
-  private readonly templateId = env.MSG91_TEMPLATE_ID;
-  private readonly isConfigured = Boolean(this.authKey && this.authKey.length > 5);
+  private get authKey(): string | undefined {
+    return process.env.MSG91_AUTH_KEY || env.MSG91_AUTH_KEY;
+  }
+
+  private get templateId(): string | undefined {
+    return process.env.MSG91_TEMPLATE_ID || env.MSG91_TEMPLATE_ID;
+  }
+
+  private get isConfigured(): boolean {
+    return Boolean(this.authKey && this.authKey.length > 5);
+  }
 
   /**
    * Request / Send OTP via MSG91 (or local secure challenge fallback)
    */
   async requestOtp(rawPhone: string): Promise<OtpRequestResult> {
+    const isDev = process.env.NODE_ENV !== 'production';
+
+    // Fast Fail-Closed Guard: In production, reject immediately if SMS gateway is not configured
+    if (!this.isConfigured && !isDev) {
+      throw new ValidationError('SMS service is currently unavailable. Please contact customer support.');
+    }
+
     const clean10 = normalizePhoneNumber(rawPhone);
     const e164 = formatE164(clean10);
     const masked = maskPhoneNumber(e164);
@@ -84,7 +99,6 @@ export class SmsService {
     }
 
     // 3. Provider Routing: MSG91 or Local Fallback
-    const isDev = process.env.NODE_ENV !== 'production';
     let devCode: string | undefined;
 
     if (this.isConfigured && !isDev) {
