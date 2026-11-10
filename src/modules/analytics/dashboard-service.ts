@@ -33,6 +33,12 @@ export class DashboardService {
             quantity: true,
           },
         },
+        cashCollections: {
+          select: {
+            collectedAmount: true,
+            collectionStatus: true,
+          },
+        },
       },
     });
 
@@ -54,11 +60,16 @@ export class DashboardService {
 
       const isPaidPrepaid =
         order.paymentMethod !== 'COD' && order.paymentStatus === PaymentStatus.PAID;
-      const isDeliveredCod =
-        order.paymentMethod === 'COD' && order.orderStatus === OrderStatus.DELIVERED;
+      const verifiedCodCollection = order.cashCollections?.[0];
+      const isVerifiedCollectedCod =
+        order.paymentMethod === 'COD' &&
+        Boolean(verifiedCodCollection && verifiedCodCollection.collectedAmount > 0);
 
-      if ((isPaidPrepaid || isDeliveredCod) && order.orderStatus !== OrderStatus.REFUNDED) {
-        todayCompletedRevenue += order.grandTotal;
+      if ((isPaidPrepaid || isVerifiedCollectedCod) && order.orderStatus !== OrderStatus.REFUNDED) {
+        const revenue = isVerifiedCollectedCod
+          ? (verifiedCodCollection?.collectedAmount ?? order.grandTotal)
+          : order.grandTotal;
+        todayCompletedRevenue += revenue;
       }
     }
 

@@ -42,6 +42,8 @@ export class FinancialAnalyticsService {
     let codDeliveredCollectedPaise = 0;
     let codPendingDeliveryCount = 0;
     let codPendingDeliveryPaise = 0;
+    let codUnverifiedLegacyCount = 0;
+    let codUnverifiedLegacyPaise = 0;
 
     // Cash collection ledger verification:
     // Query persisted CashCollection records for this store/period to reconcile actual collected cash
@@ -70,9 +72,11 @@ export class FinancialAnalyticsService {
           codDeliveredCollectedCount++;
           codDeliveredCollectedPaise += persistedCollection.collectedAmount;
         } else if (order.orderStatus === OrderStatus.DELIVERED) {
-          // Fallback if legacy record exists before CashCollection logging
-          codDeliveredCollectedCount++;
-          codDeliveredCollectedPaise += order.grandTotal;
+          // Mandatory Invariant (Batch 9.4 COND-9.3-02): Delivered status ALONE does NOT imply cash was collected.
+          // Historical/unlinked delivered COD orders are classified as unverified legacy requiring reconciliation,
+          // and are NEVER automatically counted toward collected revenue.
+          codUnverifiedLegacyCount++;
+          codUnverifiedLegacyPaise += order.grandTotal;
         } else {
           // Invariant 1: Pending COD is outstanding, NOT collected cash
           codPendingDeliveryCount++;
@@ -95,7 +99,7 @@ export class FinancialAnalyticsService {
 
     const netRazorpayCollected = Math.max(0, razorpayCapturedAmountPaise - razorpayRefundedAmountPaise);
     const totalCollected = codDeliveredCollectedPaise + netRazorpayCollected;
-    const totalExpected = codDeliveredCollectedPaise + codPendingDeliveryPaise + razorpayCapturedAmountPaise;
+    const totalExpected = codDeliveredCollectedPaise + codPendingDeliveryPaise + codUnverifiedLegacyPaise + razorpayCapturedAmountPaise;
 
     return {
       period: {
@@ -114,6 +118,8 @@ export class FinancialAnalyticsService {
         deliveredCollectedPaise: codDeliveredCollectedPaise,
         pendingDeliveryCount: codPendingDeliveryCount,
         pendingDeliveryPaise: codPendingDeliveryPaise,
+        unverifiedLegacyCount: codUnverifiedLegacyCount,
+        unverifiedLegacyPaise: codUnverifiedLegacyPaise,
       },
       wallet: {
         fundedTransactionsCount: 0,

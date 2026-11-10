@@ -66,6 +66,8 @@ export interface PaymentReconciliationReport {
     deliveredCollectedPaise: number;
     pendingDeliveryCount: number;
     pendingDeliveryPaise: number; // Invariant: Pending COD is NOT collected cash
+    unverifiedLegacyCount?: number;
+    unverifiedLegacyPaise?: number; // Invariant: Delivered COD without persisted CashCollection is unverified
   };
   wallet: {
     fundedTransactionsCount: number;

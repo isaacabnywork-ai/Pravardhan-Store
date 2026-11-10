@@ -40,6 +40,12 @@ export class SalesAnalyticsService {
             paymentMethod: true,
           },
         },
+        cashCollections: {
+          select: {
+            collectedAmount: true,
+            collectionStatus: true,
+          },
+        },
       },
     });
 
@@ -93,17 +99,22 @@ export class SalesAnalyticsService {
         }
       }
 
-      // Invariant: Completed Revenue represents collected funds
-      // For prepaid (UPI/CARD), requires PaymentStatus.PAID
-      // For COD, requires OrderStatus.DELIVERED (collected at doorstep)
+      // Invariant: Completed Revenue represents physically collected funds
+      // For prepaid (UPI/CARD/WALLET), requires PaymentStatus.PAID
+      // For COD, strictly requires persisted CashCollection with collectedAmount > 0 (Rule A: Delivered != Collected)
       const isPaidPrepaid =
         order.paymentMethod !== 'COD' && order.paymentStatus === PaymentStatus.PAID;
-      const isDeliveredCod =
-        order.paymentMethod === 'COD' && order.orderStatus === OrderStatus.DELIVERED;
+      const verifiedCodCollection = order.cashCollections?.[0];
+      const isVerifiedCollectedCod =
+        order.paymentMethod === 'COD' &&
+        Boolean(verifiedCodCollection && verifiedCodCollection.collectedAmount > 0);
 
-      if ((isPaidPrepaid || isDeliveredCod) && order.orderStatus !== OrderStatus.REFUNDED) {
+      if ((isPaidPrepaid || isVerifiedCollectedCod) && order.orderStatus !== OrderStatus.REFUNDED) {
         completedOrders++;
-        completedRevenuePaise += order.grandTotal;
+        const revenueContribution = isVerifiedCollectedCod
+          ? (verifiedCodCollection?.collectedAmount ?? order.grandTotal)
+          : order.grandTotal;
+        completedRevenuePaise += revenueContribution;
         deliveryChargesCollectedPaise += order.deliveryFee;
         deliveryTipsCollectedPaise += order.deliveryTip;
         handlingFeesCollectedPaise += order.handlingFee;

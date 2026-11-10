@@ -13,6 +13,47 @@ export interface RecordCashCollectionParams {
 
 export class CashCollectionService {
   /**
+   * Creates a canonical PENDING cash collection ledger entry for a COD order
+   * Atomic, idempotent, and rejects negative amounts.
+   */
+  async createPendingCollection(params: {
+    orderId: string;
+    riderId: string;
+    storeId: string;
+    expectedAmountPaise: number;
+    notes?: string;
+  }) {
+    const { orderId, riderId, storeId, expectedAmountPaise, notes } = params;
+
+    if (expectedAmountPaise < 0) {
+      throw new ValidationError('Expected amount cannot be negative');
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.cashCollection.findUnique({
+        where: { orderId },
+      });
+
+      if (existing) {
+        return existing; // Idempotent return
+      }
+
+      return tx.cashCollection.create({
+        data: {
+          orderId,
+          riderId,
+          storeId,
+          expectedAmount: expectedAmountPaise,
+          collectedAmount: 0,
+          collectionStatus: CashCollectionStatus.PENDING,
+          settlementStatus: SettlementStatus.UNSETTLED,
+          notes: notes || 'Pending cash collection created upon order checkout',
+        },
+      });
+    });
+  }
+
+  /**
    * Concurrency-safe cash collection logging with atomic transaction scope
    * Invariants:
    * 1. Delivered status never automatically implies cash was collected.
@@ -178,6 +219,55 @@ export class CashCollectionService {
       totalShortPaise,
       totalExcessPaise,
       collections: collections.slice(0, 50),
+    };
+  }
+
+  /**
+   * Safe, idempotent backfill utility for historical COD orders lacking CashCollection entries.
+   * Creates UNVERIFIED / PENDING ledger records with expected amount and zero collected amount.
+   * Does NOT fabricate collected cash.
+   */
+  async backfillHistoricalCodOrders(defaultStaffId?: string) {
+    const codOrdersWithoutLedger = await prisma.order.findMany({
+      where: {
+        paymentMethod: 'COD',
+        cashCollections: {
+          none: {},
+        },
+      },
+      select: {
+        id: true,
+        storeId: true,
+        deliveryStaffId: true,
+        userId: true,
+        grandTotal: true,
+        orderNumber: true,
+        orderStatus: true,
+      },
+    });
+
+    let createdCount = 0;
+    for (const order of codOrdersWithoutLedger) {
+      const assignedRider = order.deliveryStaffId || defaultStaffId || order.userId;
+
+      await prisma.cashCollection.create({
+        data: {
+          orderId: order.id,
+          riderId: assignedRider,
+          storeId: order.storeId,
+          expectedAmount: order.grandTotal,
+          collectedAmount: 0,
+          collectionStatus: CashCollectionStatus.PENDING,
+          settlementStatus: SettlementStatus.UNSETTLED,
+          notes: `Historical backfill for Order #${order.orderNumber} (Status: ${order.orderStatus}). Requires manual financial reconciliation.`,
+        },
+      });
+      createdCount++;
+    }
+
+    return {
+      totalFound: codOrdersWithoutLedger.length,
+      createdCount,
     };
   }
 }

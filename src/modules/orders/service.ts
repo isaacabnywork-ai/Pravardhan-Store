@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { OrderStatus, PaymentMethod, PaymentStatus, InventoryChangeType } from '@prisma/client';
+import { OrderStatus, PaymentMethod, PaymentStatus, InventoryChangeType, CashCollectionStatus, SettlementStatus, Role } from '@prisma/client';
 import { cartService } from '@/modules/cart/service';
 import { notificationService } from '@/modules/notifications/service';
 import { NotFoundError, ValidationError, ConflictError, ForbiddenError } from '@/lib/errors';
@@ -210,6 +210,33 @@ export class OrderService {
         },
       });
 
+      // Mandatory Invariant (Batch 9.4 Rule B): Every newly created COD order must have exactly one
+      // canonical CashCollection ledger entry in PENDING / UNSETTLED state with zero collectedAmount.
+      if (data.paymentMethod === PaymentMethod.COD) {
+        // Resolve default staff/rider reference for pending ledger line
+        let assignedRiderId = order.deliveryStaffId;
+        if (!assignedRiderId) {
+          const fallbackRider = await tx.user.findFirst({
+            where: { role: Role.DELIVERY_STAFF, isActive: true },
+            select: { id: true },
+          });
+          assignedRiderId = fallbackRider?.id || userId;
+        }
+
+        await tx.cashCollection.create({
+          data: {
+            orderId: order.id,
+            riderId: assignedRiderId,
+            storeId: store.id,
+            expectedAmount: grandTotal,
+            collectedAmount: 0,
+            collectionStatus: CashCollectionStatus.PENDING,
+            settlementStatus: SettlementStatus.UNSETTLED,
+            notes: 'Pending cash collection created upon order checkout',
+          },
+        });
+      }
+
       // Clear the customer's cart
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
       await tx.cart.update({
@@ -347,6 +374,19 @@ export class OrderService {
           });
         }
       }
+
+      // 3. Mark pending cash collection as FAILED if uncollected
+      await tx.cashCollection.updateMany({
+        where: {
+          orderId,
+          collectionStatus: CashCollectionStatus.PENDING,
+          settlementStatus: SettlementStatus.UNSETTLED,
+        },
+        data: {
+          collectionStatus: CashCollectionStatus.FAILED,
+          notes: `Order cancelled before cash collection. Reason: ${reason || 'Cancelled'}`,
+        },
+      });
 
       return updatedOrder;
     });
