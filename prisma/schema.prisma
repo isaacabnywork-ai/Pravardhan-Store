@@ -425,6 +425,7 @@ model Order {
   paymentMethod      PaymentMethod        @default(COD)
   paymentStatus      PaymentStatus        @default(PENDING)
   orderStatus        OrderStatus          @default(PLACED)
+  idempotencyKey     String?
   notes              String?
   cancellationReason String?
   
@@ -442,7 +443,9 @@ model Order {
   deliveryAssignments DeliveryAssignment[]
   cashCollections    CashCollection[]
 
+  @@unique([userId, idempotencyKey])
   @@index([userId])
+  @@index([idempotencyKey])
   @@index([storeId])
   @@index([orderStatus])
   @@index([orderNumber])
