@@ -11,13 +11,14 @@ import { z } from 'zod';
 export class OrderService {
   /**
    * Computes a canonical SHA-256 request fingerprint from authoritative checkout inputs.
-   * Version: v2
+   * Version: v3 (Wallet-aware & financial allocation completeness)
    * Serializes:
    *  - version (v)
    *  - userId
    *  - storeId
    *  - addressId
    *  - paymentMethod
+   *  - walletPaise (effective non-negative wallet allocation)
    *  - deliveryTip (normalized non-negative integer string)
    *  - deliverySlot (trimmed string)
    *  - notes (trimmed string)
@@ -36,12 +37,18 @@ export class OrderService {
       .map((i) => `v:${i.variantId.length}:${i.variantId};q:${i.quantity}`)
       .join(',');
 
+    const effectiveWalletPaise =
+      data.paymentMethod === PaymentMethod.WALLET
+        ? 'FULL_WALLET'
+        : String(Math.max(0, data.walletPaise || 0));
+
     const canonicalEntries = [
-      ['v', '2'],
+      ['v', '3'],
       ['userId', userId],
       ['storeId', storeId],
       ['addressId', data.addressId],
       ['paymentMethod', data.paymentMethod],
+      ['walletPaise', effectiveWalletPaise],
       ['deliveryTip', String(Math.max(0, data.deliveryTip || 0))],
       ['deliverySlot', (data.deliverySlot || '').trim()],
       ['notes', (data.notes || '').trim()],
@@ -284,24 +291,67 @@ export class OrderService {
           }
         }
 
-        // Record payment entity for primary checkout payment
-        await tx.payment.create({
-          data: {
-            orderId: order.id,
-            paymentMethod: data.paymentMethod,
-            paymentStatus:
-              data.paymentMethod === PaymentMethod.WALLET
-                ? PaymentStatus.PAID
-                : PaymentStatus.PENDING,
-            amount: grandTotal,
-            gatewayOrderId:
-              data.paymentMethod === PaymentMethod.WALLET
-                ? `WALLET-${order.orderNumber}`
-                : data.paymentMethod === PaymentMethod.COD
-                ? `COD-${order.orderNumber}`
-                : `rzp_order_${order.id}`,
-          },
-        });
+        // Record payment entities for checkout payment
+        // Split wallet payment support:
+        const requestedWalletPaise = Math.max(0, data.walletPaise || 0);
+
+        if (data.paymentMethod === PaymentMethod.WALLET) {
+          // Full wallet payment
+          await tx.payment.create({
+            data: {
+              orderId: order.id,
+              paymentMethod: PaymentMethod.WALLET,
+              paymentStatus: PaymentStatus.PAID,
+              amount: grandTotal,
+              gatewayOrderId: `WALLET-${order.orderNumber}`,
+            },
+          });
+        } else if (requestedWalletPaise > 0) {
+          // Split payment: partial wallet deduction + secondary payment (e.g. COD / UPI / CARD)
+          if (requestedWalletPaise >= grandTotal) {
+            throw new ValidationError('Wallet allocation covers total order amount. Please select WALLET payment method directly.');
+          }
+
+          // 1. Record prepaid wallet payment slice
+          await tx.payment.create({
+            data: {
+              orderId: order.id,
+              paymentMethod: PaymentMethod.WALLET,
+              paymentStatus: PaymentStatus.PAID,
+              amount: requestedWalletPaise,
+              gatewayOrderId: `WALLET-SPLIT-${order.orderNumber}`,
+            },
+          });
+
+          // 2. Record secondary payment slice (COD, UPI, CARD) for remainder
+          const remainderPaise = grandTotal - requestedWalletPaise;
+          await tx.payment.create({
+            data: {
+              orderId: order.id,
+              paymentMethod: data.paymentMethod,
+              paymentStatus: PaymentStatus.PENDING,
+              amount: remainderPaise,
+              gatewayOrderId:
+                data.paymentMethod === PaymentMethod.COD
+                  ? `COD-${order.orderNumber}`
+                  : `rzp_order_${order.id}`,
+            },
+          });
+        } else {
+          // Standard single payment without wallet
+          await tx.payment.create({
+            data: {
+              orderId: order.id,
+              paymentMethod: data.paymentMethod,
+              paymentStatus: PaymentStatus.PENDING,
+              amount: grandTotal,
+              gatewayOrderId:
+                data.paymentMethod === PaymentMethod.COD
+                  ? `COD-${order.orderNumber}`
+                  : `rzp_order_${order.id}`,
+            },
+          });
+        }
 
         // Mandatory Invariants (Batch 9.8 COND-9.7-01, COND-9.7-02, COND-9.7-03):
         // 1. Expected COD cash deducts ONLY successfully applied, active non-COD allocations (paymentStatus === PAID).
@@ -373,10 +423,20 @@ export class OrderService {
           : [];
 
         // Exact match on the composite unique constraint fields:
-        // Must strictly contain BOTH userId and idempotencyKey, or the named composite index identifier
-        const isConfirmedIdempotencyConstraint =
-          targetFields.includes('userId_idempotencyKey') ||
-          (targetFields.includes('userId') && targetFields.includes('idempotencyKey'));
+        // Accept ONLY:
+        //  1. Exactly ['userId', 'idempotencyKey'] or ['idempotencyKey', 'userId']
+        //  2. The exact constraint name ['userId_idempotencyKey'] or 'userId_idempotencyKey'
+        // Reject all empty, missing, single-field, orderNumber, or arrays with unexpected additional fields.
+        const isExactArray =
+          targetFields.length === 2 &&
+          targetFields.includes('userId') &&
+          targetFields.includes('idempotencyKey');
+
+        const isExactName =
+          targetFields.length === 1 &&
+          targetFields[0] === 'userId_idempotencyKey';
+
+        const isConfirmedIdempotencyConstraint = isExactArray || isExactName;
 
         if (isConfirmedIdempotencyConstraint) {
           // Transaction has rolled back; query winning committed order
