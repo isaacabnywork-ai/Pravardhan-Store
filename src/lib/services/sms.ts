@@ -70,11 +70,15 @@ export class SmsService {
     // Serialize rate limit check and challenge creation per normalized phone number
     await prisma.$transaction(async (tx) => {
       // 1. Transaction-scoped PostgreSQL advisory lock keyed on normalized E.164 phone hash
-      // If running on PostgreSQL, pg_advisory_xact_lock guarantees mutual exclusion across nodes
-      try {
+      // CRITICAL FAIL-CLOSED REQUIREMENT:
+      // In PostgreSQL, advisory-lock acquisition is mandatory before inspecting rate limits
+      // or creating an OTP challenge. Any failure (connection, permission, lock timeout, database error)
+      // must strictly throw, aborting the transaction and preventing OTP dispatch.
+      // Explicit engine check: if engine is explicitly detected as non-PostgreSQL (e.g. SQLite unit tests),
+      // bypass advisory lock. Under PostgreSQL, execution is strictly mandatory and never caught/swallowed.
+      const isSqlite = process.env.DATABASE_URL?.startsWith('file:') || process.env.DATABASE_URL?.startsWith('sqlite:');
+      if (!isSqlite) {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${e164}));`;
-      } catch {
-        // Fallback safely if underlying engine is non-Postgres (e.g. SQLite unit tests)
       }
 
       // 2. Resend Cooldown Check (60 seconds)
