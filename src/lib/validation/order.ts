@@ -7,6 +7,7 @@ export const checkoutOrderSchema = z.object({
   deliveryTip: z.number().int().min(0, 'Tip cannot be negative').default(0), // in paise
   deliverySlot: z.string().trim().default('Instant (10-15 mins)'),
   notes: z.string().trim().max(500, 'Special instructions cannot exceed 500 characters').optional(),
+  idempotencyKey: z.string().trim().max(128).optional(),
 });
 
 export const createOrderSchema = checkoutOrderSchema;

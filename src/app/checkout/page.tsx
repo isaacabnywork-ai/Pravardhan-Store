@@ -240,185 +240,200 @@ export default function CheckoutPage() {
     setIsPlacingOrder(true);
     setOrderError('');
 
-    const generatedOrderId = `ord-${Date.now()}`;
-    const generatedOrderNumber = `PRV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-    let liveOrder = {
-      id: generatedOrderId,
-      orderNumber: generatedOrderNumber,
-      paymentStatus: paymentMethod === 'WALLET' ? 'PAID' : 'PENDING',
-    };
+    // Ensure customer address is resolved to a valid persisted addressId
+    let effectiveAddressId = selectedAddressId;
 
     try {
-      const liveOrderPayload = {
-        customerId: user.id,
-        customerName: user.name,
-        customerPhone: user.phone,
-        customerEmail: user.email || '',
-        items: items.map((i) => ({
-          productId: i.productId,
-          variantId: i.variantId,
-          name: i.productName,
-          packSize: i.unit,
-          price: i.price,
-          mrp: i.mrp,
-          quantity: i.quantity,
-          imageUrl: i.image || '',
-        })),
-        deliveryAddress: {
-          label: selectedAddress.label,
-          name: selectedAddress.name,
-          phone: selectedAddress.phone,
-          houseNumber: selectedAddress.houseNumber,
-          street: selectedAddress.street,
-          landmark: selectedAddress.landmark,
-          area: selectedAddress.area,
-          city: selectedAddress.city,
-          pincode: selectedAddress.pincode,
-        },
-        slotDate: slotDateType,
-        slotTime: selectedSlot?.timeSlot || 'Express Delivery',
+      // 1. If selectedAddressId is a mock/default or doesn't exist on server, sync or persist address
+      if (!effectiveAddressId || effectiveAddressId.startsWith('default-') || effectiveAddressId.startsWith('addr-')) {
+        const addrRes = await fetch('/api/v1/me/addresses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            label: (selectedAddress.label as any) || 'Home',
+            name: selectedAddress.name || user.name || 'Customer',
+            phone: selectedAddress.phone || user.phone || '9876543210',
+            houseNumber: selectedAddress.houseNumber || 'Flat 101',
+            street: selectedAddress.street || 'Main Road',
+            landmark: selectedAddress.landmark || '',
+            area: selectedAddress.area || 'Sector 14',
+            city: selectedAddress.city || 'Gurugram',
+            pincode: selectedAddress.pincode || '122001',
+            isDefault: true,
+          }),
+        });
+
+        if (addrRes.ok) {
+          const addrData = await addrRes.json();
+          if (addrData.data && addrData.data.id) {
+            effectiveAddressId = addrData.data.id;
+          }
+        }
+      }
+
+      // 2. Synchronize local cart items to the database cart before checking out
+      for (const item of items) {
+        if (item.variantId) {
+          await fetch('/api/v1/cart/items', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              variantId: item.variantId,
+              quantity: item.quantity,
+            }),
+          }).catch(() => null);
+        }
+      }
+
+      // 3. Post authoritative order creation request conforming to createOrderSchema
+      const orderPayload = {
+        addressId: effectiveAddressId,
         paymentMethod,
-        tipAmount: deliveryTip,
-        handlingFee,
-        smallCartFee,
-        subtotal,
-        deliveryCharge,
-        couponDiscount,
-        couponCode: appliedCoupon?.code,
-        grandTotal,
+        deliveryTip: Math.round(deliveryTip * 100), // convert to paise
+        deliverySlot: selectedSlot?.timeSlot || 'Instant (10-15 mins)',
+        notes: `Deliver to ${selectedAddress.label || 'Home'} (${selectedAddress.area || 'Gurugram'})`,
+        idempotencyKey: `chk_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
       };
 
       const res = await fetch('/api/v1/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(liveOrderPayload),
+        body: JSON.stringify(orderPayload),
       });
 
       const data = await res.json();
-      if (res.ok && data.success && data.data) {
-        liveOrder = data.data;
-      }
-    } catch {
-      // Graceful fallback to client store order
-    }
 
-    // Sync frontend order state
-    const frontendOrder: Order = {
-      id: liveOrder.id,
-      orderNumber: liveOrder.orderNumber,
-      userId: user.id,
-      customerName: user.name,
-      customerPhone: user.phone,
-      deliveryAddress: selectedAddress,
-      deliverySlot: selectedSlot,
-      items: items.map((i) => ({
-        productId: i.productId,
-        variantId: i.variantId,
-        productName: i.productName,
-        variantTitle: i.variantTitle,
-        brand: i.brand,
-        unit: i.unit,
-        purchasedPrice: i.price,
-        purchasedMrp: i.mrp,
-        quantity: i.quantity,
-        image: i.image,
-      })),
-      subtotal,
-      discount: productSavings,
-      couponCode: appliedCoupon?.code,
-      couponDiscount,
-      deliveryCharge,
-      deliveryTip,
-      handlingFee,
-      grandTotal,
-      paymentMethod,
-      paymentStatus: paymentMethod === 'WALLET' ? 'PAID' : 'PENDING',
-      orderStatus: 'ORDER_PLACED',
-      statusHistory: [
-        {
-          status: 'ORDER_PLACED',
-          label: 'Order Placed',
-          timestamp: new Date().toLocaleTimeString('en-IN', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }) + ', Today',
-          completed: true,
-          note:
-            paymentMethod === 'COD'
-              ? 'Order confirmed with Cash on Delivery'
-              : paymentMethod === 'WALLET'
-              ? 'Order paid instantly using Pravdhan Money wallet'
-              : 'Online payment awaiting gateway confirmation',
-        },
-        {
-          status: 'ORDER_CONFIRMED',
-          label: 'Order Confirmed',
-          timestamp: '',
-          completed: false,
-          note: 'Store is preparing your shipment',
-        },
-        {
-          status: 'BEING_PREPARED',
-          label: 'Being Packed',
-          timestamp: '',
-          completed: false,
-        },
-        {
-          status: 'READY_FOR_DELIVERY',
-          label: 'Ready for Delivery',
-          timestamp: '',
-          completed: false,
-        },
-        {
-          status: 'OUT_FOR_DELIVERY',
-          label: 'Out for Delivery',
-          timestamp: '',
-          completed: false,
-        },
-        {
-          status: 'DELIVERED',
-          label: 'Delivered',
-          timestamp: `Expected: ${selectedSlot?.timeSlot || 'Express Delivery'}`,
-          completed: false,
-        },
-      ],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    if (paymentMethod === 'UPI' || paymentMethod === 'CARD') {
-      setPendingOrder({ liveOrder, frontendOrder });
-      setIsPlacingOrder(false);
-      setIsRazorpayModalOpen(true);
-      return;
-    }
-
-    if (paymentMethod === 'WALLET') {
-      // Debit from customer wallet in store context
-      if (currentCustomer?.id) {
-        debitCustomerWallet(
-          currentCustomer.id,
-          grandTotal,
-          `Order #${frontendOrder.orderNumber} Payment`,
-          `Paid via Pravdhan Money wallet at checkout`,
-          'Pravdhan Store Checkout'
-        );
+      if (!res.ok || !data.success || !data.data) {
+        const errorMsg =
+          data.error?.message ||
+          (data.error?.details ? JSON.stringify(data.error.details) : 'Could not place order. Please try again.');
+        setIsPlacingOrder(false);
+        setOrderError(errorMsg);
+        return;
       }
 
+      const liveOrder = data.data;
+
+      // Sync frontend order state with authoritative server data
+      const frontendOrder: Order = {
+        id: liveOrder.id,
+        orderNumber: liveOrder.orderNumber,
+        userId: user.id,
+        customerName: user.name,
+        customerPhone: user.phone,
+        deliveryAddress: selectedAddress,
+        deliverySlot: selectedSlot,
+        items: items.map((i) => ({
+          productId: i.productId,
+          variantId: i.variantId,
+          productName: i.productName,
+          variantTitle: i.variantTitle,
+          brand: i.brand,
+          unit: i.unit,
+          purchasedPrice: i.price,
+          purchasedMrp: i.mrp,
+          quantity: i.quantity,
+          image: i.image,
+        })),
+        subtotal,
+        discount: productSavings,
+        couponCode: appliedCoupon?.code,
+        couponDiscount,
+        deliveryCharge,
+        deliveryTip,
+        handlingFee,
+        grandTotal,
+        paymentMethod,
+        paymentStatus: paymentMethod === 'WALLET' ? 'PAID' : 'PENDING',
+        orderStatus: 'ORDER_PLACED',
+        statusHistory: [
+          {
+            status: 'ORDER_PLACED',
+            label: 'Order Placed',
+            timestamp: new Date().toLocaleTimeString('en-IN', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }) + ', Today',
+            completed: true,
+            note:
+              paymentMethod === 'COD'
+                ? 'Order confirmed with Cash on Delivery'
+                : paymentMethod === 'WALLET'
+                ? 'Order paid instantly using Pravdhan Money wallet'
+                : 'Online payment awaiting gateway confirmation',
+          },
+          {
+            status: 'ORDER_CONFIRMED',
+            label: 'Order Confirmed',
+            timestamp: '',
+            completed: false,
+            note: 'Store is preparing your shipment',
+          },
+          {
+            status: 'BEING_PREPARED',
+            label: 'Being Packed',
+            timestamp: '',
+            completed: false,
+          },
+          {
+            status: 'READY_FOR_DELIVERY',
+            label: 'Ready for Delivery',
+            timestamp: '',
+            completed: false,
+          },
+          {
+            status: 'OUT_FOR_DELIVERY',
+            label: 'Out for Delivery',
+            timestamp: '',
+            completed: false,
+          },
+          {
+            status: 'DELIVERED',
+            label: 'Delivered',
+            timestamp: `Expected: ${selectedSlot?.timeSlot || 'Express Delivery'}`,
+            completed: false,
+          },
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (paymentMethod === 'UPI' || paymentMethod === 'CARD') {
+        setPendingOrder({ liveOrder, frontendOrder });
+        setIsPlacingOrder(false);
+        setIsRazorpayModalOpen(true);
+        return;
+      }
+
+      if (paymentMethod === 'WALLET') {
+        // Debit from customer wallet in store context
+        if (currentCustomer?.id) {
+          debitCustomerWallet(
+            currentCustomer.id,
+            grandTotal,
+            `Order #${frontendOrder.orderNumber} Payment`,
+            `Paid via Pravdhan Money wallet at checkout`,
+            'Pravdhan Store Checkout'
+          );
+        }
+
+        createOrder(frontendOrder);
+        clearCart();
+        setIsPlacingOrder(false);
+        showToast('Payment successful using Pravdhan Money!');
+        router.push(`/account/orders/${liveOrder.id}`);
+        return;
+      }
+
+      // COD
       createOrder(frontendOrder);
       clearCart();
       setIsPlacingOrder(false);
-      showToast('Payment successful using Pravdhan Money!');
       router.push(`/account/orders/${liveOrder.id}`);
-      return;
+    } catch (err: any) {
+      setIsPlacingOrder(false);
+      setOrderError(err?.message || 'A network error occurred while placing your order. Please try again.');
     }
-
-    // COD
-    createOrder(frontendOrder);
-    clearCart();
-    setIsPlacingOrder(false);
-    router.push(`/account/orders/${liveOrder.id}`);
   };
 
   const handleRazorpaySuccess = async (paymentId: string) => {

@@ -7,6 +7,7 @@ export const createOrderSchema = z.object({
   deliveryTip: z.number().int().min(0).default(0), // in paise
   deliverySlot: z.string().default('Instant (10-15 mins)'),
   notes: z.string().optional(),
+  idempotencyKey: z.string().max(128).optional(),
 });
 
 export const updateOrderStatusSchema = z.object({

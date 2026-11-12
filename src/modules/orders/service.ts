@@ -12,6 +12,23 @@ export class OrderService {
    * Concurrency-safe atomic order creation with stock decrement & address snapshot
    */
   async createOrder(userId: string, data: z.infer<typeof createOrderSchema>) {
+    // 0. Idempotency Check: if idempotencyKey was provided via notes or header/data
+    if (data.idempotencyKey) {
+      const existingOrder = await prisma.order.findFirst({
+        where: {
+          userId,
+          notes: { contains: `[idempotency:${data.idempotencyKey}]` },
+        },
+        include: {
+          items: true,
+          statusHistory: { orderBy: { createdAt: 'asc' } },
+        },
+      });
+      if (existingOrder) {
+        return existingOrder; // Idempotent replay
+      }
+    }
+
     // 1. Resolve customer & address
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -106,7 +123,9 @@ export class OrderService {
               ? PaymentStatus.PAID
               : PaymentStatus.PENDING,
           orderStatus: OrderStatus.PLACED,
-          notes: data.notes,
+          notes: data.idempotencyKey
+            ? `${data.notes ? data.notes + ' ' : ''}[idempotency:${data.idempotencyKey}]`
+            : data.notes,
           items: {
             create: cartDetails.items.map((item) => ({
               productId: item.productId,

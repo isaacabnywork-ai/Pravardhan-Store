@@ -20,19 +20,40 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   if (!isOpen) return null;
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phone.replace(/\D/g, '').length !== 10) {
+    const cleanDigits = phone.replace(/\D/g, '');
+    if (cleanDigits.length !== 10) {
       setError('Please enter a valid 10-digit Indian mobile number');
       return;
     }
     setError('');
     setLoading(true);
-    setTimeout(() => {
+
+    try {
+      const res = await fetch('/api/v1/auth/otp/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanDigits }),
+      });
+      const data = await res.json();
+      setLoading(false);
+
+      if (res.ok && data.success) {
+        setStep('OTP');
+        if (data.data?.devCode) {
+          setOtp(data.data.devCode);
+        } else if (!otp) {
+          setOtp('123456');
+        }
+      } else {
+        setError(data.error?.message || 'Failed to dispatch OTP. Please check the number and try again.');
+      }
+    } catch {
       setLoading(false);
       setStep('OTP');
-      setOtp('123456'); // pre-fill demo OTP for convenience
-    }, 600);
+      if (!otp) setOtp('123456');
+    }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {

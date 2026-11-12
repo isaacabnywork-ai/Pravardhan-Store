@@ -34,6 +34,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // fallback
     }
+
+    // Hydrate live session from HTTP-only cookie if available
+    fetch('/api/v1/auth/session')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (res && res.data && res.data.authenticated && res.data.user) {
+          const liveUser = res.data.user;
+          setUser((curr) => {
+            const mappedUser: User = {
+              id: liveUser.id,
+              name: liveUser.name || curr?.name || `Customer ${liveUser.phone?.slice(-4) || 'User'}`,
+              phone: liveUser.phone || curr?.phone || '',
+              email: liveUser.email || curr?.email,
+              role: liveUser.role || 'CUSTOMER',
+              addresses: curr?.addresses || [],
+              createdAt: curr?.createdAt || new Date().toISOString(),
+            };
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(mappedUser));
+            } catch {}
+            return mappedUser;
+          });
+
+          // Fetch customer's live addresses from backend
+          fetch('/api/v1/me/addresses')
+            .then((addrRes) => (addrRes.ok ? addrRes.json() : null))
+            .then((addrRes) => {
+              if (addrRes && addrRes.data && Array.isArray(addrRes.data)) {
+                setUser((curr) => {
+                  if (!curr) return null;
+                  const updated = {
+                    ...curr,
+                    addresses: addrRes.data.map((a: any) => ({
+                      id: a.id,
+                      userId: a.userId,
+                      label: a.label || 'Home',
+                      name: a.name,
+                      phone: a.phone,
+                      houseNumber: a.houseNumber,
+                      street: a.street,
+                      landmark: a.landmark || '',
+                      area: a.area,
+                      city: a.city,
+                      pincode: a.pincode,
+                      isDefault: Boolean(a.isDefault),
+                    })),
+                  };
+                  try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+                  } catch {}
+                  return updated;
+                });
+              }
+            })
+            .catch(() => null);
+        }
+      })
+      .catch(() => null);
+
     setMounted(true);
   }, []);
 
