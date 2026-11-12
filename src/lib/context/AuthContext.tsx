@@ -135,24 +135,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         saveUser(mappedUser);
         return { success: true };
       }
+      return { success: false, message: data.error?.message || 'Verification failed. Incorrect or expired OTP.' };
     } catch {
-      // fallback to local if network error
+      return { success: false, message: 'Network connectivity error. Could not verify OTP.' };
     }
-
-    // Check if user with this phone exists in initial list
-    let existing = INITIAL_USERS.find((u) => u.phone === phone);
-    if (!existing) {
-      existing = {
-        id: `user-${Date.now()}`,
-        name: name || `Customer ${phone.slice(-4)}`,
-        phone,
-        role: 'CUSTOMER',
-        addresses: [],
-        createdAt: new Date().toISOString(),
-      };
-    }
-    saveUser(existing);
-    return { success: true };
   };
 
   const logout = () => {
