@@ -3,6 +3,8 @@ import { smsService } from '@/lib/services/sms';
 import { apiSuccess, apiError } from '@/lib/api-response';
 import { UnauthorizedError } from '@/lib/errors';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Production-compatible secure outbox recovery endpoint.
  * Suitable for Vercel Cron or external scheduler invocation.
@@ -13,9 +15,12 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization') || '';
     const cronSecret = process.env.CRON_SECRET;
 
-    // In production, enforce authentication if CRON_SECRET is configured
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      throw new UnauthorizedError('Unauthorized cron execution request');
+    // Fast Fail-Closed Guard: In production, require CRON_SECRET and reject unauthenticated requests
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction || cronSecret) {
+      if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+        throw new UnauthorizedError('Unauthorized cron execution request');
+      }
     }
 
     const workerId = `cron-worker-${Date.now()}`;
@@ -34,3 +39,4 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return POST(request);
 }
+
