@@ -298,12 +298,14 @@ model SmsDeliveryJob {
   id             String            @id @default(cuid())
   challengeId    String
   phone          String
+  encryptedCode  String?           // Encrypted OTP payload using AES-256-GCM (nullified immediately on delivery/expiry)
   status         SmsDeliveryStatus @default(PENDING)
   attempts       Int               @default(0)
   maxAttempts    Int               @default(3)
   nextAttemptAt  DateTime          @default(now())
   lockedAt       DateTime?
   lockedBy       String?
+  claimToken     String?           // Fencing token to prevent zombie worker completions
   lastError      String?
   providerMsgId  String?
   createdAt      DateTime          @default(now())

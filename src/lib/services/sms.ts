@@ -1,9 +1,11 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 import { ValidationError, UnauthorizedError } from '@/lib/errors';
 import { normalizePhoneNumber } from '@/lib/validation/common';
 import { SmsDeliveryStatus } from '@prisma/client';
+import { encryptPayload, decryptPayload } from '@/lib/security/crypto';
 
 export interface OtpRequestResult {
   success: boolean;
@@ -52,53 +54,73 @@ export class SmsService {
   /**
    * Process a single transactional outbox SMS delivery job.
    * Dispatches external HTTP request to MSG91 outside database locks.
+   * Employs fencing claimToken to prevent stale worker completions.
    * Records attempts, delivery status, and sanitized error messages.
-   * On permanent failure (4xx or max retry exhaustion), invalidates challenge to allow recovery.
+   * On delivery or terminal failure, encryptedCode is immediately nullified.
    */
   async processDeliveryJob(jobId: string, workerId: string = 'worker-inline'): Promise<boolean> {
     const isDev = process.env.NODE_ENV !== 'production';
+    const now = new Date();
+    const staleLockThreshold = new Date(now.getTime() - 30000); // 30s stale lease
+    const newClaimToken = crypto.randomUUID();
 
-    // 1. Atomic claim of delivery job using database lock or conditional update
-    const claimed = await prisma.$transaction(async (tx) => {
-      const job = await tx.smsDeliveryJob.findUnique({
+    // 1. Hardened conditional claim of delivery job:
+    // Guards:
+    // - status must be PENDING (with nextAttemptAt <= now) OR PROCESSING (with expired lease lockedAt < staleLockThreshold)
+    // - attempts must be < maxAttempts
+    // - sets lockedAt = now, lockedBy = workerId, claimToken = newClaimToken, attempts += 1
+    const claimedJob = await prisma.$transaction(async (tx) => {
+      const candidate = await tx.smsDeliveryJob.findUnique({
         where: { id: jobId },
       });
 
-      if (!job || job.status === SmsDeliveryStatus.DELIVERED || job.status === SmsDeliveryStatus.FAILED) {
+      if (!candidate) return null;
+
+      if (candidate.status === SmsDeliveryStatus.DELIVERED || candidate.status === SmsDeliveryStatus.FAILED) {
         return null;
       }
 
-      // Check if another active worker currently holds the lock (< 30s)
+      if (candidate.attempts >= candidate.maxAttempts) {
+        return null;
+      }
+
+      // If PENDING, must not be scheduled in future
+      if (candidate.status === SmsDeliveryStatus.PENDING && candidate.nextAttemptAt > now) {
+        return null;
+      }
+
+      // If PROCESSING, lease must be stale (>30s)
       if (
-        job.status === SmsDeliveryStatus.PROCESSING &&
-        job.lockedAt &&
-        Date.now() - job.lockedAt.getTime() < 30000
+        candidate.status === SmsDeliveryStatus.PROCESSING &&
+        candidate.lockedAt &&
+        candidate.lockedAt >= staleLockThreshold
       ) {
         return null;
       }
 
-      // Update to PROCESSING
       return tx.smsDeliveryJob.update({
         where: { id: jobId },
         data: {
           status: SmsDeliveryStatus.PROCESSING,
-          lockedAt: new Date(),
+          lockedAt: now,
           lockedBy: workerId,
+          claimToken: newClaimToken,
           attempts: { increment: 1 },
         },
       });
     });
 
-    if (!claimed) {
+    if (!claimedJob) {
       return false;
     }
 
+    // 2. Non-production or unconfigured simulation: Mark DELIVERED immediately
     if (!this.isConfigured || isDev) {
-      // Non-production or unconfigured simulation: Mark DELIVERED immediately
-      await prisma.smsDeliveryJob.update({
-        where: { id: jobId },
+      await prisma.smsDeliveryJob.updateMany({
+        where: { id: jobId, claimToken: newClaimToken },
         data: {
           status: SmsDeliveryStatus.DELIVERED,
+          encryptedCode: null, // Zero sensitive payload
           lockedAt: null,
           lockedBy: null,
         },
@@ -106,15 +128,31 @@ export class SmsService {
       return true;
     }
 
-    // Production External MSG91 HTTP Request outside of DB transaction
-    const clean10 = normalizePhoneNumber(claimed.phone);
+    // 3. Obtain OTP code:
+    // If encryptedCode is present, decrypt it safely using AES-256-GCM.
+    // If MSG91_MANAGED without custom encryptedCode, MSG91 generates code directly.
+    let otpToSend: string | undefined;
+    if (claimedJob.encryptedCode) {
+      try {
+        otpToSend = decryptPayload(claimedJob.encryptedCode);
+      } catch {
+        console.error('[SMS Decryption Error]: Invalid or corrupted encryptedCode');
+      }
+    }
+
+    // 4. Production External MSG91 HTTP Request outside of DB transaction
+    const clean10 = normalizePhoneNumber(claimedJob.phone);
     const msg91Mobile = `91${clean10}`;
     const url = new URL('https://control.msg91.com/api/v5/otp');
     url.searchParams.set('template_id', this.templateId || '');
     url.searchParams.set('mobile', msg91Mobile);
     url.searchParams.set('authkey', this.authKey || '');
-    url.searchParams.set('otp_length', '6');
-    url.searchParams.set('otp_expiry', '5');
+    if (otpToSend) {
+      url.searchParams.set('otp', otpToSend);
+    } else {
+      url.searchParams.set('otp_length', '6');
+      url.searchParams.set('otp_expiry', '5');
+    }
 
     let dispatchSuccess = false;
     let isPermanentClientError = false;
@@ -153,39 +191,41 @@ export class SmsService {
     }
 
     if (dispatchSuccess) {
-      await prisma.smsDeliveryJob.update({
-        where: { id: jobId },
+      // Complete job guarded by claimToken fencing
+      const updateRes = await prisma.smsDeliveryJob.updateMany({
+        where: { id: jobId, claimToken: newClaimToken },
         data: {
           status: SmsDeliveryStatus.DELIVERED,
+          encryptedCode: null, // Immediately wipe encrypted OTP
           providerMsgId,
           lastError: null,
           lockedAt: null,
           lockedBy: null,
         },
       });
-      return true;
+      return updateRes.count > 0;
     }
 
-    // Handle failure
-    const isExhausted = claimed.attempts >= claimed.maxAttempts || isPermanentClientError;
+    // 5. Handle Failure with Terminal State or Bounded Exponential Backoff
+    const isExhausted = claimedJob.attempts >= claimedJob.maxAttempts || isPermanentClientError;
 
     if (isExhausted) {
       // Terminal Failure State
       await prisma.$transaction(async (tx) => {
-        await tx.smsDeliveryJob.update({
-          where: { id: jobId },
+        await tx.smsDeliveryJob.updateMany({
+          where: { id: jobId, claimToken: newClaimToken },
           data: {
             status: SmsDeliveryStatus.FAILED,
+            encryptedCode: null, // Wipe encrypted OTP
             lastError: sanitizedError,
             lockedAt: null,
             lockedBy: null,
           },
         });
 
-        // Explicit Recovery Policy:
         // Invalidate challenge so customer is not locked out by an undelivered challenge
         await tx.otpChallenge.updateMany({
-          where: { id: claimed.challengeId, isUsed: false },
+          where: { id: claimedJob.challengeId, isUsed: false },
           data: { isUsed: true },
         });
       });
@@ -193,9 +233,9 @@ export class SmsService {
     }
 
     // Schedule transient retry with bounded exponential backoff (e.g. 1s, 2s)
-    const backoffMs = Math.min(1000 * Math.pow(2, claimed.attempts - 1), 5000);
-    await prisma.smsDeliveryJob.update({
-      where: { id: jobId },
+    const backoffMs = Math.min(1000 * Math.pow(2, claimedJob.attempts - 1), 5000);
+    await prisma.smsDeliveryJob.updateMany({
+      where: { id: jobId, claimToken: newClaimToken },
       data: {
         status: SmsDeliveryStatus.PENDING,
         lastError: sanitizedError,
@@ -218,6 +258,7 @@ export class SmsService {
 
     const jobs = await prisma.smsDeliveryJob.findMany({
       where: {
+        attempts: { lt: 3 },
         OR: [
           { status: SmsDeliveryStatus.PENDING, nextAttemptAt: { lte: now } },
           { status: SmsDeliveryStatus.PROCESSING, lockedAt: { lt: staleLockThreshold } },
@@ -229,8 +270,8 @@ export class SmsService {
 
     let processedCount = 0;
     for (const job of jobs) {
-      await this.processDeliveryJob(job.id, workerId);
-      processedCount++;
+      const ok = await this.processDeliveryJob(job.id, workerId);
+      if (ok) processedCount++;
     }
 
     return processedCount;
@@ -308,6 +349,8 @@ export class SmsService {
 
       // 4. Persistence of OTP Challenge and SmsDeliveryJob atomically inside transaction
       let codeHash = 'MSG91_MANAGED';
+      let encryptedCode: string | null = null;
+
       if (!this.isConfigured || isDev) {
         const generatedCode = clean10.endsWith('000000') || clean10.endsWith('43210')
           ? '123456'
@@ -315,6 +358,7 @@ export class SmsService {
 
         const salt = await bcrypt.genSalt(10);
         codeHash = await bcrypt.hash(generatedCode, salt);
+        encryptedCode = encryptPayload(generatedCode);
         if (isDev) {
           devCode = generatedCode;
         }
@@ -332,6 +376,7 @@ export class SmsService {
         data: {
           challengeId: challenge.id,
           phone: e164,
+          encryptedCode,
           status: SmsDeliveryStatus.PENDING,
           attempts: 0,
           maxAttempts: 3,
@@ -343,34 +388,39 @@ export class SmsService {
     });
 
     // 2. Post-commit immediate delivery attempt outside of database transaction
-    if (this.isConfigured && !isDev && deliveryJobId) {
-      let delivered = await this.processDeliveryJob(deliveryJobId, 'worker-inline');
+    if (deliveryJobId) {
+      if (this.isConfigured && !isDev) {
+        let delivered = await this.processDeliveryJob(deliveryJobId, 'worker-inline');
 
-      // If transient failure, synchronously execute retry loop up to maxAttempts so caller gets clear feedback
-      while (!delivered) {
-        const job = await prisma.smsDeliveryJob.findUnique({
-          where: { id: deliveryJobId },
-        });
+        // If transient failure, synchronously execute retry loop up to maxAttempts so caller gets clear feedback
+        while (!delivered) {
+          const job = await prisma.smsDeliveryJob.findUnique({
+            where: { id: deliveryJobId },
+          });
 
-        if (!job || job.status === SmsDeliveryStatus.FAILED || job.status === SmsDeliveryStatus.DELIVERED) {
-          break;
+          if (!job || job.status === SmsDeliveryStatus.FAILED || job.status === SmsDeliveryStatus.DELIVERED) {
+            break;
+          }
+
+          // Wait brief delay before retry
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          delivered = await this.processDeliveryJob(deliveryJobId, 'worker-inline');
         }
 
-        // Wait brief delay before retry
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        delivered = await this.processDeliveryJob(deliveryJobId, 'worker-inline');
-      }
+        if (!delivered) {
+          const finalJob = await prisma.smsDeliveryJob.findUnique({
+            where: { id: deliveryJobId },
+          });
 
-      if (!delivered) {
-        const finalJob = await prisma.smsDeliveryJob.findUnique({
-          where: { id: deliveryJobId },
-        });
-
-        if (finalJob?.status === SmsDeliveryStatus.FAILED) {
-          throw new ValidationError(
-            'Could not deliver verification code via SMS. Please check mobile connectivity or try again in a few moments.'
-          );
+          if (finalJob?.status === SmsDeliveryStatus.FAILED) {
+            throw new ValidationError(
+              'Could not deliver verification code via SMS. Please check mobile connectivity or try again in a few moments.'
+            );
+          }
         }
+      } else {
+        // Development or Simulation: Process immediately to mark DELIVERED and wipe encryptedCode
+        await this.processDeliveryJob(deliveryJobId, 'worker-sim');
       }
     }
 
