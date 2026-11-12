@@ -280,9 +280,41 @@ model OtpChallenge {
   expiresAt  DateTime
   createdAt  DateTime @default(now())
 
+  deliveryJobs SmsDeliveryJob[]
+
   @@index([phone])
   @@index([expiresAt])
   @@map("otp_challenges")
+}
+
+enum SmsDeliveryStatus {
+  PENDING
+  PROCESSING
+  DELIVERED
+  FAILED
+}
+
+model SmsDeliveryJob {
+  id             String            @id @default(cuid())
+  challengeId    String
+  phone          String
+  status         SmsDeliveryStatus @default(PENDING)
+  attempts       Int               @default(0)
+  maxAttempts    Int               @default(3)
+  nextAttemptAt  DateTime          @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  lastError      String?
+  providerMsgId  String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  challenge      OtpChallenge      @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@index([challengeId])
+  @@index([status, nextAttemptAt])
+  @@index([phone])
+  @@map("sms_delivery_jobs")
 }
 
 enum DiscountType {

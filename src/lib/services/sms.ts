@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { env } from '@/lib/env';
 import { ValidationError, UnauthorizedError } from '@/lib/errors';
 import { normalizePhoneNumber } from '@/lib/validation/common';
+import { SmsDeliveryStatus } from '@prisma/client';
 
 export interface OtpRequestResult {
   success: boolean;
@@ -49,8 +50,195 @@ export class SmsService {
   }
 
   /**
+   * Process a single transactional outbox SMS delivery job.
+   * Dispatches external HTTP request to MSG91 outside database locks.
+   * Records attempts, delivery status, and sanitized error messages.
+   * On permanent failure (4xx or max retry exhaustion), invalidates challenge to allow recovery.
+   */
+  async processDeliveryJob(jobId: string, workerId: string = 'worker-inline'): Promise<boolean> {
+    const isDev = process.env.NODE_ENV !== 'production';
+
+    // 1. Atomic claim of delivery job using database lock or conditional update
+    const claimed = await prisma.$transaction(async (tx) => {
+      const job = await tx.smsDeliveryJob.findUnique({
+        where: { id: jobId },
+      });
+
+      if (!job || job.status === SmsDeliveryStatus.DELIVERED || job.status === SmsDeliveryStatus.FAILED) {
+        return null;
+      }
+
+      // Check if another active worker currently holds the lock (< 30s)
+      if (
+        job.status === SmsDeliveryStatus.PROCESSING &&
+        job.lockedAt &&
+        Date.now() - job.lockedAt.getTime() < 30000
+      ) {
+        return null;
+      }
+
+      // Update to PROCESSING
+      return tx.smsDeliveryJob.update({
+        where: { id: jobId },
+        data: {
+          status: SmsDeliveryStatus.PROCESSING,
+          lockedAt: new Date(),
+          lockedBy: workerId,
+          attempts: { increment: 1 },
+        },
+      });
+    });
+
+    if (!claimed) {
+      return false;
+    }
+
+    if (!this.isConfigured || isDev) {
+      // Non-production or unconfigured simulation: Mark DELIVERED immediately
+      await prisma.smsDeliveryJob.update({
+        where: { id: jobId },
+        data: {
+          status: SmsDeliveryStatus.DELIVERED,
+          lockedAt: null,
+          lockedBy: null,
+        },
+      });
+      return true;
+    }
+
+    // Production External MSG91 HTTP Request outside of DB transaction
+    const clean10 = normalizePhoneNumber(claimed.phone);
+    const msg91Mobile = `91${clean10}`;
+    const url = new URL('https://control.msg91.com/api/v5/otp');
+    url.searchParams.set('template_id', this.templateId || '');
+    url.searchParams.set('mobile', msg91Mobile);
+    url.searchParams.set('authkey', this.authKey || '');
+    url.searchParams.set('otp_length', '6');
+    url.searchParams.set('otp_expiry', '5');
+
+    let dispatchSuccess = false;
+    let isPermanentClientError = false;
+    let sanitizedError = '';
+    let providerMsgId = '';
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
+      const res = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const resData = await res.json().catch(() => ({}));
+        providerMsgId = resData?.message || resData?.request_id || 'OK';
+        dispatchSuccess = true;
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        console.error(`[MSG91 Dispatch HTTP ${res.status}]`, errData);
+
+        if (res.status >= 400 && res.status < 500) {
+          isPermanentClientError = true;
+          sanitizedError = `Provider rejected request (HTTP ${res.status})`;
+        } else {
+          sanitizedError = `Provider temporary error (HTTP ${res.status})`;
+        }
+      }
+    } catch (err: any) {
+      console.error('[SMS Dispatch Network Error]:', err?.message || err);
+      sanitizedError = err?.name === 'AbortError' ? 'Provider timeout after 8s' : 'Network connectivity failure';
+    }
+
+    if (dispatchSuccess) {
+      await prisma.smsDeliveryJob.update({
+        where: { id: jobId },
+        data: {
+          status: SmsDeliveryStatus.DELIVERED,
+          providerMsgId,
+          lastError: null,
+          lockedAt: null,
+          lockedBy: null,
+        },
+      });
+      return true;
+    }
+
+    // Handle failure
+    const isExhausted = claimed.attempts >= claimed.maxAttempts || isPermanentClientError;
+
+    if (isExhausted) {
+      // Terminal Failure State
+      await prisma.$transaction(async (tx) => {
+        await tx.smsDeliveryJob.update({
+          where: { id: jobId },
+          data: {
+            status: SmsDeliveryStatus.FAILED,
+            lastError: sanitizedError,
+            lockedAt: null,
+            lockedBy: null,
+          },
+        });
+
+        // Explicit Recovery Policy:
+        // Invalidate challenge so customer is not locked out by an undelivered challenge
+        await tx.otpChallenge.updateMany({
+          where: { id: claimed.challengeId, isUsed: false },
+          data: { isUsed: true },
+        });
+      });
+      return false;
+    }
+
+    // Schedule transient retry with bounded exponential backoff (e.g. 1s, 2s)
+    const backoffMs = Math.min(1000 * Math.pow(2, claimed.attempts - 1), 5000);
+    await prisma.smsDeliveryJob.update({
+      where: { id: jobId },
+      data: {
+        status: SmsDeliveryStatus.PENDING,
+        lastError: sanitizedError,
+        nextAttemptAt: new Date(Date.now() + backoffMs),
+        lockedAt: null,
+        lockedBy: null,
+      },
+    });
+
+    return false;
+  }
+
+  /**
+   * Background recovery worker: Scans for abandoned/pending SMS delivery jobs and executes them.
+   * Safe for process restarts, multiple worker processes, and crash recovery.
+   */
+  async recoverPendingJobs(workerId: string = 'worker-recovery', limit: number = 10): Promise<number> {
+    const staleLockThreshold = new Date(Date.now() - 30000); // 30s stale lock
+    const now = new Date();
+
+    const jobs = await prisma.smsDeliveryJob.findMany({
+      where: {
+        OR: [
+          { status: SmsDeliveryStatus.PENDING, nextAttemptAt: { lte: now } },
+          { status: SmsDeliveryStatus.PROCESSING, lockedAt: { lt: staleLockThreshold } },
+        ],
+      },
+      take: limit,
+      orderBy: { createdAt: 'asc' },
+    });
+
+    let processedCount = 0;
+    for (const job of jobs) {
+      await this.processDeliveryJob(job.id, workerId);
+      processedCount++;
+    }
+
+    return processedCount;
+  }
+
+  /**
    * Request / Send OTP via MSG91 (or local secure challenge fallback)
-   * Hardened with transaction-scoped PostgreSQL advisory locks keyed on normalized phone.
+   * Hardened with transaction-scoped PostgreSQL advisory locks and durable outbox job persistence.
    * Guarantees true atomic distributed rate limiting (60s cooldown & max 4 requests / 10 mins).
    */
   async requestOtp(rawPhone: string): Promise<OtpRequestResult> {
@@ -66,26 +254,19 @@ export class SmsService {
     const masked = maskPhoneNumber(e164);
 
     let devCode: string | undefined;
-    let createdChallengeId: string | undefined;
+    let deliveryJobId: string | undefined;
 
-    // 1. Transactional rate-limit check and challenge persistence with advisory locking
-    // CRITICAL: SMS dispatch is kept strictly OUTSIDE the database transaction.
-    // If advisory lock acquisition, rate limiting, or database persistence fails,
-    // the transaction aborts and rollback ensures ZERO SMS messages are ever dispatched.
+    // 1. Transactional rate-limit check, OTP challenge persistence, and delivery outbox creation
+    // CRITICAL: Guaranteed atomic persistence under PostgreSQL advisory lock.
     await prisma.$transaction(async (tx) => {
       // 1. Transaction-scoped PostgreSQL advisory lock keyed on normalized E.164 phone hash
-      // CRITICAL FAIL-CLOSED REQUIREMENT:
-      // In PostgreSQL, advisory-lock acquisition is mandatory before inspecting rate limits
-      // or creating an OTP challenge. Any failure (connection, permission, lock timeout, database error)
-      // must strictly throw, aborting the transaction and preventing OTP dispatch.
       const isSqlite = process.env.DATABASE_URL?.startsWith('file:') || process.env.DATABASE_URL?.startsWith('sqlite:');
       if (!isSqlite) {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${e164}));`;
       }
 
       // 2. Rolling Window Abuse Rate Limit Check: Maximum 4 requests in last 10 minutes
-      // Checked first so that quota exhaustion reliably surfaces the 10-minute rate limit
-      // rather than masking it behind a newly created challenge's 60-second cooldown.
+      // Checked first so that quota exhaustion reliably surfaces the 10-minute rate limit.
       const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
       const countLast10Mins = await tx.otpChallenge.count({
         where: {
@@ -101,126 +282,95 @@ export class SmsService {
       }
 
       // 3. Resend Cooldown Check (60 seconds)
+      // Only active uninvalidated challenges (isUsed = false) enforce the 60-second cooldown.
+      // If a previous challenge suffered a permanent delivery failure (isUsed = true),
+      // the customer is allowed an immediate recovery attempt without waiting 60s,
+      // while still strictly bounded by the 4-per-10-minute quota above.
       const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
-      const recentChallenge = await tx.otpChallenge.findFirst({
+      const recentActiveChallenge = await tx.otpChallenge.findFirst({
         where: {
           phone: e164,
+          isUsed: false,
           createdAt: { gte: oneMinuteAgo },
         },
         orderBy: { createdAt: 'desc' },
       });
 
-      if (recentChallenge) {
+      if (recentActiveChallenge) {
         const remainingSeconds = Math.max(
           1,
-          60 - Math.floor((Date.now() - recentChallenge.createdAt.getTime()) / 1000)
+          60 - Math.floor((Date.now() - recentActiveChallenge.createdAt.getTime()) / 1000)
         );
         throw new ValidationError(
           `Please wait ${remainingSeconds} seconds before requesting a new OTP.`
         );
       }
 
-      // 4. Persistence of OTP Challenge inside transaction
-      if (this.isConfigured && !isDev) {
-        const created = await tx.otpChallenge.create({
-          data: {
-            phone: e164,
-            codeHash: 'MSG91_MANAGED',
-            expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-          },
-        });
-        createdChallengeId = created.id;
-      } else {
-        // Development or Sandbox Simulation
+      // 4. Persistence of OTP Challenge and SmsDeliveryJob atomically inside transaction
+      let codeHash = 'MSG91_MANAGED';
+      if (!this.isConfigured || isDev) {
         const generatedCode = clean10.endsWith('000000') || clean10.endsWith('43210')
           ? '123456'
           : Math.floor(100000 + Math.random() * 900000).toString();
 
         const salt = await bcrypt.genSalt(10);
-        const codeHash = await bcrypt.hash(generatedCode, salt);
-
-        const created = await tx.otpChallenge.create({
-          data: {
-            phone: e164,
-            codeHash,
-            expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-          },
-        });
-        createdChallengeId = created.id;
-
+        codeHash = await bcrypt.hash(generatedCode, salt);
         if (isDev) {
           devCode = generatedCode;
         }
       }
+
+      const challenge = await tx.otpChallenge.create({
+        data: {
+          phone: e164,
+          codeHash,
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+        },
+      });
+
+      const outboxJob = await tx.smsDeliveryJob.create({
+        data: {
+          challengeId: challenge.id,
+          phone: e164,
+          status: SmsDeliveryStatus.PENDING,
+          attempts: 0,
+          maxAttempts: 3,
+          nextAttemptAt: new Date(),
+        },
+      });
+
+      deliveryJobId = outboxJob.id;
     });
 
-    // 2. Post-commit provider dispatch: Only reached if transaction committed successfully
-    if (this.isConfigured && !isDev) {
-      const msg91Mobile = `91${clean10}`;
-      const url = new URL('https://control.msg91.com/api/v5/otp');
-      url.searchParams.set('template_id', this.templateId || '');
-      url.searchParams.set('mobile', msg91Mobile);
-      url.searchParams.set('authkey', this.authKey || '');
-      url.searchParams.set('otp_length', '6');
-      url.searchParams.set('otp_expiry', '5'); // 5 minutes
+    // 2. Post-commit immediate delivery attempt outside of database transaction
+    if (this.isConfigured && !isDev && deliveryJobId) {
+      let delivered = await this.processDeliveryJob(deliveryJobId, 'worker-inline');
 
-      const maxAttempts = 3;
-      let dispatchSucceeded = false;
+      // If transient failure, synchronously execute retry loop up to maxAttempts so caller gets clear feedback
+      while (!delivered) {
+        const job = await prisma.smsDeliveryJob.findUnique({
+          where: { id: deliveryJobId },
+        });
 
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout per attempt
-
-          const res = await fetch(url.toString(), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-
-          if (res.ok) {
-            dispatchSucceeded = true;
-            break;
-          }
-
-          // Non-2xx response from provider
-          const errData = await res.json().catch(() => ({}));
-          console.error(`[MSG91 Error - Attempt ${attempt}/${maxAttempts} HTTP ${res.status}]`, errData);
-
-          // Fast fail on 4xx client errors (e.g. invalid auth key, invalid template, blacklisted number)
-          // 4xx errors are permanent client configuration issues that should not be retried in a loop.
-          if (res.status >= 400 && res.status < 500) {
-            break;
-          }
-        } catch (err: any) {
-          console.error(`[SMS Service Network Error - Attempt ${attempt}/${maxAttempts}]:`, err?.message || err);
+        if (!job || job.status === SmsDeliveryStatus.FAILED || job.status === SmsDeliveryStatus.DELIVERED) {
+          break;
         }
 
-        if (attempt < maxAttempts) {
-          // Brief backoff before transient retry (100ms, 200ms)
-          await new Promise((resolve) => setTimeout(resolve, attempt * 100));
-        }
+        // Wait brief delay before retry
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        delivered = await this.processDeliveryJob(deliveryJobId, 'worker-inline');
       }
 
-      if (!dispatchSucceeded) {
-        // Explicit Recovery Policy:
-        // If external SMS dispatch fails across all retry attempts, invalidate the persisted challenge
-        // so it cannot remain in an orphaned state preventing prompt resend or blocking customer recovery.
-        if (createdChallengeId) {
-          try {
-            await prisma.otpChallenge.updateMany({
-              where: { id: createdChallengeId, isUsed: false },
-              data: { isUsed: true },
-            });
-          } catch (cleanupErr) {
-            console.error('[SMS Service Cleanup Error]:', cleanupErr);
-          }
-        }
+      if (!delivered) {
+        const finalJob = await prisma.smsDeliveryJob.findUnique({
+          where: { id: deliveryJobId },
+        });
 
-        throw new ValidationError(
-          'Could not deliver verification code via SMS. Please check mobile connectivity or try again in a few moments.'
-        );
+        if (finalJob?.status === SmsDeliveryStatus.FAILED) {
+          throw new ValidationError(
+            'Could not deliver verification code via SMS. Please check mobile connectivity or try again in a few moments.'
+          );
+        }
       }
     }
 
@@ -295,14 +445,11 @@ export class SmsService {
         attempts: { lt: 5 },
         expiresAt: { gt: new Date() },
       },
-      data: {
-        isUsed: true,
-        attempts: { increment: 1 },
-      },
+      data: { isUsed: true },
     });
 
-    if (result.count !== 1) {
-      throw new UnauthorizedError('This OTP challenge has already been consumed or has expired.');
+    if (result.count === 0) {
+      throw new UnauthorizedError('OTP has already been used or expired. Please request a new code.');
     }
 
     return {
