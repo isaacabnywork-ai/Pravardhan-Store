@@ -68,10 +68,12 @@ export class SmsService {
     // Guards:
     // - status must be PENDING (with nextAttemptAt <= now) OR PROCESSING (with expired lease lockedAt < staleLockThreshold)
     // - attempts must be < maxAttempts
+    // - OTP challenge must NOT be expired (if challenge is expired, mark FAILED immediately and do not deliver)
     // - sets lockedAt = now, lockedBy = workerId, claimToken = newClaimToken, attempts += 1
     const claimedJob = await prisma.$transaction(async (tx) => {
       const candidate = await tx.smsDeliveryJob.findUnique({
         where: { id: jobId },
+        include: { challenge: true },
       });
 
       if (!candidate) return null;
@@ -81,6 +83,21 @@ export class SmsService {
       }
 
       if (candidate.attempts >= candidate.maxAttempts) {
+        return null;
+      }
+
+      // Expired OTP Challenge Guard: Expired OTP jobs must NEVER be dispatched/delivered
+      if (candidate.challenge && candidate.challenge.expiresAt <= now) {
+        await tx.smsDeliveryJob.update({
+          where: { id: jobId },
+          data: {
+            status: SmsDeliveryStatus.FAILED,
+            encryptedCode: null, // Wipe sensitive OTP code
+            lastError: 'OTP challenge expired prior to delivery',
+            lockedAt: null,
+            lockedBy: null,
+          },
+        });
         return null;
       }
 
@@ -135,8 +152,19 @@ export class SmsService {
     if (claimedJob.encryptedCode) {
       try {
         otpToSend = decryptPayload(claimedJob.encryptedCode);
-      } catch {
-        console.error('[SMS Decryption Error]: Invalid or corrupted encryptedCode');
+      } catch (decErr: any) {
+        // Safe Failure: Missing, unknown, or corrupted key/ciphertext fails closed without provider invocation
+        await prisma.smsDeliveryJob.updateMany({
+          where: { id: jobId, claimToken: newClaimToken },
+          data: {
+            status: SmsDeliveryStatus.FAILED,
+            encryptedCode: null, // Wipe unprocessable payload
+            lastError: `Decryption failure: ${decErr?.message || 'invalid key or ciphertext'}`,
+            lockedAt: null,
+            lockedBy: null,
+          },
+        });
+        return false;
       }
     }
 

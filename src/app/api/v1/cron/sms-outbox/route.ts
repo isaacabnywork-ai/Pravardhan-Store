@@ -15,12 +15,9 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization') || '';
     const cronSecret = process.env.CRON_SECRET;
 
-    // Fast Fail-Closed Guard: In production, require CRON_SECRET and reject unauthenticated requests
-    const isProduction = process.env.NODE_ENV === 'production';
-    if (isProduction || cronSecret) {
-      if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-        throw new UnauthorizedError('Unauthorized cron execution request');
-      }
+    // Fail-Closed Guard: CRON_SECRET is strictly mandatory for invoking this cron route
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      throw new UnauthorizedError('Unauthorized cron execution request');
     }
 
     const workerId = `cron-worker-${Date.now()}`;

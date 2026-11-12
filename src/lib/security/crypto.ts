@@ -23,10 +23,10 @@ export function getKeyForVersion(version: string = CURRENT_KEY_VERSION): Buffer 
   const isProduction = process.env.NODE_ENV === 'production';
 
   if (!rawKey) {
-    if (isProduction) {
+    if (isProduction || version !== 'v1') {
       throw new Error(`Production Security Violation: Missing dedicated OTP encryption key for version ${version}`);
     }
-    // Safe deterministic development-only fallback key (strictly non-production)
+    // Safe deterministic development-only fallback key strictly for default v1 in non-production
     rawKey = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
   }
 
