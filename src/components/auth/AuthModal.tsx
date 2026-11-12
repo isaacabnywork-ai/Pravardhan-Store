@@ -41,18 +41,20 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
       if (res.ok && data.success) {
         setStep('OTP');
+        // Only populate OTP if authorized development response explicitly returned devCode
         if (data.data?.devCode) {
           setOtp(data.data.devCode);
-        } else if (!otp) {
-          setOtp('123456');
+        } else {
+          setOtp('');
         }
       } else {
+        // Backend rejection: remain on phone step, do not advance, do not invent OTP
         setError(data.error?.message || 'Failed to dispatch OTP. Please check the number and try again.');
       }
     } catch {
+      // Network failure: remain on phone step, stop loading, show error, do not invent OTP
       setLoading(false);
-      setStep('OTP');
-      if (!otp) setOtp('123456');
+      setError('Network connectivity error. Could not request OTP.');
     }
   };
 
