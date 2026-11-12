@@ -11,37 +11,49 @@ import { z } from 'zod';
 export class OrderService {
   /**
    * Computes a canonical SHA-256 request fingerprint from authoritative checkout inputs.
-   * Version: v1
-   * Serializes: version, userId, storeId, addressId, paymentMethod, deliveryTip, deliverySlot, notes, and sorted items.
+   * Version: v2
+   * Serializes:
+   *  - version (v)
+   *  - userId
+   *  - storeId
+   *  - addressId
+   *  - paymentMethod
+   *  - deliveryTip (normalized non-negative integer string)
+   *  - deliverySlot (trimmed string)
+   *  - notes (trimmed string)
+   *  - couponCode (normalized upper-case string or empty)
+   *  - sorted items (variantId and quantity formatted with length-prefixed encoding)
    */
   computeRequestFingerprint(
     userId: string,
     storeId: string,
     data: z.infer<typeof createOrderSchema>,
-    cartItems: Array<{ variantId: string; quantity: number }>
+    cartItems: Array<{ variantId: string; quantity: number }>,
+    couponCode?: string | null
   ): string {
     const sortedItems = [...cartItems]
       .sort((a, b) => a.variantId.localeCompare(b.variantId))
-      .map((i) => `variant=${i.variantId}&qty=${i.quantity}`)
-      .join(';');
+      .map((i) => `v:${i.variantId.length}:${i.variantId};q:${i.quantity}`)
+      .join(',');
 
     const canonicalEntries = [
-      ['v', '1'],
+      ['v', '2'],
       ['userId', userId],
       ['storeId', storeId],
       ['addressId', data.addressId],
       ['paymentMethod', data.paymentMethod],
-      ['deliveryTip', String(data.deliveryTip || 0)],
+      ['deliveryTip', String(Math.max(0, data.deliveryTip || 0))],
       ['deliverySlot', (data.deliverySlot || '').trim()],
       ['notes', (data.notes || '').trim()],
+      ['couponCode', (couponCode || '').trim().toUpperCase()],
       ['items', sortedItems],
     ];
 
     const canonicalSerialized = canonicalEntries
-      .map(([k, val]) => `${k}:${val}`)
-      .join('|');
+      .map(([k, val]) => `${k}:${val.length}:${val}`)
+      .join('\n');
 
-    return crypto.createHash('sha256').update(canonicalSerialized).digest('hex');
+    return crypto.createHash('sha256').update(canonicalSerialized, 'utf8').digest('hex');
   }
 
   /**
@@ -87,7 +99,8 @@ export class OrderService {
       userId,
       store.id,
       data,
-      cartDetails.items.map((i) => ({ variantId: i.variantId, quantity: i.quantity }))
+      cartDetails.items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+      cartDetails.summary.appliedCoupon?.code
     );
 
     // 3.2 Pre-transaction Idempotency Check
@@ -359,9 +372,9 @@ export class OrderService {
           ? [err.meta.target]
           : [];
 
-        // Exact match on composite unique constraint fields
+        // Exact match on the composite unique constraint fields:
+        // Must strictly contain BOTH userId and idempotencyKey, or the named composite index identifier
         const isConfirmedIdempotencyConstraint =
-          targetFields.includes('idempotencyKey') ||
           targetFields.includes('userId_idempotencyKey') ||
           (targetFields.includes('userId') && targetFields.includes('idempotencyKey'));
 

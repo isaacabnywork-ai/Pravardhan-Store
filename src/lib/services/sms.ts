@@ -210,9 +210,9 @@ export class SmsService {
     }
 
     if (!isCodeValid) {
-      // Safely increment attempt counter atomically
+      // Safely increment attempt counter atomically on active, unconsumed challenge up to max 5
       await prisma.otpChallenge.updateMany({
-        where: { id: challenge.id, isUsed: false },
+        where: { id: challenge.id, isUsed: false, attempts: { lt: 5 } },
         data: { attempts: { increment: 1 } },
       });
       throw new UnauthorizedError('Incorrect verification code. Please check and re-enter.');
