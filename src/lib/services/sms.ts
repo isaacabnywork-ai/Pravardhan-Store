@@ -66,8 +66,9 @@ export class SmsService {
     const masked = maskPhoneNumber(e164);
 
     let devCode: string | undefined;
+    let createdChallengeId: string | undefined;
 
-    // 1. Transactional rate-limit check and challenge creation with advisory locking
+    // 1. Transactional rate-limit check and challenge persistence with advisory locking
     // CRITICAL: SMS dispatch is kept strictly OUTSIDE the database transaction.
     // If advisory lock acquisition, rate limiting, or database persistence fails,
     // the transaction aborts and rollback ensures ZERO SMS messages are ever dispatched.
@@ -121,13 +122,14 @@ export class SmsService {
 
       // 4. Persistence of OTP Challenge inside transaction
       if (this.isConfigured && !isDev) {
-        await tx.otpChallenge.create({
+        const created = await tx.otpChallenge.create({
           data: {
             phone: e164,
             codeHash: 'MSG91_MANAGED',
             expiresAt: new Date(Date.now() + 5 * 60 * 1000),
           },
         });
+        createdChallengeId = created.id;
       } else {
         // Development or Sandbox Simulation
         const generatedCode = clean10.endsWith('000000') || clean10.endsWith('43210')
@@ -137,13 +139,14 @@ export class SmsService {
         const salt = await bcrypt.genSalt(10);
         const codeHash = await bcrypt.hash(generatedCode, salt);
 
-        await tx.otpChallenge.create({
+        const created = await tx.otpChallenge.create({
           data: {
             phone: e164,
             codeHash,
             expiresAt: new Date(Date.now() + 5 * 60 * 1000),
           },
         });
+        createdChallengeId = created.id;
 
         if (isDev) {
           devCode = generatedCode;
@@ -153,28 +156,71 @@ export class SmsService {
 
     // 2. Post-commit provider dispatch: Only reached if transaction committed successfully
     if (this.isConfigured && !isDev) {
-      try {
-        const msg91Mobile = `91${clean10}`;
-        const url = new URL('https://control.msg91.com/api/v5/otp');
-        url.searchParams.set('template_id', this.templateId || '');
-        url.searchParams.set('mobile', msg91Mobile);
-        url.searchParams.set('authkey', this.authKey || '');
-        url.searchParams.set('otp_length', '6');
-        url.searchParams.set('otp_expiry', '5'); // 5 minutes
+      const msg91Mobile = `91${clean10}`;
+      const url = new URL('https://control.msg91.com/api/v5/otp');
+      url.searchParams.set('template_id', this.templateId || '');
+      url.searchParams.set('mobile', msg91Mobile);
+      url.searchParams.set('authkey', this.authKey || '');
+      url.searchParams.set('otp_length', '6');
+      url.searchParams.set('otp_expiry', '5'); // 5 minutes
 
-        const res = await fetch(url.toString(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
+      const maxAttempts = 3;
+      let dispatchSucceeded = false;
 
-        if (!res.ok) {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout per attempt
+
+          const res = await fetch(url.toString(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+
+          if (res.ok) {
+            dispatchSucceeded = true;
+            break;
+          }
+
+          // Non-2xx response from provider
           const errData = await res.json().catch(() => ({}));
-          console.error('[MSG91 Error]', errData);
-          throw new Error('Failed to send OTP through SMS gateway');
+          console.error(`[MSG91 Error - Attempt ${attempt}/${maxAttempts} HTTP ${res.status}]`, errData);
+
+          // Fast fail on 4xx client errors (e.g. invalid auth key, invalid template, blacklisted number)
+          // 4xx errors are permanent client configuration issues that should not be retried in a loop.
+          if (res.status >= 400 && res.status < 500) {
+            break;
+          }
+        } catch (err: any) {
+          console.error(`[SMS Service Network Error - Attempt ${attempt}/${maxAttempts}]:`, err?.message || err);
         }
-      } catch (err: any) {
-        console.error('[SMS Service Error]:', err?.message || err);
-        throw new ValidationError('Could not dispatch OTP. Please check your network or try again.');
+
+        if (attempt < maxAttempts) {
+          // Brief backoff before transient retry (100ms, 200ms)
+          await new Promise((resolve) => setTimeout(resolve, attempt * 100));
+        }
+      }
+
+      if (!dispatchSucceeded) {
+        // Explicit Recovery Policy:
+        // If external SMS dispatch fails across all retry attempts, invalidate the persisted challenge
+        // so it cannot remain in an orphaned state preventing prompt resend or blocking customer recovery.
+        if (createdChallengeId) {
+          try {
+            await prisma.otpChallenge.updateMany({
+              where: { id: createdChallengeId, isUsed: false },
+              data: { isUsed: true },
+            });
+          } catch (cleanupErr) {
+            console.error('[SMS Service Cleanup Error]:', cleanupErr);
+          }
+        }
+
+        throw new ValidationError(
+          'Could not deliver verification code via SMS. Please check mobile connectivity or try again in a few moments.'
+        );
       }
     }
 
