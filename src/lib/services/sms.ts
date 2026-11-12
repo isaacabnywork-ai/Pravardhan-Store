@@ -67,21 +67,39 @@ export class SmsService {
 
     let devCode: string | undefined;
 
-    // Serialize rate limit check and challenge creation per normalized phone number
+    // 1. Transactional rate-limit check and challenge creation with advisory locking
+    // CRITICAL: SMS dispatch is kept strictly OUTSIDE the database transaction.
+    // If advisory lock acquisition, rate limiting, or database persistence fails,
+    // the transaction aborts and rollback ensures ZERO SMS messages are ever dispatched.
     await prisma.$transaction(async (tx) => {
       // 1. Transaction-scoped PostgreSQL advisory lock keyed on normalized E.164 phone hash
       // CRITICAL FAIL-CLOSED REQUIREMENT:
       // In PostgreSQL, advisory-lock acquisition is mandatory before inspecting rate limits
       // or creating an OTP challenge. Any failure (connection, permission, lock timeout, database error)
       // must strictly throw, aborting the transaction and preventing OTP dispatch.
-      // Explicit engine check: if engine is explicitly detected as non-PostgreSQL (e.g. SQLite unit tests),
-      // bypass advisory lock. Under PostgreSQL, execution is strictly mandatory and never caught/swallowed.
       const isSqlite = process.env.DATABASE_URL?.startsWith('file:') || process.env.DATABASE_URL?.startsWith('sqlite:');
       if (!isSqlite) {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${e164}));`;
       }
 
-      // 2. Resend Cooldown Check (60 seconds)
+      // 2. Rolling Window Abuse Rate Limit Check: Maximum 4 requests in last 10 minutes
+      // Checked first so that quota exhaustion reliably surfaces the 10-minute rate limit
+      // rather than masking it behind a newly created challenge's 60-second cooldown.
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      const countLast10Mins = await tx.otpChallenge.count({
+        where: {
+          phone: e164,
+          createdAt: { gte: tenMinutesAgo },
+        },
+      });
+
+      if (countLast10Mins >= 4) {
+        throw new ValidationError(
+          'Too many OTP requests. For your security, please wait 10 minutes before trying again.'
+        );
+      }
+
+      // 3. Resend Cooldown Check (60 seconds)
       const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
       const recentChallenge = await tx.otpChallenge.findFirst({
         where: {
@@ -101,54 +119,15 @@ export class SmsService {
         );
       }
 
-      // 3. Rolling Window Abuse Rate Limit: Maximum 4 requests in last 10 minutes
-      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-      const countLast10Mins = await tx.otpChallenge.count({
-        where: {
-          phone: e164,
-          createdAt: { gte: tenMinutesAgo },
-        },
-      });
-
-      if (countLast10Mins >= 4) {
-        throw new ValidationError(
-          'Too many OTP requests. For your security, please wait 10 minutes before trying again.'
-        );
-      }
-
-      // 4. Provider Routing & Persistence inside same serialized transaction
+      // 4. Persistence of OTP Challenge inside transaction
       if (this.isConfigured && !isDev) {
-        try {
-          const msg91Mobile = `91${clean10}`;
-          const url = new URL('https://control.msg91.com/api/v5/otp');
-          url.searchParams.set('template_id', this.templateId || '');
-          url.searchParams.set('mobile', msg91Mobile);
-          url.searchParams.set('authkey', this.authKey || '');
-          url.searchParams.set('otp_length', '6');
-          url.searchParams.set('otp_expiry', '5'); // 5 minutes
-
-          const res = await fetch(url.toString(), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          });
-
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            console.error('[MSG91 Error]', errData);
-            throw new Error('Failed to send OTP through SMS gateway');
-          }
-
-          await tx.otpChallenge.create({
-            data: {
-              phone: e164,
-              codeHash: 'MSG91_MANAGED',
-              expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-            },
-          });
-        } catch (err: any) {
-          console.error('[SMS Service Error]:', err?.message || err);
-          throw new ValidationError('Could not dispatch OTP. Please check your network or try again.');
-        }
+        await tx.otpChallenge.create({
+          data: {
+            phone: e164,
+            codeHash: 'MSG91_MANAGED',
+            expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+          },
+        });
       } else {
         // Development or Sandbox Simulation
         const generatedCode = clean10.endsWith('000000') || clean10.endsWith('43210')
@@ -171,6 +150,33 @@ export class SmsService {
         }
       }
     });
+
+    // 2. Post-commit provider dispatch: Only reached if transaction committed successfully
+    if (this.isConfigured && !isDev) {
+      try {
+        const msg91Mobile = `91${clean10}`;
+        const url = new URL('https://control.msg91.com/api/v5/otp');
+        url.searchParams.set('template_id', this.templateId || '');
+        url.searchParams.set('mobile', msg91Mobile);
+        url.searchParams.set('authkey', this.authKey || '');
+        url.searchParams.set('otp_length', '6');
+        url.searchParams.set('otp_expiry', '5'); // 5 minutes
+
+        const res = await fetch(url.toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          console.error('[MSG91 Error]', errData);
+          throw new Error('Failed to send OTP through SMS gateway');
+        }
+      } catch (err: any) {
+        console.error('[SMS Service Error]:', err?.message || err);
+        throw new ValidationError('Could not dispatch OTP. Please check your network or try again.');
+      }
+    }
 
     return {
       success: true,
