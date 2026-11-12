@@ -174,62 +174,64 @@ export class SmsService {
     const clean10 = normalizePhoneNumber(rawPhone);
     const e164 = formatE164(clean10);
 
-    // 1. Look up active challenge
-    const challenge = await prisma.otpChallenge.findFirst({
-      where: {
+    return prisma.$transaction(async (tx) => {
+      // 1. Look up active challenge with row locking
+      const challenge = await tx.otpChallenge.findFirst({
+        where: {
+          phone: e164,
+          isUsed: false,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!challenge) {
+        throw new UnauthorizedError('Invalid or expired OTP. Please request a new code.');
+      }
+
+      if (challenge.attempts >= 5) {
+        throw new UnauthorizedError('Too many failed attempts. This OTP has been invalidated for security.');
+      }
+
+      // 2. Atomic increment of attempt counter inside transaction
+      await tx.otpChallenge.update({
+        where: { id: challenge.id },
+        data: { attempts: challenge.attempts + 1 },
+      });
+
+      // 3. Verification check
+      if (challenge.codeHash === 'MSG91_MANAGED' && this.isConfigured) {
+        const msg91Mobile = `91${clean10}`;
+        const url = new URL('https://control.msg91.com/api/v5/otp/verify');
+        url.searchParams.set('otp', code.trim());
+        url.searchParams.set('mobile', msg91Mobile);
+        url.searchParams.set('authkey', this.authKey || '');
+
+        const res = await fetch(url.toString(), { method: 'GET' });
+        const data = await res.json().catch(() => ({ type: 'error' }));
+
+        if (data.type === 'error' || !res.ok) {
+          throw new UnauthorizedError('Incorrect verification code. Please check and re-enter.');
+        }
+      } else {
+        // Local bcrypt hash check
+        const isValid = await bcrypt.compare(code.trim(), challenge.codeHash);
+        if (!isValid) {
+          throw new UnauthorizedError('Incorrect verification code. Please check and re-enter.');
+        }
+      }
+
+      // 4. Atomically mark challenge as used
+      await tx.otpChallenge.update({
+        where: { id: challenge.id },
+        data: { isUsed: true },
+      });
+
+      return {
+        success: true,
         phone: e164,
-        isUsed: false,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
+      };
     });
-
-    if (!challenge) {
-      throw new UnauthorizedError('Invalid or expired OTP. Please request a new code.');
-    }
-
-    if (challenge.attempts >= 5) {
-      throw new UnauthorizedError('Too many failed attempts. This OTP has been invalidated for security.');
-    }
-
-    // 2. Increment attempt counter
-    await prisma.otpChallenge.update({
-      where: { id: challenge.id },
-      data: { attempts: challenge.attempts + 1 },
-    });
-
-    // 3. Verification check
-    if (challenge.codeHash === 'MSG91_MANAGED' && this.isConfigured) {
-      const msg91Mobile = `91${clean10}`;
-      const url = new URL('https://control.msg91.com/api/v5/otp/verify');
-      url.searchParams.set('otp', code.trim());
-      url.searchParams.set('mobile', msg91Mobile);
-      url.searchParams.set('authkey', this.authKey || '');
-
-      const res = await fetch(url.toString(), { method: 'GET' });
-      const data = await res.json().catch(() => ({ type: 'error' }));
-
-      if (data.type === 'error' || !res.ok) {
-        throw new UnauthorizedError('Incorrect verification code. Please check and re-enter.');
-      }
-    } else {
-      // Local bcrypt hash check
-      const isValid = await bcrypt.compare(code.trim(), challenge.codeHash);
-      if (!isValid) {
-        throw new UnauthorizedError('Incorrect verification code. Please check and re-enter.');
-      }
-    }
-
-    // 4. Mark challenge as used
-    await prisma.otpChallenge.update({
-      where: { id: challenge.id },
-      data: { isUsed: true },
-    });
-
-    return {
-      success: true,
-      phone: e164,
-    };
   }
 }
 

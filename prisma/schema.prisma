@@ -426,6 +426,7 @@ model Order {
   paymentStatus      PaymentStatus        @default(PENDING)
   orderStatus        OrderStatus          @default(PLACED)
   idempotencyKey     String?
+  requestFingerprint String?
   notes              String?
   cancellationReason String?
   

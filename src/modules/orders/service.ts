@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { OrderStatus, PaymentMethod, PaymentStatus, InventoryChangeType, CashCollectionStatus, SettlementStatus, Role } from '@prisma/client';
 import { cartService } from '@/modules/cart/service';
@@ -9,26 +10,29 @@ import { z } from 'zod';
 
 export class OrderService {
   /**
+   * Computes a canonical SHA-256 request fingerprint from authoritative checkout inputs
+   */
+  computeRequestFingerprint(userId: string, data: z.infer<typeof createOrderSchema>, cartItems: Array<{ variantId: string; quantity: number }>): string {
+    const sortedItems = [...cartItems]
+      .sort((a, b) => a.variantId.localeCompare(b.variantId))
+      .map(i => `${i.variantId}:${i.quantity}`)
+      .join('|');
+    const canonicalPayload = [
+      `user:${userId}`,
+      `addr:${data.addressId}`,
+      `method:${data.paymentMethod}`,
+      `tip:${data.deliveryTip || 0}`,
+      `slot:${data.deliverySlot || ''}`,
+      `items:${sortedItems}`,
+    ].join(';');
+
+    return crypto.createHash('sha256').update(canonicalPayload).digest('hex');
+  }
+
+  /**
    * Concurrency-safe atomic order creation with stock decrement & address snapshot
    */
   async createOrder(userId: string, data: z.infer<typeof createOrderSchema>) {
-    // 0. Database-Enforced Idempotency Check: if idempotencyKey provided, look up existing customer order
-    if (data.idempotencyKey) {
-      const existingOrder = await prisma.order.findFirst({
-        where: {
-          userId,
-          idempotencyKey: data.idempotencyKey,
-        },
-        include: {
-          items: true,
-          statusHistory: { orderBy: { createdAt: 'asc' } },
-        },
-      });
-      if (existingOrder) {
-        return existingOrder; // Idempotent return of authoritative persisted order
-      }
-    }
-
     // 1. Resolve customer & address
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -61,6 +65,39 @@ export class OrderService {
 
     if (cartDetails.items.length === 0) {
       throw new ValidationError('Your cart is empty. Please add items before checking out.');
+    }
+
+    // 3.1 Compute canonical request fingerprint for idempotency validation
+    const requestFingerprint = this.computeRequestFingerprint(
+      userId,
+      data,
+      cartDetails.items.map(i => ({ variantId: i.variantId, quantity: i.quantity }))
+    );
+
+    // 3.2 Pre-transaction Idempotency Check
+    if (data.idempotencyKey) {
+      const existingOrder = await prisma.order.findFirst({
+        where: {
+          userId,
+          idempotencyKey: data.idempotencyKey,
+        },
+        include: {
+          items: true,
+          statusHistory: { orderBy: { createdAt: 'asc' } },
+        },
+      });
+
+      if (existingOrder) {
+        // Enforce Fingerprint match:
+        // If fingerprint matches, return original order
+        // If fingerprint differs, reject with HTTP 409 Conflict
+        if (existingOrder.requestFingerprint && existingOrder.requestFingerprint !== requestFingerprint) {
+          throw new ConflictError(
+            'Idempotency key already used for a different checkout request or payload.'
+          );
+        }
+        return existingOrder;
+      }
     }
 
     if (cartDetails.summary.subtotal < store.minOrderValue) {
@@ -125,6 +162,7 @@ export class OrderService {
                 : PaymentStatus.PENDING,
             orderStatus: OrderStatus.PLACED,
             idempotencyKey: data.idempotencyKey || null,
+            requestFingerprint: data.idempotencyKey ? requestFingerprint : null,
             notes: data.notes,
             items: {
               create: cartDetails.items.map((item) => ({
@@ -289,22 +327,40 @@ export class OrderService {
         return order;
       });
     } catch (err: any) {
-      // P2002: Prisma unique constraint violation (e.g. concurrent submission with same idempotencyKey)
+      // P2002: Precise Prisma unique constraint violation handling
+      // Invariant: Only treat as idempotency race if the violated constraint specifically involves idempotencyKey
       if (err?.code === 'P2002' && data.idempotencyKey) {
-        const existingOrder = await prisma.order.findFirst({
-          where: {
-            userId,
-            idempotencyKey: data.idempotencyKey,
-          },
-          include: {
-            items: true,
-            statusHistory: { orderBy: { createdAt: 'asc' } },
-          },
-        });
-        if (existingOrder) {
-          return existingOrder; // Graceful, concurrency-safe return of the established order
+        const targetFields = Array.isArray(err.meta?.target) ? err.meta.target : [];
+        const isIdempotencyConflict =
+          targetFields.includes('idempotencyKey') ||
+          targetFields.includes('userId_idempotencyKey') ||
+          targetFields.length === 0; // If driver returns anonymous constraint, check matching key
+
+        if (isIdempotencyConflict) {
+          // Transaction has rolled back; now safe to query winning committed order
+          const existingOrder = await prisma.order.findFirst({
+            where: {
+              userId,
+              idempotencyKey: data.idempotencyKey,
+            },
+            include: {
+              items: true,
+              statusHistory: { orderBy: { createdAt: 'asc' } },
+            },
+          });
+
+          if (existingOrder) {
+            // Verify fingerprint of winning order matches this request
+            if (existingOrder.requestFingerprint && existingOrder.requestFingerprint !== requestFingerprint) {
+              throw new ConflictError(
+                'Concurrent checkout submission detected with mismatched payload parameters.'
+              );
+            }
+            return existingOrder; // Graceful, concurrency-safe return of the established order
+          }
         }
       }
+      // Re-throw any unrelated uniqueness errors (e.g. orderNumber collision) or non-P2002 failures
       throw err;
     }
   }
