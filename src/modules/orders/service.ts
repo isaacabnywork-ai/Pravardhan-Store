@@ -10,23 +10,38 @@ import { z } from 'zod';
 
 export class OrderService {
   /**
-   * Computes a canonical SHA-256 request fingerprint from authoritative checkout inputs
+   * Computes a canonical SHA-256 request fingerprint from authoritative checkout inputs.
+   * Version: v1
+   * Serializes: version, userId, storeId, addressId, paymentMethod, deliveryTip, deliverySlot, notes, and sorted items.
    */
-  computeRequestFingerprint(userId: string, data: z.infer<typeof createOrderSchema>, cartItems: Array<{ variantId: string; quantity: number }>): string {
+  computeRequestFingerprint(
+    userId: string,
+    storeId: string,
+    data: z.infer<typeof createOrderSchema>,
+    cartItems: Array<{ variantId: string; quantity: number }>
+  ): string {
     const sortedItems = [...cartItems]
       .sort((a, b) => a.variantId.localeCompare(b.variantId))
-      .map(i => `${i.variantId}:${i.quantity}`)
-      .join('|');
-    const canonicalPayload = [
-      `user:${userId}`,
-      `addr:${data.addressId}`,
-      `method:${data.paymentMethod}`,
-      `tip:${data.deliveryTip || 0}`,
-      `slot:${data.deliverySlot || ''}`,
-      `items:${sortedItems}`,
-    ].join(';');
+      .map((i) => `variant=${i.variantId}&qty=${i.quantity}`)
+      .join(';');
 
-    return crypto.createHash('sha256').update(canonicalPayload).digest('hex');
+    const canonicalEntries = [
+      ['v', '1'],
+      ['userId', userId],
+      ['storeId', storeId],
+      ['addressId', data.addressId],
+      ['paymentMethod', data.paymentMethod],
+      ['deliveryTip', String(data.deliveryTip || 0)],
+      ['deliverySlot', (data.deliverySlot || '').trim()],
+      ['notes', (data.notes || '').trim()],
+      ['items', sortedItems],
+    ];
+
+    const canonicalSerialized = canonicalEntries
+      .map(([k, val]) => `${k}:${val}`)
+      .join('|');
+
+    return crypto.createHash('sha256').update(canonicalSerialized).digest('hex');
   }
 
   /**
@@ -70,8 +85,9 @@ export class OrderService {
     // 3.1 Compute canonical request fingerprint for idempotency validation
     const requestFingerprint = this.computeRequestFingerprint(
       userId,
+      store.id,
       data,
-      cartDetails.items.map(i => ({ variantId: i.variantId, quantity: i.quantity }))
+      cartDetails.items.map((i) => ({ variantId: i.variantId, quantity: i.quantity }))
     );
 
     // 3.2 Pre-transaction Idempotency Check
@@ -88,14 +104,20 @@ export class OrderService {
       });
 
       if (existingOrder) {
-        // Enforce Fingerprint match:
-        // If fingerprint matches, return original order
-        // If fingerprint differs, reject with HTTP 409 Conflict
-        if (existingOrder.requestFingerprint && existingOrder.requestFingerprint !== requestFingerprint) {
+        // Enforce Fail-Closed Fingerprint match:
+        // 1. Missing fingerprint on existing order fails closed
+        if (!existingOrder.requestFingerprint) {
+          throw new ConflictError(
+            'Existing order has no recorded request fingerprint. Cannot verify idempotency match safely.'
+          );
+        }
+        // 2. Mismatched fingerprint rejects with HTTP 409 Conflict
+        if (existingOrder.requestFingerprint !== requestFingerprint) {
           throw new ConflictError(
             'Idempotency key already used for a different checkout request or payload.'
           );
         }
+        // 3. Exact match returns original authoritative order
         return existingOrder;
       }
     }
@@ -328,16 +350,23 @@ export class OrderService {
       });
     } catch (err: any) {
       // P2002: Precise Prisma unique constraint violation handling
-      // Invariant: Only treat as idempotency race if the violated constraint specifically involves idempotencyKey
+      // Invariant: STRICTLY recover only when the violated constraint is confirmed to be the idempotency constraint.
+      // Never treat empty, missing, or ambiguous target metadata as an idempotency conflict.
       if (err?.code === 'P2002' && data.idempotencyKey) {
-        const targetFields = Array.isArray(err.meta?.target) ? err.meta.target : [];
-        const isIdempotencyConflict =
+        const targetFields: string[] = Array.isArray(err.meta?.target)
+          ? err.meta.target
+          : typeof err.meta?.target === 'string'
+          ? [err.meta.target]
+          : [];
+
+        // Exact match on composite unique constraint fields
+        const isConfirmedIdempotencyConstraint =
           targetFields.includes('idempotencyKey') ||
           targetFields.includes('userId_idempotencyKey') ||
-          targetFields.length === 0; // If driver returns anonymous constraint, check matching key
+          (targetFields.includes('userId') && targetFields.includes('idempotencyKey'));
 
-        if (isIdempotencyConflict) {
-          // Transaction has rolled back; now safe to query winning committed order
+        if (isConfirmedIdempotencyConstraint) {
+          // Transaction has rolled back; query winning committed order
           const existingOrder = await prisma.order.findFirst({
             where: {
               userId,
@@ -350,8 +379,15 @@ export class OrderService {
           });
 
           if (existingOrder) {
-            // Verify fingerprint of winning order matches this request
-            if (existingOrder.requestFingerprint && existingOrder.requestFingerprint !== requestFingerprint) {
+            // Fail-closed fingerprint check:
+            // 1. If fingerprint is missing on existing order: fail closed
+            if (!existingOrder.requestFingerprint) {
+              throw new ConflictError(
+                'Existing order has no recorded request fingerprint. Cannot verify idempotency match safely.'
+              );
+            }
+            // 2. If fingerprint does not match incoming request: reject with HTTP 409 Conflict
+            if (existingOrder.requestFingerprint !== requestFingerprint) {
               throw new ConflictError(
                 'Concurrent checkout submission detected with mismatched payload parameters.'
               );
@@ -360,7 +396,7 @@ export class OrderService {
           }
         }
       }
-      // Re-throw any unrelated uniqueness errors (e.g. orderNumber collision) or non-P2002 failures
+      // Re-throw any unrelated uniqueness errors (e.g. orderNumber collision, unknown targets) or non-P2002 failures
       throw err;
     }
   }
