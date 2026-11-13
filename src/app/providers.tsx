@@ -9,6 +9,7 @@ import { CmsProvider } from '@/lib/context/CmsContext';
 import { FloatingCart } from '@/components/cart/FloatingCart';
 import { LocationConfirmModal } from '@/components/location/LocationConfirmModal';
 import { AuthGate } from '@/components/auth/AuthGate';
+import { LiveOrderTrackingPill } from '@/components/orders/LiveOrderTrackingPill';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 {children}
                 <FloatingCart />
                 <LocationConfirmModal />
+                <LiveOrderTrackingPill />
               </AuthGate>
             </CmsProvider>
           </CartProvider>
