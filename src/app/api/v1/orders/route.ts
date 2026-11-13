@@ -8,7 +8,11 @@ export async function POST(request: NextRequest) {
   try {
     const session = await requireAuth(request);
     const body = await request.json();
-    const parsed = createOrderSchema.safeParse(body);
+    const idempotencyHeader = request.headers.get('x-idempotency-key') || undefined;
+    const parsed = createOrderSchema.safeParse({
+      ...body,
+      idempotencyKey: body.idempotencyKey || idempotencyHeader,
+    });
 
     if (!parsed.success) {
       return apiError(parsed.error);

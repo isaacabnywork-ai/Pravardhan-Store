@@ -30,13 +30,21 @@ export class AnalyticsService {
         payments: {
           select: { paymentMethod: true, paymentStatus: true, amount: true },
         },
+        cashCollections: {
+          select: { collectedAmount: true, collectionStatus: true },
+        },
       },
       orderBy: { createdAt: 'asc' },
     });
 
-    const paidOrders = orders.filter(
-      (o) => o.orderStatus === OrderStatus.DELIVERED || o.paymentStatus === PaymentStatus.PAID
-    );
+    const paidOrders = orders.filter((o) => {
+      if (o.orderStatus === OrderStatus.CANCELLED || o.orderStatus === OrderStatus.REFUNDED) return false;
+      const isCod = o.payments.some((p) => p.paymentMethod === 'COD');
+      if (isCod) {
+        return Boolean(o.cashCollections?.[0] && o.cashCollections[0].collectedAmount > 0);
+      }
+      return o.paymentStatus === PaymentStatus.PAID;
+    });
 
     const totalRevenuePaise = paidOrders.reduce((sum, o) => sum + o.grandTotal, 0);
     const totalDiscountsPaise = paidOrders.reduce((sum, o) => sum + o.discount, 0);

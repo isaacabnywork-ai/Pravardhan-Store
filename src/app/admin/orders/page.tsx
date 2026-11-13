@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   PackageCheck,
@@ -25,11 +25,109 @@ import { Order, OrderStatus } from '@/types';
 import { formatPrice, formatDateTime } from '@/lib/utils';
 
 export default function AdminOrdersPage() {
-  const { orders, updateOrderStatus, assignDeliveryStaff, toggleOrderItemPicked } = useStore();
+  const { orders: storeOrders, updateOrderStatus, assignDeliveryStaff, toggleOrderItemPicked } = useStore();
 
+  const [adminLiveOrders, setAdminLiveOrders] = useState<Order[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // Poll /api/v1/admin/orders every 5 seconds for real-time dark-store fulfillment
+  useEffect(() => {
+    let isMounted = true;
+    const fetchAdminOrders = async () => {
+      try {
+        const res = await fetch('/api/v1/admin/orders?pageSize=100');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && Array.isArray(data.data) && isMounted) {
+            const mapped: Order[] = data.data.map((o: any) => ({
+              id: o.id,
+              orderNumber: o.orderNumber,
+              userId: o.userId,
+              customerName: o.customerName,
+              customerPhone: o.customerPhone,
+              deliveryAddress: o.deliveryAddress,
+              deliverySlot: {
+                id: 'slot-instant',
+                dateType: 'TODAY' as const,
+                dateLabel: 'Today',
+                dateString: new Date(o.createdAt).toISOString().split('T')[0],
+                timeSlot: o.deliverySlot || 'Instant (10-15 mins)',
+                isAvailable: true,
+                capacity: 50,
+                bookedCount: 1,
+              },
+              items: (o.items || []).map((i: any) => ({
+                productId: i.productId,
+                variantId: i.variantId,
+                productName: i.productName,
+                variantTitle: i.variantTitle,
+                brand: i.brand,
+                unit: i.unit,
+                purchasedPrice: Math.round((i.purchasedPrice || 0) / 100),
+                purchasedMrp: Math.round((i.purchasedMrp || 0) / 100),
+                quantity: i.quantity,
+                image: i.image,
+              })),
+              subtotal: Math.round((o.subtotal || 0) / 100),
+              discount: Math.round((o.discount || 0) / 100),
+              couponCode: o.couponCode,
+              couponDiscount: Math.round((o.couponDiscount || 0) / 100),
+              deliveryCharge: Math.round((o.deliveryFee || 0) / 100),
+              deliveryTip: Math.round((o.deliveryTip || 0) / 100),
+              handlingFee: Math.round((o.handlingFee || 0) / 100),
+              grandTotal: Math.round((o.grandTotal || 0) / 100),
+              paymentMethod: o.paymentMethod,
+              paymentStatus: o.paymentStatus,
+              orderStatus:
+                o.orderStatus === 'PLACED'
+                  ? 'ORDER_PLACED'
+                  : o.orderStatus === 'CONFIRMED'
+                  ? 'ORDER_CONFIRMED'
+                  : o.orderStatus === 'PREPARING'
+                  ? 'BEING_PREPARED'
+                  : o.orderStatus === 'READY_FOR_PICKUP'
+                  ? 'READY_FOR_DELIVERY'
+                  : o.orderStatus,
+              statusHistory: (o.statusHistory || []).map((h: any) => ({
+                status: h.status,
+                label: h.label,
+                timestamp: new Date(h.createdAt).toLocaleTimeString('en-IN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+                note: h.note,
+                completed: true,
+              })),
+              createdAt: o.createdAt,
+              updatedAt: o.updatedAt,
+            }));
+            setAdminLiveOrders(mapped);
+          }
+        }
+      } catch {
+        // Fallback gracefully to store context if offline
+      }
+    };
+
+    fetchAdminOrders();
+    const interval = setInterval(fetchAdminOrders, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Merge live backend orders with local store fallback
+  const orders = React.useMemo(() => {
+    if (adminLiveOrders.length > 0) {
+      const liveIds = new Set(adminLiveOrders.map((o) => o.id));
+      const nonDuplicateLocal = storeOrders.filter((so) => !liveIds.has(so.id));
+      return [...adminLiveOrders, ...nonDuplicateLocal];
+    }
+    return storeOrders;
+  }, [adminLiveOrders, storeOrders]);
 
   const filteredOrders = orders.filter((o) => {
     if (statusFilter !== 'ALL' && o.orderStatus !== statusFilter) return false;
@@ -45,6 +143,25 @@ export default function AdminOrdersPage() {
 
   const handleAdvanceStatus = (orderId: string, nextStatus: OrderStatus, note?: string) => {
     updateOrderStatus(orderId, nextStatus, note);
+    // Also notify live backend
+    fetch(`/api/v1/admin/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status:
+          nextStatus === 'ORDER_PLACED'
+            ? 'PLACED'
+            : nextStatus === 'ORDER_CONFIRMED'
+            ? 'CONFIRMED'
+            : nextStatus === 'BEING_PREPARED'
+            ? 'PREPARING'
+            : nextStatus === 'READY_FOR_DELIVERY'
+            ? 'READY_FOR_PICKUP'
+            : nextStatus,
+        note,
+      }),
+    }).catch(() => null);
+
     if (selectedOrder && selectedOrder.id === orderId) {
       const updated = orders.find((o) => o.id === orderId);
       if (updated) setSelectedOrder({ ...updated, orderStatus: nextStatus });

@@ -20,19 +20,42 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
   if (!isOpen) return null;
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phone.replace(/\D/g, '').length !== 10) {
+    const cleanDigits = phone.replace(/\D/g, '');
+    if (cleanDigits.length !== 10) {
       setError('Please enter a valid 10-digit Indian mobile number');
       return;
     }
     setError('');
     setLoading(true);
-    setTimeout(() => {
+
+    try {
+      const res = await fetch('/api/v1/auth/otp/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanDigits }),
+      });
+      const data = await res.json();
       setLoading(false);
-      setStep('OTP');
-      setOtp('123456'); // pre-fill demo OTP for convenience
-    }, 600);
+
+      if (res.ok && data.success) {
+        setStep('OTP');
+        // Only populate OTP if authorized development response explicitly returned devCode
+        if (data.data?.devCode) {
+          setOtp(data.data.devCode);
+        } else {
+          setOtp('');
+        }
+      } else {
+        // Backend rejection: remain on phone step, do not advance, do not invent OTP
+        setError(data.error?.message || 'Failed to dispatch OTP. Please check the number and try again.');
+      }
+    } catch {
+      // Network failure: remain on phone step, stop loading, show error, do not invent OTP
+      setLoading(false);
+      setError('Network connectivity error. Could not request OTP.');
+    }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {

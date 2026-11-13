@@ -35,7 +35,11 @@ export class OperationsService {
           grandTotal: true,
           orderStatus: true,
           paymentStatus: true,
+          paymentMethod: true,
           createdAt: true,
+          cashCollections: {
+            select: { collectedAmount: true, collectionStatus: true },
+          },
         },
       }),
       prisma.order.findMany({
@@ -43,7 +47,15 @@ export class OperationsService {
           ...where,
           createdAt: { gte: startOfToday },
         },
-        select: { grandTotal: true, orderStatus: true, paymentStatus: true },
+        select: {
+          grandTotal: true,
+          orderStatus: true,
+          paymentStatus: true,
+          paymentMethod: true,
+          cashCollections: {
+            select: { collectedAmount: true, collectionStatus: true },
+          },
+        },
       }),
       prisma.inventory.count(),
       prisma.inventory.count({
@@ -54,16 +66,35 @@ export class OperationsService {
       prisma.store.count({ where: { isActive: true } }),
     ]);
 
-    // Financial totals
-    const completedOrders = allOrders.filter(
-      (o) => o.orderStatus === OrderStatus.DELIVERED || o.paymentStatus === PaymentStatus.PAID
-    );
-    const totalRevenuePaise = completedOrders.reduce((sum, o) => sum + o.grandTotal, 0);
+    // Financial totals (Rule A: Delivered COD != Collected cash; verify cashCollections)
+    const isOrderCollected = (o: {
+      orderStatus: OrderStatus;
+      paymentStatus: PaymentStatus;
+      paymentMethod: any;
+      cashCollections?: { collectedAmount: number }[];
+    }) => {
+      if (o.orderStatus === OrderStatus.CANCELLED || o.orderStatus === OrderStatus.REFUNDED) return false;
+      if (o.paymentMethod === 'COD') {
+        return Boolean(o.cashCollections?.[0] && o.cashCollections[0].collectedAmount > 0);
+      }
+      return o.paymentStatus === PaymentStatus.PAID;
+    };
 
-    const todayDeliveredOrPaid = todayOrders.filter(
-      (o) => o.orderStatus === OrderStatus.DELIVERED || o.paymentStatus === PaymentStatus.PAID
-    );
-    const todayRevenuePaise = todayDeliveredOrPaid.reduce((sum, o) => sum + o.grandTotal, 0);
+    const completedOrders = allOrders.filter(isOrderCollected);
+    const totalRevenuePaise = completedOrders.reduce((sum, o) => {
+      if (o.paymentMethod === 'COD' && o.cashCollections?.[0]) {
+        return sum + o.cashCollections[0].collectedAmount;
+      }
+      return sum + o.grandTotal;
+    }, 0);
+
+    const todayDeliveredOrPaid = todayOrders.filter(isOrderCollected);
+    const todayRevenuePaise = todayDeliveredOrPaid.reduce((sum, o) => {
+      if (o.paymentMethod === 'COD' && o.cashCollections?.[0]) {
+        return sum + o.cashCollections[0].collectedAmount;
+      }
+      return sum + o.grandTotal;
+    }, 0);
 
     const pendingStatuses: OrderStatus[] = [
       OrderStatus.PLACED,
@@ -383,6 +414,12 @@ export class OperationsService {
           statusHistory: true,
           deliveryAssignments: true,
         },
+      });
+
+      // Update associated cashCollection record with assigned riderId if present
+      await tx.cashCollection.updateMany({
+        where: { orderId },
+        data: { riderId },
       });
 
       await notificationService.notifyOrderStatusChange(

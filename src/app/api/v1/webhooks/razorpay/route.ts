@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
-import { PaymentStatus, OrderStatus } from '@prisma/client';
+import { PaymentStatus, OrderStatus, RefundStatus, RefundReason } from '@prisma/client';
+import { refundService } from '@/modules/payments/refund-service';
 import { apiSuccess, apiError } from '@/lib/api-response';
 import { env } from '@/lib/env';
 
@@ -85,6 +86,29 @@ export async function POST(request: NextRequest) {
           gatewayRawResponse: paymentEntity,
         },
       });
+    } else if (event === 'refund.processed' || event === 'refund.created') {
+      const refundEntity = payload.payload?.refund?.entity;
+      if (refundEntity) {
+        await refundService.processGatewayRefundWebhook({
+          gatewayRefundId: refundEntity.id,
+          gatewayPaymentId: refundEntity.payment_id || gatewayPaymentId,
+          amountPaise: refundEntity.amount,
+          status: 'PROCESSED',
+          rawResponse: refundEntity,
+        });
+      }
+    } else if (event === 'refund.failed') {
+      const refundEntity = payload.payload?.refund?.entity;
+      if (refundEntity) {
+        await refundService.processGatewayRefundWebhook({
+          gatewayRefundId: refundEntity.id,
+          gatewayPaymentId: refundEntity.payment_id || gatewayPaymentId,
+          amountPaise: refundEntity.amount,
+          status: 'FAILED',
+          rawResponse: refundEntity,
+          failureReason: refundEntity.error_description || 'Refund failed at gateway',
+        });
+      }
     }
 
     return apiSuccess({ received: true, event });

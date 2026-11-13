@@ -1,12 +1,68 @@
+import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
-import { OrderStatus, PaymentMethod, PaymentStatus, InventoryChangeType } from '@prisma/client';
+import { OrderStatus, PaymentMethod, PaymentStatus, InventoryChangeType, CashCollectionStatus, SettlementStatus, Role } from '@prisma/client';
 import { cartService } from '@/modules/cart/service';
 import { notificationService } from '@/modules/notifications/service';
 import { NotFoundError, ValidationError, ConflictError, ForbiddenError } from '@/lib/errors';
+import { calculateNetCodObligation } from '@/modules/operations/financial-reconciliation-helper';
 import { createOrderSchema } from './schemas';
 import { z } from 'zod';
 
 export class OrderService {
+  /**
+   * Computes a canonical SHA-256 request fingerprint from authoritative checkout inputs.
+   * Version: v3 (Wallet-aware & financial allocation completeness)
+   * Serializes:
+   *  - version (v)
+   *  - userId
+   *  - storeId
+   *  - addressId
+   *  - paymentMethod
+   *  - walletPaise (effective non-negative wallet allocation)
+   *  - deliveryTip (normalized non-negative integer string)
+   *  - deliverySlot (trimmed string)
+   *  - notes (trimmed string)
+   *  - couponCode (normalized upper-case string or empty)
+   *  - sorted items (variantId and quantity formatted with length-prefixed encoding)
+   */
+  computeRequestFingerprint(
+    userId: string,
+    storeId: string,
+    data: z.infer<typeof createOrderSchema>,
+    cartItems: Array<{ variantId: string; quantity: number }>,
+    couponCode?: string | null
+  ): string {
+    const sortedItems = [...cartItems]
+      .sort((a, b) => a.variantId.localeCompare(b.variantId))
+      .map((i) => `v:${i.variantId.length}:${i.variantId};q:${i.quantity}`)
+      .join(',');
+
+    const effectiveWalletPaise =
+      data.paymentMethod === PaymentMethod.WALLET
+        ? 'FULL_WALLET'
+        : String(Math.max(0, data.walletPaise || 0));
+
+    const canonicalEntries = [
+      ['v', '3'],
+      ['userId', userId],
+      ['storeId', storeId],
+      ['addressId', data.addressId],
+      ['paymentMethod', data.paymentMethod],
+      ['walletPaise', effectiveWalletPaise],
+      ['deliveryTip', String(Math.max(0, data.deliveryTip || 0))],
+      ['deliverySlot', (data.deliverySlot || '').trim()],
+      ['notes', (data.notes || '').trim()],
+      ['couponCode', (couponCode || '').trim().toUpperCase()],
+      ['items', sortedItems],
+    ];
+
+    const canonicalSerialized = canonicalEntries
+      .map(([k, val]) => `${k}:${val.length}:${val}`)
+      .join('\n');
+
+    return crypto.createHash('sha256').update(canonicalSerialized, 'utf8').digest('hex');
+  }
+
   /**
    * Concurrency-safe atomic order creation with stock decrement & address snapshot
    */
@@ -45,6 +101,47 @@ export class OrderService {
       throw new ValidationError('Your cart is empty. Please add items before checking out.');
     }
 
+    // 3.1 Compute canonical request fingerprint for idempotency validation
+    const requestFingerprint = this.computeRequestFingerprint(
+      userId,
+      store.id,
+      data,
+      cartDetails.items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+      cartDetails.summary.appliedCoupon?.code
+    );
+
+    // 3.2 Pre-transaction Idempotency Check
+    if (data.idempotencyKey) {
+      const existingOrder = await prisma.order.findFirst({
+        where: {
+          userId,
+          idempotencyKey: data.idempotencyKey,
+        },
+        include: {
+          items: true,
+          statusHistory: { orderBy: { createdAt: 'asc' } },
+        },
+      });
+
+      if (existingOrder) {
+        // Enforce Fail-Closed Fingerprint match:
+        // 1. Missing fingerprint on existing order fails closed
+        if (!existingOrder.requestFingerprint) {
+          throw new ConflictError(
+            'Existing order has no recorded request fingerprint. Cannot verify idempotency match safely.'
+          );
+        }
+        // 2. Mismatched fingerprint rejects with HTTP 409 Conflict
+        if (existingOrder.requestFingerprint !== requestFingerprint) {
+          throw new ConflictError(
+            'Idempotency key already used for a different checkout request or payload.'
+          );
+        }
+        // 3. Exact match returns original authoritative order
+        return existingOrder;
+      }
+    }
+
     if (cartDetails.summary.subtotal < store.minOrderValue) {
       const minInRupees = Math.round(store.minOrderValue / 100);
       throw new ValidationError(
@@ -68,157 +165,313 @@ export class OrderService {
       cartDetails.summary.grandTotal + (data.deliveryTip || 0);
 
     // 4. Atomic transaction: create order, decrement stock, save snapshot, and clear cart
-    return prisma.$transaction(async (tx) => {
-      // Create immutable address snapshot
-      const addressSnapshot = {
-        name: address.name,
-        phone: address.phone,
-        label: address.label,
-        houseNumber: address.houseNumber,
-        street: address.street,
-        landmark: address.landmark,
-        area: address.area,
-        city: address.city,
-        pincode: address.pincode,
-      };
+    try {
+      return await prisma.$transaction(async (tx) => {
+        // Create immutable address snapshot
+        const addressSnapshot = {
+          name: address.name,
+          phone: address.phone,
+          label: address.label,
+          houseNumber: address.houseNumber,
+          street: address.street,
+          landmark: address.landmark,
+          area: address.area,
+          city: address.city,
+          pincode: address.pincode,
+        };
 
-      const order = await tx.order.create({
-        data: {
-          orderNumber,
-          userId,
-          storeId: store.id,
-          customerName: address.name || user.name,
-          customerPhone: address.phone || user.phone || '',
-          deliveryAddress: addressSnapshot,
-          deliverySlot: data.deliverySlot,
-          subtotal: cartDetails.summary.subtotal,
-          discount: cartDetails.summary.productDiscount,
-          couponCode: cartDetails.summary.appliedCoupon?.code,
-          couponDiscount: cartDetails.summary.couponDiscount,
-          deliveryFee: cartDetails.summary.deliveryFee,
-          deliveryTip: data.deliveryTip,
-          handlingFee: 0,
-          grandTotal,
-          paymentMethod: data.paymentMethod,
-          paymentStatus:
-            data.paymentMethod === PaymentMethod.WALLET
-              ? PaymentStatus.PAID
-              : PaymentStatus.PENDING,
-          orderStatus: OrderStatus.PLACED,
-          notes: data.notes,
-          items: {
-            create: cartDetails.items.map((item) => ({
-              productId: item.productId,
-              variantId: item.variantId,
-              productName: item.name,
-              variantTitle: item.variantTitle,
-              brand: item.brand,
-              unit: item.unit,
-              purchasedPrice: item.price,
-              purchasedMrp: item.mrp,
-              quantity: item.quantity,
-              image: item.image,
-            })),
-          },
-          statusHistory: {
-            create: {
-              status: OrderStatus.PLACED,
-              label: 'Order Placed',
-              note:
-                data.paymentMethod === PaymentMethod.WALLET
-                  ? 'Paid instantly via Pravdhan Money wallet'
-                  : `Order placed via ${data.paymentMethod}`,
-              actorId: userId,
+        const order = await tx.order.create({
+          data: {
+            orderNumber,
+            userId,
+            storeId: store.id,
+            customerName: address.name || user.name,
+            customerPhone: address.phone || user.phone || '',
+            deliveryAddress: addressSnapshot,
+            deliverySlot: data.deliverySlot,
+            subtotal: cartDetails.summary.subtotal,
+            discount: cartDetails.summary.productDiscount,
+            couponCode: cartDetails.summary.appliedCoupon?.code,
+            couponDiscount: cartDetails.summary.couponDiscount,
+            deliveryFee: cartDetails.summary.deliveryFee,
+            deliveryTip: data.deliveryTip,
+            handlingFee: 0,
+            grandTotal,
+            paymentMethod: data.paymentMethod,
+            paymentStatus:
+              data.paymentMethod === PaymentMethod.WALLET
+                ? PaymentStatus.PAID
+                : PaymentStatus.PENDING,
+            orderStatus: OrderStatus.PLACED,
+            idempotencyKey: data.idempotencyKey || null,
+            requestFingerprint: data.idempotencyKey ? requestFingerprint : null,
+            notes: data.notes,
+            items: {
+              create: cartDetails.items.map((item) => ({
+                productId: item.productId,
+                variantId: item.variantId,
+                productName: item.name,
+                variantTitle: item.variantTitle,
+                brand: item.brand,
+                unit: item.unit,
+                purchasedPrice: item.price,
+                purchasedMrp: item.mrp,
+                quantity: item.quantity,
+                image: item.image,
+              })),
+            },
+            statusHistory: {
+              create: {
+                status: OrderStatus.PLACED,
+                label: 'Order Placed',
+                note:
+                  data.paymentMethod === PaymentMethod.WALLET
+                    ? 'Paid instantly via Pravdhan Money wallet'
+                    : `Order placed via ${data.paymentMethod}`,
+                actorId: userId,
+              },
             },
           },
-        },
-        include: {
-          items: true,
-          statusHistory: true,
-        },
-      });
-
-      // Decrement inventory and record stock reservations
-      for (const item of cartDetails.items) {
-        const inv = await tx.inventory.findUnique({
-          where: {
-            storeId_variantId: {
-              storeId: store.id,
-              variantId: item.variantId,
-            },
+          include: {
+            items: true,
+            statusHistory: true,
           },
         });
 
-        if (inv) {
-          const previousStock = inv.quantity;
-          const newStock = Math.max(0, previousStock - item.quantity);
-
-          await tx.inventory.update({
-            where: { id: inv.id },
-            data: { quantity: newStock },
-          });
-
-          await tx.inventoryMovement.create({
-            data: {
-              storeId: store.id,
-              variantId: item.variantId,
-              changeType: InventoryChangeType.ORDER_RESERVED,
-              quantityChange: -item.quantity,
-              previousStock,
-              newStock,
-              reason: `Reserved for Order #${order.orderNumber}`,
-              updatedById: userId,
+        // Decrement inventory and record stock reservations
+        for (const item of cartDetails.items) {
+          const inv = await tx.inventory.findUnique({
+            where: {
+              storeId_variantId: {
+                storeId: store.id,
+                variantId: item.variantId,
+              },
             },
           });
+
+          if (inv) {
+            const previousStock = inv.quantity;
+            const newStock = Math.max(0, previousStock - item.quantity);
+
+            await tx.inventory.update({
+              where: { id: inv.id },
+              data: { quantity: newStock },
+            });
+
+            await tx.inventoryMovement.create({
+              data: {
+                storeId: store.id,
+                variantId: item.variantId,
+                changeType: InventoryChangeType.ORDER_RESERVED,
+                quantityChange: -item.quantity,
+                previousStock,
+                newStock,
+                reason: `Reserved for Order #${order.orderNumber}`,
+                updatedById: userId,
+              },
+            });
+          }
         }
-      }
 
-      // Record coupon redemption if coupon applied
-      if (cartDetails.summary.appliedCoupon) {
-        const coupon = await tx.coupon.findUnique({
-          where: { code: cartDetails.summary.appliedCoupon.code },
-        });
+        // Record coupon redemption if coupon applied
+        if (cartDetails.summary.appliedCoupon) {
+          const coupon = await tx.coupon.findUnique({
+            where: { code: cartDetails.summary.appliedCoupon.code },
+          });
 
-        if (coupon) {
-          await tx.couponRedemption.create({
+          if (coupon) {
+            await tx.couponRedemption.create({
+              data: {
+                couponId: coupon.id,
+                userId,
+                orderId: order.id,
+                discount: cartDetails.summary.couponDiscount,
+              },
+            });
+          }
+        }
+
+        // Record payment entities for checkout payment
+        // Split wallet payment support:
+        const requestedWalletPaise = Math.max(0, data.walletPaise || 0);
+
+        if (data.paymentMethod === PaymentMethod.WALLET) {
+          // Full wallet payment
+          await tx.payment.create({
             data: {
-              couponId: coupon.id,
-              userId,
               orderId: order.id,
-              discount: cartDetails.summary.couponDiscount,
+              paymentMethod: PaymentMethod.WALLET,
+              paymentStatus: PaymentStatus.PAID,
+              amount: grandTotal,
+              gatewayOrderId: `WALLET-${order.orderNumber}`,
+            },
+          });
+        } else if (requestedWalletPaise > 0) {
+          // Split payment: partial wallet deduction + secondary payment (e.g. COD / UPI / CARD)
+          if (requestedWalletPaise >= grandTotal) {
+            throw new ValidationError('Wallet allocation covers total order amount. Please select WALLET payment method directly.');
+          }
+
+          // 1. Record prepaid wallet payment slice
+          await tx.payment.create({
+            data: {
+              orderId: order.id,
+              paymentMethod: PaymentMethod.WALLET,
+              paymentStatus: PaymentStatus.PAID,
+              amount: requestedWalletPaise,
+              gatewayOrderId: `WALLET-SPLIT-${order.orderNumber}`,
+            },
+          });
+
+          // 2. Record secondary payment slice (COD, UPI, CARD) for remainder
+          const remainderPaise = grandTotal - requestedWalletPaise;
+          await tx.payment.create({
+            data: {
+              orderId: order.id,
+              paymentMethod: data.paymentMethod,
+              paymentStatus: PaymentStatus.PENDING,
+              amount: remainderPaise,
+              gatewayOrderId:
+                data.paymentMethod === PaymentMethod.COD
+                  ? `COD-${order.orderNumber}`
+                  : `rzp_order_${order.id}`,
+            },
+          });
+        } else {
+          // Standard single payment without wallet
+          await tx.payment.create({
+            data: {
+              orderId: order.id,
+              paymentMethod: data.paymentMethod,
+              paymentStatus: PaymentStatus.PENDING,
+              amount: grandTotal,
+              gatewayOrderId:
+                data.paymentMethod === PaymentMethod.COD
+                  ? `COD-${order.orderNumber}`
+                  : `rzp_order_${order.id}`,
             },
           });
         }
+
+        // Mandatory Invariants (Batch 9.8 COND-9.7-01, COND-9.7-02, COND-9.7-03):
+        // 1. Expected COD cash deducts ONLY successfully applied, active non-COD allocations (paymentStatus === PAID).
+        // 2. Over-allocations (nonCodAllocations > grandTotal) reject the transaction via ValidationError.
+        // 3. Zero-cash orders (expectedCodPaise === 0) do NOT create a physical CashCollection record,
+        //    preventing false collection/settlement history and operational count pollution.
+        if (data.paymentMethod === PaymentMethod.COD) {
+          // Query any non-COD payments allocated to this order including their processed refunds
+          const nonCodPayments = await tx.payment.findMany({
+            where: {
+              orderId: order.id,
+              paymentMethod: { not: PaymentMethod.COD },
+            },
+            include: {
+              refunds: true,
+            },
+          });
+
+          const { expectedCodPaise, isFullyPrepaid, validNonCodAllocationsPaise } =
+            calculateNetCodObligation(grandTotal, nonCodPayments, { throwOnOverAllocation: true });
+
+          // COND-9.7-02: Only instantiate physical cash collection if there is actual physical cash to collect (> 0)
+          if (!isFullyPrepaid && expectedCodPaise > 0) {
+            // Resolve default staff/rider reference for pending ledger line
+            let assignedRiderId = order.deliveryStaffId;
+            if (!assignedRiderId) {
+              const fallbackRider = await tx.user.findFirst({
+                where: { role: Role.DELIVERY_STAFF, isActive: true },
+                select: { id: true },
+              });
+              assignedRiderId = fallbackRider?.id || userId;
+            }
+
+            await tx.cashCollection.create({
+              data: {
+                orderId: order.id,
+                riderId: assignedRiderId,
+                storeId: store.id,
+                expectedAmount: expectedCodPaise,
+                collectedAmount: 0,
+                collectionStatus: CashCollectionStatus.PENDING,
+                settlementStatus: SettlementStatus.UNSETTLED,
+                notes: validNonCodAllocationsPaise > 0
+                  ? `Split payment: ₹${Math.round(validNonCodAllocationsPaise / 100)} prepaid via non-COD, ₹${Math.round(expectedCodPaise / 100)} expected in physical cash`
+                  : 'Pending cash collection created upon order checkout',
+              },
+            });
+          }
+        }
+
+        // Clear the customer's cart
+        await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+        await tx.cart.update({
+          where: { id: cart.id },
+          data: { couponCode: null },
+        });
+
+        return order;
+      });
+    } catch (err: any) {
+      // P2002: Precise Prisma unique constraint violation handling
+      // Invariant: STRICTLY recover only when the violated constraint is confirmed to be the idempotency constraint.
+      // Never treat empty, missing, or ambiguous target metadata as an idempotency conflict.
+      if (err?.code === 'P2002' && data.idempotencyKey) {
+        const targetFields: string[] = Array.isArray(err.meta?.target)
+          ? err.meta.target
+          : typeof err.meta?.target === 'string'
+          ? [err.meta.target]
+          : [];
+
+        // Exact match on the composite unique constraint fields:
+        // Accept ONLY:
+        //  1. Exactly ['userId', 'idempotencyKey'] or ['idempotencyKey', 'userId']
+        //  2. The exact constraint name ['userId_idempotencyKey'] or 'userId_idempotencyKey'
+        // Reject all empty, missing, single-field, orderNumber, or arrays with unexpected additional fields.
+        const isExactArray =
+          targetFields.length === 2 &&
+          targetFields.includes('userId') &&
+          targetFields.includes('idempotencyKey');
+
+        const isExactName =
+          targetFields.length === 1 &&
+          targetFields[0] === 'userId_idempotencyKey';
+
+        const isConfirmedIdempotencyConstraint = isExactArray || isExactName;
+
+        if (isConfirmedIdempotencyConstraint) {
+          // Transaction has rolled back; query winning committed order
+          const existingOrder = await prisma.order.findFirst({
+            where: {
+              userId,
+              idempotencyKey: data.idempotencyKey,
+            },
+            include: {
+              items: true,
+              statusHistory: { orderBy: { createdAt: 'asc' } },
+            },
+          });
+
+          if (existingOrder) {
+            // Fail-closed fingerprint check:
+            // 1. If fingerprint is missing on existing order: fail closed
+            if (!existingOrder.requestFingerprint) {
+              throw new ConflictError(
+                'Existing order has no recorded request fingerprint. Cannot verify idempotency match safely.'
+              );
+            }
+            // 2. If fingerprint does not match incoming request: reject with HTTP 409 Conflict
+            if (existingOrder.requestFingerprint !== requestFingerprint) {
+              throw new ConflictError(
+                'Concurrent checkout submission detected with mismatched payload parameters.'
+              );
+            }
+            return existingOrder; // Graceful, concurrency-safe return of the established order
+          }
+        }
       }
-
-      // Record payment entity
-      await tx.payment.create({
-        data: {
-          orderId: order.id,
-          paymentMethod: data.paymentMethod,
-          paymentStatus:
-            data.paymentMethod === PaymentMethod.WALLET
-              ? PaymentStatus.PAID
-              : PaymentStatus.PENDING,
-          amount: grandTotal,
-          gatewayOrderId:
-            data.paymentMethod === PaymentMethod.WALLET
-              ? `WALLET-${order.orderNumber}`
-              : data.paymentMethod === PaymentMethod.COD
-              ? `COD-${order.orderNumber}`
-              : `rzp_order_${order.id}`,
-        },
-      });
-
-      // Clear the customer's cart
-      await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-      await tx.cart.update({
-        where: { id: cart.id },
-        data: { couponCode: null },
-      });
-
-      return order;
-    });
+      // Re-throw any unrelated uniqueness errors (e.g. orderNumber collision, unknown targets) or non-P2002 failures
+      throw err;
+    }
   }
 
   /**
@@ -347,6 +600,19 @@ export class OrderService {
           });
         }
       }
+
+      // 3. Mark pending cash collection as FAILED if uncollected
+      await tx.cashCollection.updateMany({
+        where: {
+          orderId,
+          collectionStatus: CashCollectionStatus.PENDING,
+          settlementStatus: SettlementStatus.UNSETTLED,
+        },
+        data: {
+          collectionStatus: CashCollectionStatus.FAILED,
+          notes: `Order cancelled before cash collection. Reason: ${reason || 'Cancelled'}`,
+        },
+      });
 
       return updatedOrder;
     });

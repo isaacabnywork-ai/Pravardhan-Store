@@ -51,6 +51,7 @@ model User {
   orders       Order[]
   deliveries   Order[]             @relation("StaffDeliveries")
   riderAssignments DeliveryAssignment[] @relation("RiderAssignments")
+  cashCollections  CashCollection[]    @relation("RiderCashCollections")
   redemptions  CouponRedemption[]
   notifications Notification[]
 
@@ -279,9 +280,43 @@ model OtpChallenge {
   expiresAt  DateTime
   createdAt  DateTime @default(now())
 
+  deliveryJobs SmsDeliveryJob[]
+
   @@index([phone])
   @@index([expiresAt])
   @@map("otp_challenges")
+}
+
+enum SmsDeliveryStatus {
+  PENDING
+  PROCESSING
+  DELIVERED
+  FAILED
+}
+
+model SmsDeliveryJob {
+  id             String            @id @default(cuid())
+  challengeId    String
+  phone          String
+  encryptedCode  String?           // Encrypted OTP payload using AES-256-GCM (nullified immediately on delivery/expiry)
+  status         SmsDeliveryStatus @default(PENDING)
+  attempts       Int               @default(0)
+  maxAttempts    Int               @default(3)
+  nextAttemptAt  DateTime          @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  claimToken     String?           // Fencing token to prevent zombie worker completions
+  lastError      String?
+  providerMsgId  String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  challenge      OtpChallenge      @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@index([challengeId])
+  @@index([status, nextAttemptAt])
+  @@index([phone])
+  @@map("sms_delivery_jobs")
 }
 
 enum DiscountType {
@@ -313,6 +348,21 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+enum RefundReason {
+  CUSTOMER_CANCELLATION
+  ADMIN_INITIATED
+  ITEM_OUT_OF_STOCK
+  QUALITY_DISPUTE
+  RETURN_ON_DELIVERY
+  OTHER
 }
 
 model Cart {
@@ -409,6 +459,8 @@ model Order {
   paymentMethod      PaymentMethod        @default(COD)
   paymentStatus      PaymentStatus        @default(PENDING)
   orderStatus        OrderStatus          @default(PLACED)
+  idempotencyKey     String?
+  requestFingerprint String?
   notes              String?
   cancellationReason String?
   
@@ -421,10 +473,14 @@ model Order {
   items              OrderItem[]
   statusHistory      OrderStatusHistory[]
   payments           Payment[]
+  refunds            Refund[]
   redemptions        CouponRedemption[]
   deliveryAssignments DeliveryAssignment[]
+  cashCollections    CashCollection[]
 
+  @@unique([userId, idempotencyKey])
   @@index([userId])
+  @@index([idempotencyKey])
   @@index([storeId])
   @@index([orderStatus])
   @@index([orderNumber])
@@ -485,10 +541,39 @@ model Payment {
   updatedAt          DateTime      @updatedAt
 
   order              Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds            Refund[]
 
   @@index([orderId])
   @@index([gatewayOrderId])
   @@map("payments")
+}
+
+model Refund {
+  id                 String       @id @default(cuid())
+  orderId            String
+  paymentId          String
+  amount             Int          // in paise
+  status             RefundStatus @default(PENDING)
+  reason             RefundReason @default(CUSTOMER_CANCELLATION)
+  gatewayRefundId    String?      // e.g. Razorpay refund ID 'rfnd_xxxx'
+  idempotencyKey     String?      @unique
+  notes              String?
+  rawGatewayResponse Json?
+  processedAt        DateTime?
+  failedAt           DateTime?
+  failureReason      String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  order              Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  payment            Payment      @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([status])
+  @@index([gatewayRefundId])
+  @@index([idempotencyKey])
+  @@map("refunds")
 }
 
 enum AssignmentStatus {
@@ -549,4 +634,46 @@ model Notification {
   @@index([isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+enum CashCollectionStatus {
+  PENDING
+  COLLECTED
+  SHORT_COLLECTED
+  EXCESS_COLLECTED
+  FAILED
+}
+
+enum SettlementStatus {
+  UNSETTLED
+  SETTLED
+  DISCREPANCY
+}
+
+model CashCollection {
+  id                 String               @id @default(cuid())
+  orderId            String
+  riderId            String
+  storeId            String
+  expectedAmount     Int                  // in paise
+  collectedAmount    Int                  @default(0) // in paise
+  collectionStatus   CashCollectionStatus @default(PENDING)
+  settlementStatus   SettlementStatus     @default(UNSETTLED)
+  collectedAt        DateTime?
+  settledAt          DateTime?
+  handoverToStaffId  String?
+  notes              String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  order              Order                @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  rider              User                 @relation("RiderCashCollections", fields: [riderId], references: [id])
+
+  @@unique([orderId])
+  @@index([orderId])
+  @@index([riderId])
+  @@index([storeId])
+  @@index([collectionStatus])
+  @@index([settlementStatus])
+  @@map("cash_collections")
 }

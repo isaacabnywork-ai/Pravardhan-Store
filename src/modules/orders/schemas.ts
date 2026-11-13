@@ -4,9 +4,11 @@ import { OrderStatus, PaymentMethod } from '@prisma/client';
 export const createOrderSchema = z.object({
   addressId: z.string().min(1, 'Delivery address is required'),
   paymentMethod: z.nativeEnum(PaymentMethod).default(PaymentMethod.COD),
+  walletPaise: z.number().int().min(0).default(0), // optional wallet allocation in paise
   deliveryTip: z.number().int().min(0).default(0), // in paise
   deliverySlot: z.string().default('Instant (10-15 mins)'),
   notes: z.string().optional(),
+  idempotencyKey: z.string().max(128).optional(),
 });
 
 export const updateOrderStatusSchema = z.object({

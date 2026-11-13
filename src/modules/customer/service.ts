@@ -26,7 +26,12 @@ export class CustomerService {
    * Request OTP for phone login or registration via SMS service
    */
   async requestOtp(rawPhone: string) {
-    return smsService.requestOtp(rawPhone);
+    const res = await smsService.requestOtp(rawPhone);
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction && res.devCode) {
+      delete res.devCode;
+    }
+    return res;
   }
 
   /**
