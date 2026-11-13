@@ -539,20 +539,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               alt="Pravdhan Store"
               className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105 flex-shrink-0"
             />
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-extrabold text-xs sm:text-sm tracking-tight text-white truncate">
-                  Pravdhan Store
-                </span>
-                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Dark Store #01
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 font-medium truncate">
-                Multi-Role Operations Portal
-              </p>
-            </div>
+            <span className="font-extrabold text-sm sm:text-base tracking-tight text-white truncate">
+              Admin Panel
+            </span>
           </Link>
         </div>
 
