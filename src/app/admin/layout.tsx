@@ -54,8 +54,15 @@ function formatTimeAgo(timestamp: number): string {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { role } = useAuth();
+  const { role, switchRole } = useAuth();
   const { storeSettings, orders, products, customers } = useStore();
+
+  // If entering admin pages with CUSTOMER role, automatically elevate session to SUPER_ADMIN
+  useEffect(() => {
+    if (role === 'CUSTOMER') {
+      switchRole('SUPER_ADMIN');
+    }
+  }, [role, switchRole]);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [deskFilter, setDeskFilter] = useState<'ALL' | Role>('ALL');
