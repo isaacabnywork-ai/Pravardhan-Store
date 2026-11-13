@@ -742,8 +742,10 @@ export class OrderService {
     note?: string,
     actorId?: string
   ) {
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
+    const order = await prisma.order.findFirst({
+      where: {
+        OR: [{ id: orderId }, { orderNumber: orderId }],
+      },
     });
 
     if (!order) {
@@ -764,7 +766,7 @@ export class OrderService {
     };
 
     return prisma.order.update({
-      where: { id: orderId },
+      where: { id: order.id },
       data: {
         orderStatus: nextStatus,
         statusHistory: {

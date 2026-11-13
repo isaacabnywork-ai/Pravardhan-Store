@@ -141,31 +141,101 @@ export default function AdminOrdersPage() {
     return true;
   });
 
-  const handleAdvanceStatus = (orderId: string, nextStatus: OrderStatus, note?: string) => {
+  const handleAdvanceStatus = async (orderId: string, nextStatus: OrderStatus, note?: string) => {
+    // 1. Immediately update StoreContext (local storage)
     updateOrderStatus(orderId, nextStatus, note);
-    // Also notify live backend
-    fetch(`/api/v1/admin/orders/${orderId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        status:
-          nextStatus === 'ORDER_PLACED'
-            ? 'PLACED'
-            : nextStatus === 'ORDER_CONFIRMED'
-            ? 'CONFIRMED'
-            : nextStatus === 'BEING_PREPARED'
-            ? 'PREPARING'
-            : nextStatus === 'READY_FOR_DELIVERY'
-            ? 'READY_FOR_PICKUP'
-            : nextStatus,
-        note,
-      }),
-    }).catch(() => null);
 
-    if (selectedOrder && selectedOrder.id === orderId) {
-      const updated = orders.find((o) => o.id === orderId);
-      if (updated) setSelectedOrder({ ...updated, orderStatus: nextStatus });
+    // 2. Immediately update adminLiveOrders in local state (optimistic update)
+    setAdminLiveOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId && o.orderNumber !== orderId) return o;
+        return {
+          ...o,
+          orderStatus: nextStatus,
+          statusHistory: [
+            ...(o.statusHistory || []),
+            {
+              status: nextStatus,
+              label: nextStatus,
+              timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+              note: note || '',
+              completed: true,
+            },
+          ],
+        };
+      })
+    );
+
+    // 3. Immediately update selectedOrder state so modal moves forward instantly
+    setSelectedOrder((prev) => {
+      if (!prev || (prev.id !== orderId && prev.orderNumber !== orderId)) return prev;
+      return {
+        ...prev,
+        orderStatus: nextStatus,
+        statusHistory: [
+          ...(prev.statusHistory || []),
+          {
+            status: nextStatus,
+            label: nextStatus,
+            timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+            note: note || '',
+            completed: true,
+          },
+        ],
+      };
+    });
+
+    // 4. Send PATCH to live API
+    try {
+      const backendStatus =
+        nextStatus === 'ORDER_PLACED'
+          ? 'PLACED'
+          : nextStatus === 'ORDER_CONFIRMED'
+          ? 'CONFIRMED'
+          : nextStatus === 'BEING_PREPARED'
+          ? 'PREPARING'
+          : nextStatus === 'READY_FOR_DELIVERY'
+          ? 'READY_FOR_PICKUP'
+          : nextStatus;
+
+      await fetch(`/api/v1/admin/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: backendStatus,
+          note,
+        }),
+      });
+    } catch (err) {
+      console.warn('Could not sync status to backend:', err);
     }
+  };
+
+  const handleTogglePicked = (orderId: string, variantId: string) => {
+    toggleOrderItemPicked(orderId, variantId);
+    setSelectedOrder((prev) => {
+      if (!prev || (prev.id !== orderId && prev.orderNumber !== orderId)) return prev;
+      const currentVal = prev.pickedItems?.[variantId] || false;
+      return {
+        ...prev,
+        pickedItems: {
+          ...(prev.pickedItems || {}),
+          [variantId]: !currentVal,
+        },
+      };
+    });
+  };
+
+  const handleAssignRider = (orderId: string, staffId: string, staffName: string) => {
+    assignDeliveryStaff(orderId, staffId, staffName);
+    setSelectedOrder((prev) => {
+      if (!prev || (prev.id !== orderId && prev.orderNumber !== orderId)) return prev;
+      return {
+        ...prev,
+        deliveryStaffId: staffId,
+        deliveryStaffName: staffName,
+      };
+    });
   };
 
   const handlePrintSlip = () => {
@@ -374,7 +444,16 @@ export default function AdminOrdersPage() {
 
       {/* Order Fulfillment Drawer / Modal */}
       {selectedOrder && (() => {
-        const order = orders.find((o) => o.id === selectedOrder.id) || selectedOrder;
+        const liveOrder = orders.find((o) => o.id === selectedOrder.id || o.orderNumber === selectedOrder.orderNumber);
+        const order: Order = {
+          ...(liveOrder || {}),
+          ...selectedOrder,
+          orderStatus: selectedOrder.orderStatus,
+          pickedItems: {
+            ...(liveOrder?.pickedItems || {}),
+            ...(selectedOrder.pickedItems || {}),
+          },
+        };
         const totalItemsCount = order.items.reduce((acc, i) => acc + i.quantity, 0);
         const pickedCount = order.items.reduce((acc, i) => {
           return acc + (order.pickedItems?.[i.variantId] ? i.quantity : 0);
@@ -562,7 +641,7 @@ export default function AdminOrdersPage() {
                       <div className="flex items-center gap-2 pt-1">
                         <button
                           onClick={() => {
-                            assignDeliveryStaff(order.id, 'user-del-staff', 'Amit Singh');
+                            handleAssignRider(order.id, 'user-del-staff', 'Amit Singh');
                             handleAdvanceStatus(
                               order.id,
                               'READY_FOR_DELIVERY',
@@ -699,7 +778,7 @@ export default function AdminOrdersPage() {
                             {/* Interactive checkbox for warehouse picker */}
                             <button
                               type="button"
-                              onClick={() => toggleOrderItemPicked(order.id, i.variantId)}
+                              onClick={() => handleTogglePicked(order.id, i.variantId)}
                               aria-label={`Mark ${i.productName} as picked`}
                               className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all ${
                                 isPicked
