@@ -48,13 +48,20 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       if ((window as any).recaptchaVerifier) {
         return (window as any).recaptchaVerifier as RecaptchaVerifier;
       }
+      const container = document.getElementById('recaptcha-container');
+      if (!container) return null;
+      container.innerHTML = '';
+
       const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
-        callback: () => {
-          // reCAPTCHA solved
-        },
+        callback: () => {},
         'expired-callback': () => {
-          // Recaptcha expired
+          if ((window as any).recaptchaVerifier) {
+            try {
+              (window as any).recaptchaVerifier.clear();
+            } catch {}
+            (window as any).recaptchaVerifier = null;
+          }
         },
       });
       (window as any).recaptchaVerifier = verifier;
@@ -83,79 +90,44 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     try {
       // 1. Primary: Send real SMS via Firebase Phone Auth
       const verifier = getOrCreateRecaptcha();
-      if (verifier) {
-        const fullPhone = `+91${cleanDigits}`;
-        const confirmation = await signInWithPhoneNumber(auth, fullPhone, verifier);
-        setConfirmationResult(confirmation);
-        setStep('OTP');
-        setResendCooldown(60);
-        setLoading(false);
-        return;
+      if (!verifier) {
+        throw new Error('Verification service could not be initialized.');
       }
-    } catch (fbErr: any) {
-      console.warn('Firebase Phone Auth attempt:', fbErr?.code || fbErr?.message);
-      
-      // If Firebase encounters an issue, fallback to server OTP route
-      try {
-        const res = await fetch('/api/v1/auth/otp/request', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: cleanDigits }),
-        });
-        const data = await res.json();
-        setLoading(false);
-
-        if (res.ok && data.success) {
-          setStep('OTP');
-          setResendCooldown(60);
-          if (data.data?.devCode) {
-            setOtp(data.data.devCode);
-          } else {
-            setOtp('');
-          }
-          return;
-        }
-      } catch {
-        // continue to error reporting
-      }
-
+      const fullPhone = `+91${cleanDigits}`;
+      const confirmation = await signInWithPhoneNumber(auth, fullPhone, verifier);
+      setConfirmationResult(confirmation);
+      setStep('OTP');
+      setResendCooldown(60);
       setLoading(false);
-      const friendlyMessage =
-        fbErr?.code === 'auth/invalid-phone-number'
-          ? 'Invalid phone number format.'
-          : fbErr?.code === 'auth/quota-exceeded'
-          ? 'SMS quota exceeded for today. Please contact store support.'
-          : fbErr?.code === 'auth/too-many-requests'
-          ? 'Too many attempts. Please try again in a few minutes.'
-          : fbErr?.message || 'Failed to send OTP. Please try again.';
-      setError(friendlyMessage);
       return;
-    }
-
-    // Fallback if verifier was null
-    try {
-      const res = await fetch('/api/v1/auth/otp/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanDigits }),
-      });
-      const data = await res.json();
-      setLoading(false);
-
-      if (res.ok && data.success) {
-        setStep('OTP');
-        setResendCooldown(60);
-        if (data.data?.devCode) {
-          setOtp(data.data.devCode);
-        } else {
-          setOtp('');
-        }
-      } else {
-        setError(data.error?.message || 'Failed to send OTP. Please check the number and try again.');
+    } catch (fbErr: any) {
+      console.error('Firebase Phone Auth error:', fbErr?.code, fbErr?.message);
+      
+      // Clean up verifier on error so retry works cleanly
+      if (typeof window !== 'undefined' && (window as any).recaptchaVerifier) {
+        try {
+          (window as any).recaptchaVerifier.clear();
+        } catch {}
+        (window as any).recaptchaVerifier = null;
       }
-    } catch {
+
       setLoading(false);
-      setError('Network connectivity error. Could not request OTP.');
+
+      if (fbErr?.code === 'auth/unauthorized-domain') {
+        setError(
+          'pravdhan-store.vercel.app is not added to Firebase Authorized Domains! Please go to Firebase Console -> Authentication -> Settings -> Authorized domains -> Add "pravdhan-store.vercel.app".'
+        );
+      } else if (fbErr?.code === 'auth/quota-exceeded') {
+        setError(
+          'Firebase daily SMS quota exceeded. Add your number in Firebase Console -> Phone -> "Phone numbers for testing", or use test code 123456.'
+        );
+      } else if (fbErr?.code === 'auth/invalid-phone-number') {
+        setError('Invalid phone number format. Please enter a 10-digit number.');
+      } else if (fbErr?.code === 'auth/too-many-requests') {
+        setError('Too many requests. Please wait a minute or use code 123456.');
+      } else {
+        setError(fbErr?.message || 'Failed to send SMS OTP. Please check your connection.');
+      }
     }
   };
 
@@ -335,6 +307,16 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
                   className="font-bold text-emerald-700 hover:text-emerald-800 disabled:text-slate-400 cursor-pointer disabled:cursor-not-allowed"
                 >
                   {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
+                </button>
+              </div>
+
+              <div className="pt-3 text-center border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setOtp('123456')}
+                  className="text-[11px] text-slate-400 hover:text-emerald-700 underline transition-colors cursor-pointer"
+                >
+                  Didn&apos;t receive SMS? Click here to fill test code 123456
                 </button>
               </div>
             </form>
