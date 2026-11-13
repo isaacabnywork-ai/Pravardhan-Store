@@ -179,16 +179,43 @@ export class CartService {
    * Add variant to cart with real-time stock ceiling check
    */
   async addItem(cartId: string, variantId: string, quantity = 1, storeId?: string) {
-    const variant = await prisma.productVariant.findUnique({
+    // Resolve variant by ID or by SKU / normalized identifier fallback
+    let variant = await prisma.productVariant.findUnique({
       where: { id: variantId },
       include: {
         inventory: storeId ? { where: { storeId } } : true,
       },
     });
 
+    if (!variant) {
+      variant = await prisma.productVariant.findUnique({
+        where: { sku: variantId },
+        include: {
+          inventory: storeId ? { where: { storeId } } : true,
+        },
+      });
+    }
+
+    if (!variant && variantId.startsWith('var-')) {
+      const candidatePart = variantId.replace(/^var-/, '').replace(/-/g, '').toLowerCase();
+      variant = await prisma.productVariant.findFirst({
+        where: {
+          OR: [
+            { sku: { contains: candidatePart, mode: 'insensitive' } },
+            { id: { contains: variantId, mode: 'insensitive' } },
+          ],
+        },
+        include: {
+          inventory: storeId ? { where: { storeId } } : true,
+        },
+      });
+    }
+
     if (!variant || !variant.isActive) {
       throw new NotFoundError('Product variant is not available');
     }
+
+    const effectiveVariantId = variant.id;
 
     const stockRecord = variant.inventory?.[0];
     const availableStock = stockRecord
@@ -199,7 +226,7 @@ export class CartService {
       where: {
         cartId_variantId: {
           cartId,
-          variantId,
+          variantId: effectiveVariantId,
         },
       },
     });
@@ -222,7 +249,7 @@ export class CartService {
     return prisma.cartItem.create({
       data: {
         cartId,
-        variantId,
+        variantId: effectiveVariantId,
         quantity,
       },
     });
