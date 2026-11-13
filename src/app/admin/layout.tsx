@@ -64,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminAuthError, setAdminAuthError] = useState('');
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [deskFilter, setDeskFilter] = useState<'ALL' | Role>('ALL');
+  const [selectedRoleDesk, setSelectedRoleDesk] = useState<Role>(role);
   const [notifications, setNotifications] = useState<AdminOrderNotif[]>([]);
   const [isNotifDropdownOpen, setIsNotifDropdownOpen] = useState(false);
   const [activeOrderToast, setActiveOrderToast] = useState<AdminOrderNotif | null>(null);
@@ -74,6 +74,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Sync selectedRoleDesk with current user's active role if changed
+  useEffect(() => {
+    if (role && role !== 'CUSTOMER') {
+      setSelectedRoleDesk(role);
+    }
+  }, [role]);
 
   const handleGoogleAdminLogin = async () => {
     try {
@@ -511,9 +518,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     },
   ];
 
-  const visibleDesks = deskFilter === 'ALL'
-    ? roleDesks
-    : roleDesks.filter((d) => d.id === deskFilter);
+  const activeDesk = roleDesks.find((d) => d.id === selectedRoleDesk) || roleDesks[0];
 
   return (
     <div className="min-h-screen bg-slate-100/70 flex flex-col font-sans">
@@ -811,131 +816,123 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <p className="text-[11px] text-slate-300 mt-0.5 truncate">{storeSettings.serviceArea}</p>
             </div>
 
-            {/* Role Desk Filter Pills (Allows filtering or viewing all differentiated desks) */}
-            <div className="space-y-1.5">
+            {/* Role Switcher Box with Compact Role Selector */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-2.5 space-y-2 shadow-2xs">
               <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                  Role Desk Filter:
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                  Select Role Desk:
                 </span>
-                {deskFilter !== 'ALL' && (
-                  <button
-                    onClick={() => setDeskFilter('ALL')}
-                    className="text-[10px] font-bold text-teal-700 hover:underline"
-                  >
-                    View All
-                  </button>
-                )}
+                <span className="text-[10px] font-bold text-slate-400">
+                  {roleDesks.length} Roles
+                </span>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {[
-                  { key: 'ALL', label: 'All Desks' },
-                  { key: 'SUPER_ADMIN', label: '👑 Admin' },
-                  { key: 'STORE_MANAGER', label: '🏬 Store' },
-                  { key: 'PRODUCT_MANAGER', label: '📦 Catalog' },
-                  { key: 'ORDER_MANAGER', label: '⚡ Orders' },
-                  { key: 'DELIVERY_STAFF', label: '🛵 Rider' },
-                ].map((item) => {
-                  const isSelected = deskFilter === item.key;
+
+              {/* Role Dropdown / Selector Buttons */}
+              <div className="grid grid-cols-1 gap-1">
+                {roleDesks.map((d) => {
+                  const isSelected = selectedRoleDesk === d.id;
+                  const Icon = d.icon;
                   return (
                     <button
-                      key={item.key}
+                      key={d.id}
                       type="button"
-                      onClick={() => setDeskFilter(item.key as 'ALL' | Role)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                      onClick={() => setSelectedRoleDesk(d.id)}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-slate-900 text-white shadow-2xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/70'
                       }`}
                     >
-                      {item.label}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-emerald-400' : 'text-slate-500'}`} />
+                        <span className="truncate">{d.roleName}</span>
+                      </div>
+                      <span
+                        className={`text-[9px] px-1.5 py-0.5 rounded-md font-semibold ${
+                          isSelected
+                            ? 'bg-white/20 text-white'
+                            : 'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        {d.badge}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Differentiated Role Desks Navigation */}
-            <div className="space-y-6 pt-1">
-              {visibleDesks.map((desk) => {
-                const DeskIcon = desk.icon;
-                const isCurrentRoleDesk = role === desk.id;
+            {/* Respected Role Section Navigation Links */}
+            <div className="pt-1">
+              <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs">
+                {/* Selected Role Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 mb-2.5 border-b border-slate-100">
+                  <span className={`p-2 rounded-xl border text-xs ${activeDesk.color}`}>
+                    <activeDesk.icon className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black tracking-tight text-slate-900 truncate">
+                      {activeDesk.heading}
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-medium truncate">
+                      {activeDesk.description}
+                    </p>
+                  </div>
+                </div>
 
-                return (
-                  <div
-                    key={desk.id}
-                    className={`rounded-2xl transition-all ${
-                      deskFilter === 'ALL'
-                        ? 'p-2 border border-slate-200/80 bg-slate-50/40'
-                        : 'space-y-1'
-                    }`}
-                  >
-                    {/* Role Heading with Clear Badge & Icon */}
-                    <div className="flex items-center justify-between px-2 py-1.5 mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`p-1.5 rounded-lg border text-xs ${desk.color}`}>
-                          <DeskIcon className="w-3.5 h-3.5" />
-                        </span>
-                        <div>
-                          <p className="text-[11px] font-black uppercase tracking-wider text-slate-800">
-                            {desk.heading}
-                          </p>
-                          <p className="text-[9px] text-slate-400 font-medium">
-                            {desk.description}
-                          </p>
-                        </div>
-                      </div>
+                {/* Respected Role's Individual Section Links */}
+                <div className="space-y-1">
+                  {activeDesk.links.map((link) => {
+                    const isActive = pathname === link.href;
+                    const Icon = link.icon;
 
-                      {isCurrentRoleDesk && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          Active
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Desk Links */}
-                    <div className="space-y-0.5">
-                      {desk.links.map((link) => {
-                        const isActive = pathname === link.href;
-                        const Icon = link.icon;
-
-                        return (
-                          <Link
-                            key={link.href}
-                            href={link.href}
-                            onClick={() => setIsMobileSidebarOpen(false)}
-                            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                              isActive
-                                ? 'bg-slate-900 text-white shadow-xs'
-                                : 'text-slate-700 hover:bg-white hover:text-slate-900 hover:shadow-2xs'
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setIsMobileSidebarOpen(false)}
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                          isActive
+                            ? 'bg-slate-900 text-white shadow-xs'
+                            : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Icon
+                            className={`w-4 h-4 shrink-0 ${
+                              isActive ? 'text-emerald-400' : 'text-slate-400'
                             }`}
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <Icon
-                                className={`w-3.5 h-3.5 shrink-0 ${
-                                  isActive ? 'text-emerald-400' : 'text-slate-400'
-                                }`}
-                              />
-                              <span className="truncate">{link.title}</span>
-                            </div>
-
-                            {link.badge && (
+                          />
+                          <div className="min-w-0 text-left">
+                            <span className="truncate block">{link.title}</span>
+                            {link.hint && (
                               <span
-                                className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 ${
-                                  isActive
-                                    ? 'bg-white/20 text-white'
-                                    : link.badgeColor || 'bg-slate-200 text-slate-800'
+                                className={`text-[10px] font-normal truncate block ${
+                                  isActive ? 'text-slate-300' : 'text-slate-400'
                                 }`}
                               >
-                                {link.badge}
+                                {link.hint}
                               </span>
                             )}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
+                          </div>
+                        </div>
+
+                        {link.badge && (
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-full shrink-0 font-bold ${
+                              isActive
+                                ? 'bg-white/20 text-white'
+                                : link.badgeColor || 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            {link.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
