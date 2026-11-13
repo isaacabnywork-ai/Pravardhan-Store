@@ -181,7 +181,7 @@ export class OperationsService {
     }
 
     const salt = await bcrypt.genSalt(12);
-    const passwordHash = await bcrypt.hash(data.password, salt);
+    const passwordHash = await bcrypt.hash(data.password || 'Pravdhan@2026', salt);
 
     const staff = await prisma.user.create({
       data: {
@@ -244,6 +244,38 @@ export class OperationsService {
           entity: 'User',
           entityId: staffId,
           details: data,
+        },
+      }).catch(() => null);
+    }
+
+    return staff;
+  }
+
+  async deleteStaff(staffId: string, actorId?: string) {
+    const staff = await prisma.user.update({
+      where: { id: staffId },
+      data: {
+        role: Role.CUSTOMER,
+        isActive: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        isActive: true,
+      },
+    });
+
+    if (actorId) {
+      await prisma.auditLog.create({
+        data: {
+          actorId,
+          action: 'STAFF_DELETED',
+          entity: 'User',
+          entityId: staffId,
+          details: { name: staff.name, email: staff.email },
         },
       }).catch(() => null);
     }

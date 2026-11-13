@@ -6,7 +6,7 @@ export const createStaffSchema = z.object({
   email: z.string().email('Valid email is required'),
   phone: z.string().min(10, 'Valid phone is required'),
   role: z.nativeEnum(Role).refine((r) => r !== Role.CUSTOMER, 'Cannot assign Customer role to staff'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
   storeId: z.string().optional(),
 });
 

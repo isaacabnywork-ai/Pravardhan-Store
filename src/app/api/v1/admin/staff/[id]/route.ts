@@ -25,3 +25,23 @@ export async function PATCH(
     return apiError(error);
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await requireRole(request, ['SUPER_ADMIN']);
+    const { id } = await params;
+
+    // Prevent deleting oneself
+    if (session.userId === id) {
+      throw new ValidationError('You cannot remove your own active admin account.');
+    }
+
+    const removed = await operationsService.deleteStaff(id, session.userId);
+    return apiSuccess(removed);
+  } catch (error) {
+    return apiError(error);
+  }
+}

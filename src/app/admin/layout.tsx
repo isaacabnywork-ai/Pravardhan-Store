@@ -558,14 +558,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Center / Right Controls */}
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-          {/* Warehouse Status Pill (Desktop only) */}
-          <div className="hidden xl:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-slate-300 font-semibold">{storeSettings.serviceArea}</span>
-            <span className="text-slate-500">•</span>
-            <span className="text-emerald-400 font-bold">Open for Dispatch</span>
-          </div>
-
           {/* Customer Storefront Link */}
           <Link
             href="/"
@@ -803,19 +795,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           {/* Scrollable Navigation Area */}
-          <div className="p-3.5 sm:p-4 space-y-5 overflow-y-auto flex-1">
-            {/* Dark Store Facility Card */}
-            <div className="p-3 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-xs border border-slate-800">
-              <div className="flex items-center justify-between text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5">
-                <span>Active Dark Store #01</span>
-                <span className="bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded text-[9px]">
-                  Live Hub
-                </span>
-              </div>
-              <p className="text-xs font-bold text-white">{storeSettings.storeName}</p>
-              <p className="text-[11px] text-slate-300 mt-0.5 truncate">{storeSettings.serviceArea}</p>
-            </div>
-
+          <div className="p-3.5 sm:p-4 space-y-4 overflow-y-auto flex-1">
             {/* Role Switcher Box with Compact Role Selector */}
             <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-2.5 space-y-2 shadow-2xs">
               <div className="flex items-center justify-between px-1">
