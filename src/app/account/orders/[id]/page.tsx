@@ -85,9 +85,40 @@ export default function OrderTrackingPage({
     // Re-check whenever an order update occurs in another tab or window regains focus
     window.addEventListener('storage', checkLocalStorage);
     window.addEventListener('focus', checkLocalStorage);
+
+    // Live continuous poll for multi-device sync (e.g. status changed on Admin PC)
+    const checkSyncServer = async () => {
+      try {
+        const res = await fetch('/api/v1/sync/orders');
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data?.orders && Array.isArray(json.data.orders)) {
+            const found = json.data.orders.find(
+              (o: any) =>
+                o.id === targetId ||
+                o.orderNumber === targetId ||
+                o.orderNumber?.toLowerCase() === targetId.toLowerCase()
+            );
+            if (found) {
+              setLocalOrder((curr) => {
+                if (!curr || curr.orderStatus !== found.orderStatus || curr.updatedAt !== found.updatedAt) {
+                  return found;
+                }
+                return curr;
+              });
+            }
+          }
+        }
+      } catch {}
+    };
+
+    checkSyncServer();
+    const syncInterval = setInterval(checkSyncServer, 2000);
+
     return () => {
       window.removeEventListener('storage', checkLocalStorage);
       window.removeEventListener('focus', checkLocalStorage);
+      clearInterval(syncInterval);
     };
   }, [targetId]);
 

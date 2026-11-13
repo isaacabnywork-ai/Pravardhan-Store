@@ -124,7 +124,58 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
     };
     window.addEventListener('storage', handleStorageSync);
-    return () => window.removeEventListener('storage', handleStorageSync);
+
+    // Background sync with server for cross-device updates (PC Admin <-> Mobile Phone)
+    const syncWithServer = async () => {
+      try {
+        const res = await fetch('/api/v1/sync/orders');
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data?.orders && Array.isArray(json.data.orders) && json.data.orders.length > 0) {
+            const serverOrders: Order[] = json.data.orders;
+            setOrders((prev) => {
+              const map = new Map<string, Order>();
+              prev.forEach((o) => map.set(o.id, o));
+              let hasChanges = false;
+              serverOrders.forEach((so) => {
+                const existing = map.get(so.id);
+                if (!existing) {
+                  map.set(so.id, so);
+                  hasChanges = true;
+                } else if (
+                  existing.orderStatus !== so.orderStatus ||
+                  existing.updatedAt !== so.updatedAt
+                ) {
+                  map.set(so.id, { ...existing, ...so });
+                  hasChanges = true;
+                }
+              });
+
+              if (hasChanges) {
+                const updated = Array.from(map.values()).sort(
+                  (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                );
+                try {
+                  localStorage.setItem(ORDERS_KEY, JSON.stringify(updated));
+                } catch {}
+                return updated;
+              }
+              return prev;
+            });
+          }
+        }
+      } catch {
+        // ignore network poll errors
+      }
+    };
+
+    syncWithServer();
+    const pollInterval = setInterval(syncWithServer, 2000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageSync);
+      clearInterval(pollInterval);
+    };
   }, []);
 
   useEffect(() => {
@@ -455,6 +506,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     saveOrders(newOrders);
 
+    // Sync updated order status immediately with shared cross-device server store
+    const targetUpdatedOrder = newOrders.find((o) => o.id === orderId);
+    if (targetUpdatedOrder) {
+      fetch('/api/v1/sync/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: targetUpdatedOrder }),
+      }).catch(() => null);
+    }
+
     // Async sync with live backend
     const statusMap: Record<OrderStatus, string> = {
       ORDER_PLACED: 'PLACED',
@@ -555,6 +616,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     // 2. Add to orders
     saveOrders([newOrder, ...orders]);
+
+    // Push new order to shared server store for cross-device visibility (PC Admin gets it immediately)
+    fetch('/api/v1/sync/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order: newOrder }),
+    }).catch(() => null);
 
     // 3. Broadcast real-time new order event for Admin Panel notification
     try {
