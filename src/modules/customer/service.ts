@@ -38,7 +38,7 @@ export class CustomerService {
   /**
    * Verify OTP and establish secure session
    */
-  async verifyOtp(rawPhone: string, code: string) {
+  async verifyOtp(rawPhone: string, code: string, name?: string) {
     const verified = await smsService.verifyOtp(rawPhone, code);
     const phone = verified.phone;
 
@@ -54,10 +54,16 @@ export class CustomerService {
       user = await prisma.user.create({
         data: {
           phone,
-          name: `Customer ${phone.slice(-4)}`,
+          name: name?.trim() || `Customer ${phone.slice(-4)}`,
           role: Role.CUSTOMER,
           isActive: true,
         },
+      });
+    } else if (name && name.trim()) {
+      // Update name if customer provides it
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { name: name.trim() },
       });
     }
 

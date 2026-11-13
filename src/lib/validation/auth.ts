@@ -8,6 +8,7 @@ export const requestOtpSchema = z.object({
 export const verifyOtpSchema = z.object({
   phone: phoneSchema,
   otp: otpSchema,
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').optional(),
 });
 
 export const staffLoginSchema = z.object({

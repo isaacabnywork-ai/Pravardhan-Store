@@ -22,7 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const STORAGE_KEY = 'pravdhan_auth_user_v1';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(INITIAL_USERS[0]); // default to customer
+  const [user, setUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/v1/auth/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, otp }),
+        body: JSON.stringify({ phone, otp, name }),
       });
       const data = await res.json();
       if (res.ok && data.data && data.data.user) {
@@ -258,7 +258,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user: mounted ? user : INITIAL_USERS[0],
+        user: mounted ? user : null,
         role: mounted && user ? user.role : 'CUSTOMER',
         isAuthenticated: !!user,
         loginWithPhoneOtp,

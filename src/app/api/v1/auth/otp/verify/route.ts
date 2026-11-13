@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
 
     const { user, token, isNewCustomer } = await customerService.verifyOtp(
       parsed.data.phone,
-      parsed.data.otp
+      parsed.data.otp,
+      parsed.data.name
     );
 
     const response = apiSuccess(
