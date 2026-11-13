@@ -248,21 +248,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isStaffAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 font-sans">
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-slate-100">
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-950/20 mb-3">
-              <Store className="w-7 h-7" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Pravdhan Admin Portal
-            </h1>
-            <p className="text-xs text-slate-500 mt-1 font-medium">
-              Authorized Dark Store &amp; Warehouse Operations
-            </p>
+        <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-slate-100 text-center">
+          {/* Transparent Pravdhan Logo */}
+          <div className="flex justify-center mb-5">
+            <img
+              src="/images/logo.png"
+              alt="Pravdhan Store"
+              className="h-12 sm:h-14 w-auto object-contain"
+            />
           </div>
 
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-6">
+            Pravdhan Store Admin Login
+          </h1>
+
           {adminAuthError && (
-            <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800">
+            <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800 text-left">
               <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-bold">Authentication Error</p>
@@ -271,29 +272,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           )}
 
-          {user && role === 'CUSTOMER' && !adminAuthError && (
-            <div className="mb-5 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900">
-              <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">Customer Account Detected</p>
-                <p className="text-amber-800 mt-0.5 leading-relaxed">
-                  You are signed in as customer ({user.phone || user.email || user.name}). Sign in with an authorized Google Admin email to enter the management desk.
-                </p>
-              </div>
-            </div>
-          )}
-
           <div className="space-y-4">
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-600 space-y-1.5">
-              <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Locked to Whitelisted Emails Only
-              </div>
-              <p className="text-[11px] text-slate-500 leading-relaxed">
-                Access is restricted to verified store managers and super administrators. Only authorized Google accounts can log in.
-              </p>
-            </div>
-
             <button
               type="button"
               onClick={handleGoogleAdminLogin}
@@ -318,7 +297,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>{adminAuthLoading ? 'Verifying with Google...' : 'Sign in with Google Admin'}</span>
+              <span>{adminAuthLoading ? 'Verifying with Google...' : 'Sign in with Google'}</span>
             </button>
 
             <div className="pt-3 text-center border-t border-slate-100 flex items-center justify-between text-xs">
@@ -550,9 +529,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
 
           <Link href="/admin" className="flex items-center gap-2.5 sm:gap-3 group min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center font-bold text-white shadow-md shadow-emerald-950/20 flex-shrink-0">
-              <Store className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
+            <img
+              src="/images/logo-dark.png"
+              alt="Pravdhan Store"
+              className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105 flex-shrink-0"
+            />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="font-extrabold text-xs sm:text-sm tracking-tight text-white truncate">
