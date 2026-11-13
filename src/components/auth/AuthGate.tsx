@@ -5,8 +5,6 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Phone, ArrowRight, CheckCircle2, UserCheck, Lock } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
-import { auth } from '@/lib/firebase';
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -20,10 +18,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [otp, setOtp] = useState('');
+  const [onScreenOtp, setOnScreenOtp] = useState('123456');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -42,36 +40,6 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  const getOrCreateRecaptcha = () => {
-    if (typeof window === 'undefined') return null;
-    try {
-      if ((window as any).recaptchaVerifier) {
-        return (window as any).recaptchaVerifier as RecaptchaVerifier;
-      }
-      const container = document.getElementById('recaptcha-container');
-      if (!container) return null;
-      container.innerHTML = '';
-
-      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: () => {},
-        'expired-callback': () => {
-          if ((window as any).recaptchaVerifier) {
-            try {
-              (window as any).recaptchaVerifier.clear();
-            } catch {}
-            (window as any).recaptchaVerifier = null;
-          }
-        },
-      });
-      (window as any).recaptchaVerifier = verifier;
-      return verifier;
-    } catch (err) {
-      console.warn('Recaptcha init warning:', err);
-      return null;
-    }
-  };
-
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanDigits = phone.replace(/\D/g, '');
@@ -87,84 +55,46 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     setError('');
     setLoading(true);
 
-    try {
-      // 1. Primary: Send real SMS via Firebase Phone Auth
-      const verifier = getOrCreateRecaptcha();
-      if (!verifier) {
-        throw new Error('Verification service could not be initialized.');
-      }
-      const fullPhone = `+91${cleanDigits}`;
-      const confirmation = await signInWithPhoneNumber(auth, fullPhone, verifier);
-      setConfirmationResult(confirmation);
-      setStep('OTP');
-      setResendCooldown(60);
-      setLoading(false);
-      return;
-    } catch (fbErr: any) {
-      console.error('Firebase Phone Auth error:', fbErr?.code, fbErr?.message);
-      
-      // Clean up verifier on error so retry works cleanly
-      if (typeof window !== 'undefined' && (window as any).recaptchaVerifier) {
-        try {
-          (window as any).recaptchaVerifier.clear();
-        } catch {}
-        (window as any).recaptchaVerifier = null;
-      }
-
-      setLoading(false);
-
-      if (fbErr?.code === 'auth/unauthorized-domain') {
-        setError(
-          'pravdhan-store.vercel.app is not added to Firebase Authorized Domains! Please go to Firebase Console -> Authentication -> Settings -> Authorized domains -> Add "pravdhan-store.vercel.app".'
-        );
-      } else if (fbErr?.code === 'auth/quota-exceeded') {
-        setError(
-          'Firebase daily SMS quota exceeded. Add your number in Firebase Console -> Phone -> "Phone numbers for testing", or use test code 123456.'
-        );
-      } else if (fbErr?.code === 'auth/invalid-phone-number') {
-        setError('Invalid phone number format. Please enter a 10-digit number.');
-      } else if (fbErr?.code === 'auth/too-many-requests') {
-        setError('Too many requests. Please wait a minute or use code 123456.');
-      } else {
-        setError(fbErr?.message || 'Failed to send SMS OTP. Please check your connection.');
-      }
-    }
+    // Option 2: Instant On-Screen Verification Code (100% Free, zero card risk)
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setOnScreenOtp(code);
+    setOtp(code);
+    setStep('OTP');
+    setResendCooldown(30);
+    setLoading(false);
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otp.length < 4) {
-      setError('Please enter the OTP you received');
+      setError('Please enter the verification code');
       return;
     }
     setError('');
     setLoading(true);
 
-    // 1. Try Firebase confirmation first if available and not demo bypass
-    if (confirmationResult && otp !== '123456') {
-      try {
-        await confirmationResult.confirm(otp);
-        const res = await loginWithFirebaseSession(phone, name.trim());
-        setLoading(false);
+    // Accept on-screen code or test bypass 123456
+    if (otp === onScreenOtp || otp === '123456') {
+      const res = await loginWithFirebaseSession(phone, name.trim());
+      setLoading(false);
 
-        if (res.success) {
-          return;
-        } else {
-          setError(res.message || 'Verification succeeded but failed to establish session.');
-          return;
-        }
-      } catch (confirmErr: any) {
-        console.warn('Firebase confirmation failed, trying fallback verify:', confirmErr);
-        // Fall through to server verify for test codes or edge cases
+      if (res.success) {
+        return;
       }
+
+      // Fallback to server verify
+      const fallbackRes = await loginWithPhoneOtp(phone, '123456', name.trim());
+      if (fallbackRes.success) return;
+
+      setError(res.message || 'Verification failed. Please try again.');
+      return;
     }
 
-    // 2. Server verify (handles demo bypass code 123456 and server OTPs)
     const res = await loginWithPhoneOtp(phone, otp, name.trim());
     setLoading(false);
 
     if (!res.success) {
-      setError(res.message || 'Verification failed. Please check the OTP.');
+      setError(`Incorrect code. Please enter the code: ${onScreenOtp}`);
     }
   };
 
@@ -260,9 +190,24 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
+              {/* Instant On-Screen Verification Badge */}
+              <div className="p-3.5 bg-emerald-50/90 border border-emerald-200 rounded-2xl text-center">
+                <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wide">
+                  Your Instant Verification Code
+                </p>
+                <div className="my-1.5 inline-block px-4 py-1 bg-white border border-emerald-300 rounded-xl shadow-xs">
+                  <span className="text-2xl font-black tracking-widest text-emerald-950 font-mono">
+                    {onScreenOtp}
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-700 font-medium">
+                  Auto-filled below. Click &ldquo;Verify &amp; Enter Store&rdquo;!
+                </p>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Enter 6-Digit Verification Code
+                  Verification Code
                 </label>
                 <div className="relative">
                   <input
@@ -306,17 +251,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
                   onClick={handleSendOtp}
                   className="font-bold text-emerald-700 hover:text-emerald-800 disabled:text-slate-400 cursor-pointer disabled:cursor-not-allowed"
                 >
-                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
-                </button>
-              </div>
-
-              <div className="pt-3 text-center border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setOtp('123456')}
-                  className="text-[11px] text-slate-400 hover:text-emerald-700 underline transition-colors cursor-pointer"
-                >
-                  Didn&apos;t receive SMS? Click here to fill test code 123456
+                  {resendCooldown > 0 ? `New Code in ${resendCooldown}s` : 'Get New Code'}
                 </button>
               </div>
             </form>
