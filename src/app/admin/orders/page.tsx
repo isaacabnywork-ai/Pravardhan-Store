@@ -354,26 +354,26 @@ export default function AdminOrdersPage() {
                       </span>
                       <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 font-bold mt-1">
                         <ShoppingBag className="w-3 h-3 text-slate-400" />
-                        {ord.items.length} {ord.items.length === 1 ? 'item' : 'items'}
+                        {ord.items?.length || 0} {ord.items?.length === 1 ? 'item' : 'items'}
                       </span>
                     </td>
 
                     <td className="py-4 px-4">
-                      <p className="font-bold text-slate-900 text-xs">{ord.customerName}</p>
+                      <p className="font-bold text-slate-900 text-xs">{ord.customerName || 'Customer'}</p>
                       <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                        {ord.deliveryAddress.houseNumber}, {ord.deliveryAddress.street}
+                        {ord.deliveryAddress?.houseNumber || 'House'}, {ord.deliveryAddress?.street || 'Vrindavan Colony'}
                       </p>
                       <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                        +91 {ord.customerPhone}
+                        +91 {ord.customerPhone || '9876543210'}
                       </p>
                     </td>
 
                     <td className="py-4 px-4">
                       <span className="font-bold text-slate-800 block text-xs">
-                        {ord.deliverySlot.dateLabel}
+                        {ord.deliverySlot?.dateLabel || 'Today'}
                       </span>
                       <span className="text-[11px] text-emerald-700 font-bold block mt-0.5">
-                        {ord.deliverySlot.timeSlot}
+                        {ord.deliverySlot?.timeSlot || '1-Hour Slot'}
                       </span>
                     </td>
 

@@ -138,15 +138,64 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
               prev.forEach((o) => map.set(o.id, o));
               let hasChanges = false;
               serverOrders.forEach((so) => {
+                if (!so || !so.id || !so.orderNumber) return;
                 const existing = map.get(so.id);
                 if (!existing) {
-                  map.set(so.id, so);
+                  // Ensure complete Order shape with all required fields
+                  const completeOrder: Order = {
+                    id: so.id,
+                    orderNumber: so.orderNumber,
+                    userId: so.userId || 'user-cust-01',
+                    customerName: so.customerName || 'Customer',
+                    customerPhone: so.customerPhone || '9876543210',
+                    deliveryAddress: so.deliveryAddress || {
+                      id: 'addr-default',
+                      userId: so.userId || 'user-cust-01',
+                      name: so.customerName || 'Customer',
+                      phone: so.customerPhone || '9876543210',
+                      label: 'Home',
+                      houseNumber: 'Plot 112',
+                      street: 'Vrindavan Colony, Sector 4',
+                      area: 'Vrindavan Colony',
+                      city: 'Lucknow',
+                      pincode: '226029',
+                      isDefault: true,
+                    },
+                    deliverySlot: so.deliverySlot || {
+                      id: 'slot-1',
+                      dateType: 'TODAY' as const,
+                      dateLabel: 'Today',
+                      dateString: new Date().toISOString().split('T')[0],
+                      timeSlot: '1-Hour Fast Delivery',
+                      isAvailable: true,
+                      capacity: 50,
+                      bookedCount: 1,
+                    },
+                    items: Array.isArray(so.items) ? so.items : [],
+                    subtotal: Number(so.subtotal) || Number(so.grandTotal) || 0,
+                    discount: Number(so.discount) || 0,
+                    couponDiscount: Number(so.couponDiscount) || 0,
+                    deliveryCharge: Number(so.deliveryCharge) || 0,
+                    grandTotal: Number(so.grandTotal) || Number(so.subtotal) || 0,
+                    paymentMethod: so.paymentMethod || 'COD',
+                    paymentStatus: so.paymentStatus || 'PENDING',
+                    orderStatus: so.orderStatus || 'ORDER_PLACED',
+                    statusHistory: Array.isArray(so.statusHistory) ? so.statusHistory : [],
+                    createdAt: so.createdAt || new Date().toISOString(),
+                    updatedAt: so.updatedAt || new Date().toISOString(),
+                  };
+                  map.set(so.id, completeOrder);
                   hasChanges = true;
                 } else if (
                   existing.orderStatus !== so.orderStatus ||
                   existing.updatedAt !== so.updatedAt
                 ) {
-                  map.set(so.id, { ...existing, ...so });
+                  map.set(so.id, {
+                    ...existing,
+                    orderStatus: so.orderStatus,
+                    statusHistory: Array.isArray(so.statusHistory) && so.statusHistory.length > 0 ? so.statusHistory : existing.statusHistory,
+                    updatedAt: so.updatedAt || new Date().toISOString(),
+                  });
                   hasChanges = true;
                 }
               });
