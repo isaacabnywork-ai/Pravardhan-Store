@@ -19,8 +19,9 @@ import { formatPrice } from '@/lib/utils';
 import { Order, OrderStatus } from '@/types';
 
 export default function AdminDeliveryPage() {
-  const { orders, updateOrderStatus, assignDeliveryStaff } = useStore();
+  const { orders: storeOrders, updateOrderStatus, assignDeliveryStaff } = useStore();
 
+  const [adminLiveOrders, setAdminLiveOrders] = useState<Order[]>([]);
   const [activeTab, setActiveTab] = useState<'ALL' | 'READY_FOR_DELIVERY' | 'OUT_FOR_DELIVERY' | 'DELIVERED'>('ALL');
 
   // Proof of Delivery (POD) Modal State
@@ -35,6 +36,102 @@ export default function AdminDeliveryPage() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchAdminOrders = async () => {
+      try {
+        const res = await fetch('/api/v1/admin/orders?pageSize=50');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.data && Array.isArray(data.data) && isMounted) {
+            const mapped: Order[] = data.data.map((o: any) => ({
+              id: o.id,
+              orderNumber: o.orderNumber,
+              customerName: o.customer?.name || 'Customer',
+              customerPhone: o.customer?.phone || '',
+              deliveryAddress: {
+                name: o.deliveryAddress?.name || o.customer?.name || 'Customer',
+                phone: o.deliveryAddress?.phone || o.customer?.phone || '',
+                houseNumber: o.deliveryAddress?.houseNumber || '',
+                street: o.deliveryAddress?.street || '',
+                area: o.deliveryAddress?.area || '',
+                city: o.deliveryAddress?.city || 'Gurugram',
+                pincode: o.deliveryAddress?.pincode || '122001',
+              },
+              deliverySlot: {
+                dateLabel: 'Today',
+                timeSlot: '12-15 Mins Express Delivery',
+              },
+              items: (o.items || []).map((i: any) => ({
+                productId: i.productId,
+                variantId: i.variantId,
+                productName: i.productName,
+                variantTitle: i.variantTitle,
+                brand: i.brand,
+                unit: i.unit,
+                purchasedPrice: Math.round((i.purchasedPrice || 0) / 100),
+                purchasedMrp: Math.round((i.purchasedMrp || 0) / 100),
+                quantity: i.quantity,
+                image: i.image,
+              })),
+              subtotal: Math.round((o.subtotal || 0) / 100),
+              discount: Math.round((o.discount || 0) / 100),
+              couponCode: o.couponCode,
+              couponDiscount: Math.round((o.couponDiscount || 0) / 100),
+              deliveryCharge: Math.round((o.deliveryFee || 0) / 100),
+              deliveryTip: Math.round((o.deliveryTip || 0) / 100),
+              handlingFee: Math.round((o.handlingFee || 0) / 100),
+              grandTotal: Math.round((o.grandTotal || 0) / 100),
+              paymentMethod: o.paymentMethod,
+              paymentStatus: o.paymentStatus,
+              orderStatus:
+                o.orderStatus === 'PLACED'
+                  ? 'ORDER_PLACED'
+                  : o.orderStatus === 'CONFIRMED'
+                  ? 'ORDER_CONFIRMED'
+                  : o.orderStatus === 'PREPARING'
+                  ? 'BEING_PREPARED'
+                  : o.orderStatus === 'READY_FOR_PICKUP'
+                  ? 'READY_FOR_DELIVERY'
+                  : o.orderStatus,
+              statusHistory: (o.statusHistory || []).map((h: any) => ({
+                status: h.status,
+                label: h.label,
+                timestamp: new Date(h.createdAt).toLocaleTimeString('en-IN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+                note: h.note,
+                completed: true,
+              })),
+              createdAt: o.createdAt,
+              updatedAt: o.updatedAt,
+            }));
+            setAdminLiveOrders(mapped);
+          }
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    };
+
+    fetchAdminOrders();
+    const interval = setInterval(fetchAdminOrders, 5000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const orders = React.useMemo(() => {
+    if (adminLiveOrders.length > 0) {
+      const liveIds = new Set(adminLiveOrders.map((o) => o.id));
+      const nonDuplicateLocal = storeOrders.filter((so) => !liveIds.has(so.id));
+      return [...adminLiveOrders, ...nonDuplicateLocal];
+    }
+    return storeOrders;
+  }, [adminLiveOrders, storeOrders]);
 
   const SAMPLE_POD_PRESETS = [
     {
@@ -56,6 +153,20 @@ export default function AdminDeliveryPage() {
 
   const handleStatusUpdate = (orderId: string, status: OrderStatus, note: string) => {
     updateOrderStatus(orderId, status, note);
+    setAdminLiveOrders((prev) =>
+      prev.map((o) => (o.id === orderId || o.orderNumber === orderId ? { ...o, orderStatus: status } : o))
+    );
+    const backendStatus =
+      status === 'READY_FOR_DELIVERY'
+        ? 'READY_FOR_PICKUP'
+        : status === 'BEING_PREPARED'
+        ? 'PREPARING'
+        : status;
+    fetch(`/api/v1/admin/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: backendStatus, note }),
+    }).catch(() => null);
   };
 
   const deliveryOrders = orders.filter(
@@ -103,6 +214,19 @@ export default function AdminDeliveryPage() {
     }`;
 
     updateOrderStatus(order.id, 'DELIVERED', note, capturedPhoto);
+    setAdminLiveOrders((prev) =>
+      prev.map((o) =>
+        o.id === order.id || o.orderNumber === order.orderNumber
+          ? { ...o, orderStatus: 'DELIVERED', deliveryProofPhoto: capturedPhoto }
+          : o
+      )
+    );
+    fetch(`/api/v1/admin/orders/${order.id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'DELIVERED', note }),
+    }).catch(() => null);
+
     setPodModalOrder(null);
     setCapturedPhoto(null);
     setPhotoError(false);

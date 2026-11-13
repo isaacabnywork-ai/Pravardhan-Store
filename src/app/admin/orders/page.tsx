@@ -663,19 +663,45 @@ export default function AdminOrdersPage() {
                         <Bike className="w-5 h-5 text-indigo-700 shrink-0 mt-0.5" />
                         <div>
                           <h4 className="font-extrabold text-indigo-950 text-sm">
-                            Dispatched & Staged at Hub Dispatch Dock!
+                            Step 4: Dispatched & Staged at Hub Dispatch Dock!
                           </h4>
                           <p className="text-indigo-900/80 text-[11px] mt-0.5">
-                            This consignment is now visible in the <strong>Rider Panel</strong> (`/admin/delivery`) where the delivery rider will accept it, confirm pickup, and start out for delivery.
+                            Consignment is staged for rider pickup. You can assign out-for-delivery or mark it delivered directly below.
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 pt-1">
+                      <div className="flex items-center gap-2 pt-1 flex-wrap">
+                        <button
+                          onClick={() =>
+                            handleAdvanceStatus(
+                              order.id,
+                              'OUT_FOR_DELIVERY',
+                              'Consignment picked up by rider and out for delivery'
+                            )
+                          }
+                          className="px-4 py-2 bg-indigo-700 hover:bg-indigo-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+                        >
+                          <Truck className="w-3.5 h-3.5" />
+                          <span>Start Out for Delivery</span>
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleAdvanceStatus(
+                              order.id,
+                              'DELIVERED',
+                              'Delivered to customer doorstep'
+                            )
+                          }
+                          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Mark as Delivered</span>
+                        </button>
                         <Link
                           href="/admin/delivery"
-                          className="px-4 py-2 bg-indigo-700 hover:bg-indigo-800 text-white font-bold rounded-xl text-xs inline-flex items-center gap-1.5 shadow-xs transition-colors"
+                          className="px-3.5 py-2 bg-white border border-indigo-300 text-indigo-900 hover:bg-indigo-50 font-bold rounded-xl text-xs inline-flex items-center gap-1.5 transition-colors"
                         >
-                          <span>Go to Rider Panel (Delivery & Fleet)</span>
+                          <span>Go to Rider Panel</span>
                           <ExternalLink className="w-3.5 h-3.5" />
                         </Link>
                       </div>
@@ -683,25 +709,40 @@ export default function AdminOrdersPage() {
                   )}
 
                   {order.orderStatus === 'OUT_FOR_DELIVERY' && (
-                    <div className="p-3.5 bg-purple-50/80 rounded-xl border border-purple-200 space-y-2">
+                    <div className="p-3.5 bg-purple-50/80 rounded-xl border border-purple-200 space-y-3">
                       <div className="flex items-start gap-2.5">
                         <Truck className="w-5 h-5 text-purple-700 shrink-0 mt-0.5 animate-pulse" />
                         <div>
                           <h4 className="font-extrabold text-purple-950 text-sm">
-                            Consignment Out for Delivery
+                            Step 5: Consignment Out for Delivery
                           </h4>
                           <p className="text-purple-900/80 text-[11px] mt-0.5">
-                            Rider <strong>{order.deliveryStaffName || 'Amit Singh'}</strong> picked up this parcel and is currently en route to the customer doorstep.
+                            Rider <strong>{order.deliveryStaffName || 'Amit Singh'}</strong> picked up this parcel and is delivering to the customer doorstep.
                           </p>
                         </div>
                       </div>
-                      <Link
-                        href="/admin/delivery"
-                        className="px-3.5 py-1.5 bg-white border border-purple-300 text-purple-900 font-bold rounded-lg text-xs inline-flex items-center gap-1.5 hover:bg-purple-50"
-                      >
-                        <span>View Rider Live Status</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
+                      <div className="flex items-center gap-2 pt-1 flex-wrap">
+                        <button
+                          onClick={() =>
+                            handleAdvanceStatus(
+                              order.id,
+                              'DELIVERED',
+                              'Delivered to customer doorstep'
+                            )
+                          }
+                          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Confirm Doorstep Delivery (Mark Delivered)</span>
+                        </button>
+                        <Link
+                          href="/admin/delivery"
+                          className="px-3.5 py-1.5 bg-white border border-purple-300 text-purple-900 font-bold rounded-lg text-xs inline-flex items-center gap-1.5 hover:bg-purple-50"
+                        >
+                          <span>View Rider Live Status</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
                     </div>
                   )}
 
