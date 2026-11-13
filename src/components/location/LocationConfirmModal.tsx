@@ -69,7 +69,7 @@ const DEFAULT_INITIAL_ADDRESSES: SavedLocation[] = [
     recipientType: 'someone_else',
     receiverName: 'Store Operations',
     phone: '7080907954',
-    tag: '12-min delivery',
+    tag: 'Scheduled slot',
     isDefault: false,
   },
 ];
@@ -861,7 +861,7 @@ export function LocationConfirmModal() {
                   Select delivery location
                 </h3>
                 <p className="text-xs text-gray-500">
-                  Select your doorstep location for ultra-fast express delivery
+                  Select your doorstep location for 1-hour or scheduled delivery
                 </p>
               </div>
             </div>

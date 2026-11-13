@@ -416,7 +416,7 @@ export default function CheckoutPage() {
           {
             status: 'DELIVERED',
             label: 'Delivered',
-            timestamp: `Expected: ${selectedSlot?.timeSlot || 'Express Delivery'}`,
+            timestamp: `Expected: ${selectedSlot?.timeSlot || 'Scheduled Slot'}`,
             completed: false,
           },
         ],
@@ -1127,7 +1127,7 @@ export default function CheckoutPage() {
               <div className="flex items-center gap-2">
                 <span className="font-black text-slate-900">{selectedAddress.label}</span>
                 <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded-full">
-                  Express delivery
+                  Standard & Scheduled
                 </span>
               </div>
               <p className="text-slate-600 font-medium mt-0.5">

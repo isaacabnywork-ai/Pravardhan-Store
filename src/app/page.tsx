@@ -291,12 +291,12 @@ export default function HomePage() {
           {/* Features 3-Pills Bar */}
           <div className="grid grid-cols-3 gap-1.5 sm:gap-3 pt-1 border-t border-emerald-700/40 text-center">
             <div className="bg-white/10 backdrop-blur-xs rounded-xl py-1.5 px-1">
-              <p className="text-[10px] sm:text-xs font-extrabold text-amber-300">⚡ 12–15 Mins</p>
-              <p className="text-[9px] text-emerald-200 hidden sm:block">Express Delivery</p>
+              <p className="text-[10px] sm:text-xs font-extrabold text-amber-300">⚡ 1-Hour Delivery</p>
+              <p className="text-[9px] text-emerald-200 hidden sm:block">Fast Dispatch</p>
             </div>
             <div className="bg-white/10 backdrop-blur-xs rounded-xl py-1.5 px-1">
-              <p className="text-[10px] sm:text-xs font-extrabold text-white">📅 2-Hr Slots</p>
-              <p className="text-[9px] text-emerald-200 hidden sm:block">Scheduled Choice</p>
+              <p className="text-[10px] sm:text-xs font-extrabold text-white">📅 Anytime Slots</p>
+              <p className="text-[9px] text-emerald-200 hidden sm:block">Schedule Any Time</p>
             </div>
             <div className="bg-white/10 backdrop-blur-xs rounded-xl py-1.5 px-1">
               <p className="text-[10px] sm:text-xs font-extrabold text-emerald-300">₹0 Delivery</p>

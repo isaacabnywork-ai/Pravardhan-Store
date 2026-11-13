@@ -243,12 +243,12 @@ export function ProductCard({
           </Link>
         </div>
 
-        {/* ================= 5. EXPRESS DELIVERY BADGE & ACTION PILL ================= */}
+        {/* ================= 5. DELIVERY BADGE & ACTION PILL ================= */}
         <div className="mt-1.5 pt-1 space-y-1">
           <div className="flex items-center gap-2 text-[11px] font-medium text-gray-500 flex-wrap">
             <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3 text-gray-400 stroke-[2]" />
-              <span>{product.categoryId === 'cat-snacks' ? '8 mins' : '12 mins'}</span>
+              <Clock className="w-3 h-3 text-emerald-600 stroke-[2]" />
+              <span className="font-semibold text-emerald-700">1-hr / Scheduled</span>
             </div>
             {selectedVariant.stock <= 5 && selectedVariant.stock > 0 && (
               <span className="text-[9px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/70">

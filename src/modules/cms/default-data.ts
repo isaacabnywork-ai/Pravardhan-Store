@@ -21,9 +21,9 @@ export const DEFAULT_HOMEPAGE_BLOCKS: CmsBlock[] = [
       slides: [
         {
           id: 'slide-1',
-          tag: '12-MIN EXPRESS IN GURUGRAM',
+          tag: 'ONLINE GROCERY DELIVERY IN LUCKNOW',
           title: 'Farm Fresh Produce & Chakki Atta',
-          subtitle: 'Pure, unadulterated essentials delivered straight from local mandis to Sector 14 within 15 minutes.',
+          subtitle: 'Pure, unadulterated essentials delivered straight from local mandis to Vrindavan Colony within 1 hour or scheduled anytime.',
           buttonText: 'Order Essentials',
           buttonUrl: '/shop',
           imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80',
@@ -126,8 +126,8 @@ export const DEFAULT_HOMEPAGE_BLOCKS: CmsBlock[] = [
       badges: [
         {
           icon: 'Zap',
-          title: '12-Minute Delivery',
-          description: 'Instant hyper-local dark store dispatch across Sector 14, Gurugram',
+          title: '1-Hour & Scheduled Delivery',
+          description: 'Fast doorstep delivery or schedule any time of day across Vrindavan Colony, Lucknow',
         },
         {
           icon: 'ShieldCheck',
@@ -219,9 +219,9 @@ export const DEFAULT_PAGES: CmsPage[] = [
     blocks: DEFAULT_HOMEPAGE_BLOCKS,
     draftBlocks: DEFAULT_HOMEPAGE_BLOCKS,
     seo: {
-      metaTitle: 'Pravdhan Store | 12-Min Express Grocery Delivery in Gurugram',
-      metaDescription: 'Order fresh vegetables, fruits, chakki atta, dairy, and daily kitchen staples delivered in 12–15 minutes with zero delivery charge.',
-      keywords: ['grocery delivery', 'gurugram groceries', 'sector 14', 'chakki atta', 'quick commerce'],
+      metaTitle: 'Pravdhan Store | Online Grocery & Essentials Delivery in Lucknow',
+      metaDescription: 'Order fresh vegetables, fruits, chakki atta, dairy, and daily kitchen staples delivered in 1 hour or scheduled anytime with zero delivery charge.',
+      keywords: ['grocery delivery', 'lucknow groceries', 'vrindavan colony', 'chakki atta', 'ecommerce grocery'],
       robotsDirectives: 'index,follow',
       structuredDataType: 'WebPage',
     },
@@ -255,8 +255,8 @@ export const DEFAULT_PAGES: CmsPage[] = [
         type: 'heading',
         content: {
           level: 'h1',
-          text: 'Pravdhan Store — Your Neighborhood Dark Store',
-          subtext: 'Reimagining everyday grocery shopping for modern Indian homes with freshness, honesty, and ultra-fast speed.',
+          text: 'Pravdhan Store — Your Trusted Neighborhood Grocery & Essentials',
+          subtext: 'Reimagining everyday grocery shopping for modern Indian homes with freshness, honesty, and reliable 1-hour & scheduled delivery.',
         },
         styles: { textAlign: 'center', paddingTop: 24, paddingBottom: 16 },
       },
@@ -291,7 +291,7 @@ export const DEFAULT_PAGES: CmsPage[] = [
         content: {
           title: 'Our Core Commitments',
           items: [
-            { title: 'True 12-Minute Handover', desc: 'Real riders, dedicated dark-store pickers, and optimized neighborhood routes.' },
+            { title: 'Flexible Delivery Slots', desc: 'Get orders delivered in 1 hour or schedule any convenient time slot throughout the day.' },
             { title: 'Zero Surcharges', desc: 'No platform fees, no packaging fees, no rain fees. Flat ₹0 delivery above ₹100 order.' },
             { title: 'Mandi-Direct Sourcing', desc: 'Direct partnerships with cultivators across Haryana and Western UP.' },
           ],
@@ -308,7 +308,7 @@ export const DEFAULT_PAGES: CmsPage[] = [
     ],
     seo: {
       metaTitle: 'About Us | Pravdhan Store Gurugram',
-      metaDescription: 'Learn about Pravdhan Store, our direct mandi sourcing, 12-minute dark store fulfillment, and zero-fee customer promise.',
+      metaDescription: 'Learn about Pravdhan Store, our direct mandi sourcing, 1-hour & scheduled delivery fulfillment, and zero-fee customer promise.',
       robotsDirectives: 'index,follow',
     },
     createdAt: '2026-01-10T00:00:00.000Z',
@@ -438,7 +438,7 @@ export const DEFAULT_PAGES: CmsPage[] = [
     ],
     seo: {
       metaTitle: 'FAQ | Pravdhan Store Grocery Delivery Questions',
-      metaDescription: 'Find answers to common questions about Pravdhan Store 12-minute grocery delivery, minimum order value, OTP verification, and refunds.',
+      metaDescription: 'Find answers to common questions about Pravdhan Store 1-hour and scheduled grocery delivery, minimum order value, OTP verification, and refunds.',
       robotsDirectives: 'index,follow',
     },
     createdAt: '2026-01-15T00:00:00.000Z',
@@ -534,7 +534,7 @@ export const DEFAULT_THEME_SETTINGS: CmsThemeSettings = {
 
 export const DEFAULT_HEADER_CONFIG: CmsHeaderConfig = {
   showAnnouncementBar: true,
-  announcementBarText: '⚡ Flat ₹100 OFF on your first order! Use code WELCOME100 • 12-Min Delivery in Sector 14, Gurugram',
+  announcementBarText: '⚡ Flat ₹100 OFF on your first order! Use code WELCOME100 • 1-Hour & Scheduled Delivery in Lucknow',
   announcementBarLink: '/deals',
   announcementBarBg: '#0F5132',
   announcementBarTextColor: '#FFFFFF',
@@ -559,7 +559,7 @@ export const DEFAULT_FOOTER_CONFIG: CmsFooterConfig = {
       id: 'col-about',
       title: 'Pravdhan Store',
       type: 'TEXT',
-      text: 'Gurugram’s trusted neighborhood dark store. Delivering farm-fresh vegetables, stone-ground flours, pure pulses, and daily essentials within 12–15 minutes.',
+      text: 'Lucknow’s trusted neighborhood grocery and daily essentials store. Delivering farm-fresh vegetables, stone-ground flours, pure pulses, and daily essentials within 1 hour or scheduled anytime throughout the day.',
     },
     {
       id: 'col-links',
@@ -587,15 +587,15 @@ export const DEFAULT_FOOTER_CONFIG: CmsFooterConfig = {
     },
     {
       id: 'col-contact',
-      title: 'Dark Store Hub #01',
+      title: 'Vrindavan Hub #01',
       type: 'CONTACT',
-      text: 'Sector 14, Model Town, Gurugram, Haryana 122001',
+      text: 'Vrindavan Colony, Sector 4, Lucknow, Uttar Pradesh 226029',
     },
   ],
-  aboutText: 'Pravdhan Store delivers farm-fresh groceries and household essentials in 12–15 minutes.',
-  contactPhone: '+91 124 456 7890',
+  aboutText: 'Pravdhan Store delivers farm-fresh groceries and household essentials with 1-hour and scheduled day slots.',
+  contactPhone: '+91 708 090 7954',
   contactEmail: 'care@pravdhanstore.in',
-  address: 'Sector 14, Model Town, Gurugram, Haryana 122001',
+  address: 'Vrindavan Colony, Sector 4, Lucknow, Uttar Pradesh 226029',
   socialLinks: [
     { platform: 'Instagram', url: 'https://instagram.com' },
     { platform: 'Twitter', url: 'https://twitter.com' },
@@ -690,7 +690,7 @@ export const DEFAULT_MEDIA_ITEMS: CmsMediaItem[] = [
 export const DEFAULT_POPUP: CmsPopupConfig = {
   id: 'popup-welcome-100',
   title: '🎉 Welcome to Pravdhan Store!',
-  content: 'Enjoy Flat ₹100 OFF on your first 3 grocery orders with instant 12-minute delivery in Sector 14, Gurugram.',
+  content: 'Enjoy Flat ₹100 OFF on your first 3 grocery orders with fast 1-hour or scheduled delivery in Vrindavan Colony, Lucknow.',
   couponCode: 'WELCOME100',
   buttonText: 'Claim ₹100 Discount',
   buttonUrl: '/deals',
@@ -746,7 +746,7 @@ export const DEFAULT_TEMPLATES: CmsTemplate[] = [
 
 export const DEFAULT_WEBSITE_SETTINGS: CmsWebsiteSettings = {
   siteName: 'Pravdhan Store',
-  siteDescription: '12-Minute Express Grocery Delivery in Sector 14, Model Town, Gurugram.',
+  siteDescription: 'Online Grocery & Daily Essentials Delivery in Vrindavan Colony, Lucknow with 1-Hour & Scheduled Day Slots.',
   maintenanceMode: false,
   maintenanceMessage: 'We are restocking fresh inventory! Pravdhan Store will be back online shortly.',
   enableCustomerReviews: true,

@@ -270,7 +270,7 @@ function ShopContent() {
         navigator
           .share({
             title: `${activeCategory.name} - Pravdhan Store`,
-            text: `Order fresh ${activeCategory.name} with 12-minute express delivery!`,
+            text: `Order fresh ${activeCategory.name} with 1-hour or scheduled delivery!`,
             url: window.location.href,
           })
           .catch(() => {});
@@ -333,7 +333,7 @@ function ShopContent() {
     }
     return {
       title: activeCategory.name,
-      subtitle: activeCategory.description || 'Delivered express to your doorstep in 12 mins',
+      subtitle: activeCategory.description || 'Fast doorstep delivery across Vrindavan Colony, Lucknow',
       image: activeCategory.image,
     };
   }, [activeCategory]);
@@ -882,16 +882,13 @@ function ShopContent() {
               </div>
 
               <p className="text-xs text-gray-500">
-                ⚡ Instant 12–15 minute express delivery available in Gurugram zones:
+                Fast 1-hour and scheduled deliveries available across Lucknow:
               </p>
 
               <div className="space-y-2 py-1">
                 {[
-                  { zone: 'Sector 14, Model Town, Gurugram', time: '12 mins' },
-                  { zone: 'Old DLF Colony', time: '14 mins' },
-                  { zone: 'Sector 15 Part 1', time: '15 mins' },
-                  { zone: 'Civil Lines · Prem Nagar', time: '15 mins' },
-                  { zone: 'DLF Phase 1 & 2', time: '18 mins' },
+                  { zone: 'Vrindavan Colony, Lucknow, UP', time: '1 hr / Scheduled' },
+                  { zone: 'Vrindavan Yojna, Sector 4', time: '1 hr / Scheduled' },
                 ].map((loc) => {
                   const isSelected = selectedZone.includes(loc.zone.split(',')[0]);
                   return (
@@ -1153,16 +1150,13 @@ function ShopContent() {
             </div>
 
             <p className="text-xs text-gray-500">
-              ⚡ Instant 12–15 minute express delivery available in Gurugram zones:
+              Fast 1-hour and scheduled deliveries available across Lucknow:
             </p>
 
             <div className="space-y-2 py-1">
               {[
-                { zone: 'Sector 14, Model Town, Gurugram', time: '12 mins' },
-                { zone: 'Old DLF Colony', time: '14 mins' },
-                { zone: 'Sector 15 Part 1', time: '15 mins' },
-                { zone: 'Civil Lines · Prem Nagar', time: '15 mins' },
-                { zone: 'DLF Phase 1 & 2', time: '18 mins' },
+                { zone: 'Vrindavan Colony, Lucknow, UP', time: '1 hr / Scheduled' },
+                { zone: 'Vrindavan Yojna, Sector 4', time: '1 hr / Scheduled' },
               ].map((loc) => {
                 const isSelected = selectedZone.includes(loc.zone.split(',')[0]);
                 return (

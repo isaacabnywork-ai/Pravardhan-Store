@@ -284,7 +284,7 @@ export default function OrderTrackingPage({
               </span>
             </div>
             <p className="text-xs text-slate-500">
-              Placed on {formatDateTime(order.createdAt)} • Slot: {order.deliverySlot?.dateLabel || 'Today'} ({order.deliverySlot?.timeSlot || 'Express Delivery'})
+              Placed on {formatDateTime(order.createdAt)} • Slot: {order.deliverySlot?.dateLabel || 'Today'} ({order.deliverySlot?.timeSlot || 'Scheduled Delivery'})
             </p>
           </div>
 
@@ -593,7 +593,7 @@ export default function OrderTrackingPage({
                 </span>
               </div>
               <p className="text-slate-600 font-medium text-[11px] mt-0.5">
-                12-Minute Express Grocery & Daily Essentials
+                Online Grocery & Daily Essentials • Fast 1-Hour & Scheduled Delivery
               </p>
               <p className="text-slate-500 text-[10px] mt-1 max-w-sm">
                 Fulfillment Dark Store Hub #01, Vrindavan Colony, Lucknow, UP - 226029
@@ -666,7 +666,7 @@ export default function OrderTrackingPage({
               <div>
                 <span className="text-slate-500">Delivery Slot: </span>
                 <span className="font-medium text-slate-800">
-                  {order.deliverySlot?.dateLabel || 'Today'} ({order.deliverySlot?.timeSlot || 'Express 12-15 Mins'})
+                  {order.deliverySlot?.dateLabel || 'Today'} ({order.deliverySlot?.timeSlot || 'Scheduled Slot'})
                 </span>
               </div>
               <div>

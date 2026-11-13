@@ -182,9 +182,9 @@ export function CmsBlockRenderer({
       case 'hero_banner': {
         const slides = content.slides || [
           {
-            tag: '12-MIN EXPRESS IN GURUGRAM',
+            tag: '1-HOUR & SCHEDULED DELIVERY',
             title: 'Farm Fresh Produce & Chakki Atta',
-            subtitle: 'Pure, unadulterated essentials delivered straight from local mandis to Sector 14.',
+            subtitle: 'Pure, unadulterated essentials delivered straight from local mandis to Vrindavan Colony.',
             buttonText: 'Order Essentials',
             buttonUrl: '/shop',
             imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80',

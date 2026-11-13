@@ -37,7 +37,7 @@ export function HeroBannerCarousel() {
   const slides: BannerSlide[] = [
     {
       id: 'staples-deal',
-      badge: '⚡ 12-15 MINS EXPRESS',
+      badge: '⚡ 1-HR & SCHEDULED DELIVERY',
       badgeStyle: 'bg-amber-400 text-gray-950 font-black',
       title: 'Pantry Staples & Atta at Wholesale Rates',
       subtitle: 'Aashirvaad, Daawat, Fortune & Tata Sampann up to 25% OFF',
@@ -52,7 +52,7 @@ export function HeroBannerCarousel() {
       badge: '🎟️ COUPON: WELCOME100',
       badgeStyle: 'bg-amber-300 text-gray-950 font-black',
       title: 'Flat ₹100 OFF on Your First Order',
-      subtitle: 'Special welcome discount for Gurugram residents • Min order ₹499',
+      subtitle: 'Special welcome discount for Lucknow residents • Min order ₹499',
       ctaText: couponClaimed ? 'Coupon Applied!' : 'Claim Discount',
       ctaAction: handleClaimWelcomeCoupon,
       bgGradient: 'from-[#1E1B4B] via-[#312E81] to-[#4338CA]',

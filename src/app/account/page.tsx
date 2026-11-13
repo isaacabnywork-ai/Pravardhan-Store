@@ -102,8 +102,8 @@ export default function AccountPage() {
     if (typeof window !== 'undefined') {
       if (navigator.share) {
         navigator.share({
-          title: 'Pravdhan Store - 12-Min Express Grocery',
-          text: 'Order fresh groceries, atta, dal, and daily essentials with express delivery in Gurugram!',
+          title: 'Pravdhan Store - Online Grocery & Essentials',
+          text: 'Order fresh groceries, atta, dal, and daily essentials with fast & scheduled delivery in Lucknow!',
           url: window.location.origin,
         }).catch(() => {});
       } else {
@@ -635,7 +635,7 @@ export default function AccountPage() {
               </button>
             </div>
             <p className="text-xs text-gray-600 leading-relaxed">
-              We are here to assist with express dispatch, delivery status, returns, and refunds from our Sector 14 Hub.
+              We are here to assist with dispatch, delivery status, scheduled slots, returns, and refunds from our Vrindavan Hub.
             </p>
             <div className="space-y-2">
               <a

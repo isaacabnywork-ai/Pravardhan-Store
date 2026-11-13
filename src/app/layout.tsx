@@ -15,25 +15,25 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Pravdhan Store | 12-Min Express Grocery Delivery in Gurugram',
+    default: 'Pravdhan Store | Online Grocery & Daily Essentials in Lucknow',
     template: '%s | Pravdhan Store',
   },
   description:
-    'Pravdhan Store delivers fresh groceries, atta, rice, pulses, dairy, fresh farm produce, and household essentials to your doorstep in Sector 14, Model Town, Gurugram in 12–15 minutes.',
+    'Pravdhan Store delivers fresh groceries, atta, rice, pulses, dairy, fresh farm produce, and household essentials to your doorstep in Vrindavan Colony, Lucknow with 1-hour & flexible scheduled delivery.',
   keywords: [
     'Pravdhan Store',
-    'Gurugram grocery delivery',
-    'Sector 14 groceries',
-    'Model Town instant delivery',
-    'fresh fruits vegetables Gurugram',
+    'Lucknow grocery delivery',
+    'Vrindavan Colony groceries',
+    'scheduled grocery delivery',
+    'fresh fruits vegetables Lucknow',
     'chakki atta delivery',
-    'quick commerce Gurugram',
+    'ecommerce grocery store',
   ],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://pravdhanstore.in'),
   openGraph: {
-    title: 'Pravdhan Store | 12-Min Grocery Delivery Gurugram',
+    title: 'Pravdhan Store | Online Grocery Delivery in Lucknow',
     description:
-      'Ultra-fast delivery of fresh farm produce, groceries, dairy, and household essentials in Sector 14 and Model Town, Gurugram.',
+      'Reliable delivery of fresh farm produce, groceries, dairy, and household essentials in Vrindavan Colony, Lucknow.',
     url: 'https://pravdhanstore.in',
     siteName: 'Pravdhan Store',
     locale: 'en_IN',
@@ -41,9 +41,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Pravdhan Store | 12-Min Express Grocery Delivery',
+    title: 'Pravdhan Store | Grocery & Daily Essentials Delivery',
     description:
-      'Fresh staples, dairy, organic produce and household essentials in Gurugram.',
+      'Fresh staples, dairy, organic produce and household essentials in Vrindavan Colony, Lucknow.',
   },
   icons: {
     icon: '/favicon.ico',

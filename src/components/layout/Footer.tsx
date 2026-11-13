@@ -35,8 +35,8 @@ export function Footer() {
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-bold text-white text-sm">Express & Slots</p>
-              <p className="text-slate-400 text-xs">⚡ 12–15m or 2-hr slots</p>
+              <p className="font-bold text-white text-sm">Flexible Delivery</p>
+              <p className="text-slate-400 text-xs">⚡ 1-Hour or Scheduled Day Slots</p>
             </div>
           </div>
 
@@ -219,7 +219,7 @@ export function Footer() {
               <ul className="space-y-2 text-xs text-slate-400">
                 <li className="flex items-start gap-2">
                   <span className="text-amber-400 font-bold">⚡</span>
-                  <span><strong>12–15 Mins Express:</strong> Dispatched direct from Sector 14 hub</span>
+                  <span><strong>1-Hour & Scheduled:</strong> Fast delivery or choose any time slot</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-400 font-bold">🌱</span>
@@ -252,10 +252,10 @@ export function Footer() {
       <div className="border-t border-slate-800/80 py-4 px-4 text-center text-slate-500 text-[11px]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
-            © {new Date().getFullYear()} {storeSettings.storeName}. All rights reserved. Registered Indian Local Retail Entity (Sector 14, Gurugram).
+            © {new Date().getFullYear()} {storeSettings.storeName}. All rights reserved. Registered Indian Local Retail Entity (Vrindavan Colony, Lucknow).
           </span>
           <span className="text-slate-400">
-            Helpline: +91 124 456 7890 • care@pravdhanstore.in
+            Helpline: +91 708 090 7954 • care@pravdhanstore.in
           </span>
         </div>
       </div>
@@ -331,7 +331,7 @@ export function Footer() {
                     Pravdhan Store Terms & Delivery Guidelines:
                   </p>
                   <p>
-                    • <strong>Coverage Area:</strong> Instant delivery (12–15 minutes) is operational across Sector 14, Model Town, and immediate Zone 1 boundaries in Gurugram.
+                    • <strong>Coverage Area:</strong> Delivery (1-hour or scheduled any time of day) is operational across Vrindavan Colony, Lucknow.
                   </p>
                   <p>
                     • <strong>Order Minimum:</strong> The store maintains a ₹100 minimum order threshold to preserve free doorstep delivery for the local community.

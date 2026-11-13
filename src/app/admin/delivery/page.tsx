@@ -61,7 +61,7 @@ export default function AdminDeliveryPage() {
               },
               deliverySlot: {
                 dateLabel: 'Today',
-                timeSlot: '12-15 Mins Express Delivery',
+                timeSlot: '1-Hour & Scheduled Delivery',
               },
               items: (o.items || []).map((i: any) => ({
                 productId: i.productId,

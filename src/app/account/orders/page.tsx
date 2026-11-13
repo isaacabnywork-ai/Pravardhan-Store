@@ -95,23 +95,12 @@ export default function MyOrdersPage() {
     });
   }, [userOrders, searchQuery]);
 
-  // Format delivery header (e.g. "Arrived in 7 minutes", "Arriving in 12 minutes")
+  // Format delivery header
   const getDeliveryTitle = (order: Order): string => {
     if (order.orderStatus === 'DELIVERED') {
-      if (order.id === 'ord-1003' || order.orderNumber === 'PRV-2026-1003') return 'Arrived in 7 minutes';
-      if (order.id === 'ord-1004' || order.orderNumber === 'PRV-2026-1004') return 'Arrived in 9 minutes';
-      if (order.id === 'ord-1005' || order.orderNumber === 'PRV-2026-1005') return 'Arrived in 7 minutes';
-      const hist = order.statusHistory?.find((h) => h.status === 'DELIVERED');
-      if (hist?.note && /in (\d+ minutes)/i.test(hist.note)) {
-        const m = hist.note.match(/in (\d+ minutes)/i);
-        if (m) return `Arrived in ${m[1]}`;
-      }
-      // Hash-based deterministic realistic minutes (7-11 mins)
-      const hash = order.orderNumber.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-      const mins = 7 + (hash % 5);
-      return `Arrived in ${mins} minutes`;
+      return 'Delivered Successfully';
     }
-    if (order.orderStatus === 'OUT_FOR_DELIVERY') return 'Arriving in 12 minutes';
+    if (order.orderStatus === 'OUT_FOR_DELIVERY') return 'Out for Delivery (On the way)';
     if (order.orderStatus === 'READY_FOR_DELIVERY') return 'Ready for Delivery';
     if (order.orderStatus === 'BEING_PREPARED') return 'Being Prepared';
     if (order.orderStatus === 'ORDER_CONFIRMED') return 'Order Confirmed';
@@ -136,7 +125,7 @@ export default function MyOrdersPage() {
     } catch {
       // fallback
     }
-    return `${price} • ${order.deliverySlot?.dateLabel || 'Express Delivery'}`;
+    return `${price} • ${order.deliverySlot?.dateLabel || 'Standard Delivery'}`;
   };
 
   // Click on any product thumbnail
@@ -321,7 +310,7 @@ export default function MyOrdersPage() {
             <p className="text-xs text-gray-500 max-w-xs mx-auto">
               {searchQuery
                 ? 'Try searching with a different product name, brand or order number.'
-                : 'Your express 12-minute deliveries and past receipts will appear here.'}
+                : 'Your delivered orders and receipts will appear here.'}
             </p>
             {searchQuery ? (
               <button
@@ -607,7 +596,7 @@ export default function MyOrdersPage() {
               </p>
               <div className="pt-1 flex items-center gap-2 text-emerald-700 font-medium text-[11px]">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Express 12-Minute Delivery Available</span>
+                <span>1-Hour & Scheduled Slot Delivery Available</span>
               </div>
             </div>
 

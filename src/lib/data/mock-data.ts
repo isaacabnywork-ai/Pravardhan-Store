@@ -1445,13 +1445,13 @@ export const INITIAL_PRODUCTS: Product[] = [
 ];
 
 export const INITIAL_DELIVERY_SLOTS: DeliverySlot[] = [
-  // Express Instant & Scheduled Slots
+  // Fast 1-Hour & Flexible Day Slots
   {
     id: 'slot-express-now',
     dateType: 'TODAY',
-    dateLabel: '⚡ Instant Express (Vrindavan Hub)',
+    dateLabel: '⚡ 1-Hour Express (Vrindavan Hub)',
     dateString: new Date().toISOString().split('T')[0],
-    timeSlot: '⚡ 12–15 Mins Express Delivery',
+    timeSlot: '⚡ Within 1 Hour Delivery',
     isAvailable: true,
     capacity: 60,
     bookedCount: 19,
@@ -1460,7 +1460,7 @@ export const INITIAL_DELIVERY_SLOTS: DeliverySlot[] = [
   {
     id: 'slot-today-1',
     dateType: 'TODAY',
-    dateLabel: 'Today (Same Day)',
+    dateLabel: 'Today (Slot 1)',
     dateString: new Date().toISOString().split('T')[0],
     timeSlot: '12:00 PM – 2:00 PM',
     isAvailable: true,

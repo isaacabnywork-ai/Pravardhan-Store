@@ -1,0 +1,50 @@
+# PRAVDHAN STORE — DOCUMENTATION EVIDENCE REGISTER
+
+**Product Name:** Pravdhan Store  
+**Repository:** `isaacabnywork-ai/Pravardhan-Store` (`https://github.com/isaacabnywork-ai/Pravardhan-Store.git`)  
+**Audited Branch & HEAD:** `feature/batch-11.17-independent-final-acceptance` @ `a28736f793ece9be405921da013e47aabd89fd10`  
+**Benchmark Reference Commit:** `4921fff712307e31554f8dc481db9b11888770be`  
+**Frontend Freeze Baseline Commit:** `8edc2cddf84a7257931e591a12b31e8fbfb84ac2` (Batch 10.1)  
+**Documentation Date:** November 12, 2026  
+
+---
+
+## 1. Purpose of This Evidence Register
+
+This register maps every key architectural, product, database, security, financial, testing, audit, and roadmap claim made across `PRAVDHAN-STORE-COMPLETE-TECHNICAL-DOCUMENTATION.docx` and `PRAVDHAN-STORE-COMPLETE-TECHNICAL-DOCUMENTATION.pdf` directly to verifiable files, line ranges, git commits, database migrations, test scripts, and audit documents in the repository.
+
+---
+
+## 2. Core Evidence Mapping Matrix
+
+| Claim ID | Technical / Historical Claim | Evidence Classification | Primary Source Paths, Commits, Migrations & Scripts |
+| :--- | :--- | :--- | :--- |
+| **EV-01** | Project initialized Oct 19, 2026; `main` head at `3783371` (Nov 3, 2026); two divergent local branch tracks (`feature/phase-1..batch-8` unmerged vs `origin` Batch 8..11.17 -> `a28736f`). | Implemented and source-verified | `git log --reverse`, `git branch -a`, `git log --oneline main..3884170` (19 unmerged local commits `309cb6c`..`3884170` vs `origin/feature/batch-11.17-independent-final-acceptance` @ `a28736f`). |
+| **EV-02** | Dark Store Hub #01 operational configuration: Sector 14, Model Town, Gurugram; pincodes `122001`, `122002`, `122003`, `122018`; ₹100 min order (10000 paise); ₹0 default delivery fee. | Implemented and source-verified | `README.md`, `prisma/seed.ts`, `src/modules/cart/service.ts` (lines 71–73), `src/app/api/v1/serviceability/route.ts`. |
+| **EV-03** | Tech stack versions: Next.js `^15.3.9`, React `^19.0.0`, Prisma `^6.19.3`, Zod `^4.6.7`, jose `^6.2.13`, bcryptjs `^3.0.3`, Tailwind CSS `^3.4.1`, tsx `^4.23.15`, ESLint `^9`. | Implemented and source-verified | `package.json`, `next.config.ts`, `vercel.json`. |
+| **EV-04** | Prisma schema comprises **25 models** and **14 enums** using integer paise (`Int`) for all monetary amounts; absent `Wallet`, `PurchaseOrder`, `Supplier`, `InventoryBatch`, `Loyalty`, `Referral` models on `HEAD`. | Implemented and source-verified | `prisma/schema.prisma` (679 lines); `npx prisma validate` (exited `0`). Unmerged prototype models reside only on local branches `feature/batch-4..7.2`. |
+| **EV-05** | Authoritative SQL migration runner enforces 6 sequential SQL files with SHA-256 checksum validation in `_app_migrations` under `pg_advisory_xact_lock`. | Implemented and source-verified | `scripts/db-sync.js`, `src/lib/services/migration-runner.ts` (`AUTHORITATIVE_MIGRATION_SEQUENCE`), `prisma/migrations/20261110_batch9_cash_collection.sql` through `20261112_batch11_12_sms_outbox.sql`. |
+| **EV-06** | Next.js App Router exposes 79 API route files (`/api/v1/*`) and 41 page/layout files across Storefront, Account, and Admin portals. | Implemented and source-verified | `find src/app -type f \( -name "route.ts" -o -name "page.tsx" -o -name "layout.tsx" \)` (79 `route.ts`, 41 `page.tsx`/`layout.tsx`). |
+| **EV-07** | Frontend Design Freeze vs `8edc2cd`: strictly 4 UI files (`admin/orders/page.tsx`, `checkout/page.tsx`, `AuthModal.tsx`, `AuthContext.tsx`) and 2 API routes (`cron/sms-outbox/route.ts`, `orders/route.ts`) changed (+424/-181). | Implemented and source-verified | `git diff --stat 8edc2cd..HEAD -- src/components src/app src/styles src/lib/context`. |
+| **EV-08** | Phone OTP authentication uses `pg_advisory_xact_lock(hashtext(e164))` rolling 10-min cap (max 4 requests), 60s resend cooldown, `bcrypt` cost 10, AES-256-GCM outbox encryption (`v1..vN`), 30s `claimToken` fencing leases, 8s `AbortController`, and plaintext wipe. | Implemented and test-verified | `src/lib/services/sms.ts`, `src/lib/security/crypto.ts`, `src/app/api/v1/cron/sms-outbox/route.ts`, `prisma/migrations/20261112_batch11_12_sms_outbox.sql`, `tests/batch-11-4..11-14*.test.*`. |
+| **EV-09** | Client mock OTP hints and demo bypass fallbacks were purged from `AuthModal.tsx` and `AuthContext.tsx`, while `DiagnosticsService` line 79 retains stale fallback copy (`"Falling back to test OTP 123456."`). | Historical issue corrected / Source-verified | `src/components/auth/AuthModal.tsx`, `src/lib/context/AuthContext.tsx`, commits `7ff5434` & `5d1feb9`, `tests/batch-11-16-auth-modal-failure-paths.test.ts`; stale log at `src/modules/operations/diagnostics-service.ts#L79`. |
+| **EV-10** | Server-authoritative checkout computes canonical SHA-256 Request Fingerprint v3 (`computeRequestFingerprint`), enforces composite partial unique index `[userId, idempotencyKey]`, catches exact `P2002` constraint target, and rejects mismatches with HTTP 409 Conflict. | Implemented and test-verified | `src/lib/validation/order.ts`, `src/modules/orders/service.ts` (lines 420–475), `prisma/migrations/20261112_batch11_2_order_idempotency.sql`, `tests/batch-11-2..11-6*.test.*`. |
+| **EV-11** | Multi-tender reconciliation deducts strictly `PROCESSED` refunds against non-COD `PAID` payments (`netApplied = max(0, min(amount, amount - processedRefunds))`), rejects over-allocation at checkout, isolates backfill anomalies, and omits `CashCollection` for zero-cash prepaid orders. | Implemented and test-verified | `src/modules/operations/financial-reconciliation-helper.ts`, `src/modules/operations/cash-collection-service.ts`, `src/modules/payments/refund-service.ts`, `tests/batch-9-6`, `tests/batch-9-8`, `tests/batch-10-refund-ledger.test.mjs`. |
+| **EV-12** | **Razorpay Payment Gap:** Frontend `RazorpayPaymentModal.tsx` simulates Test Mode (`pay_test_*`); `/api/v1/orders/[id]/pay` & `OrderService.confirmPayment` lack Razorpay HMAC signature verification and ownership guard; webhook signature check runs only if `RAZORPAY_WEBHOOK_SECRET && signature` (COND-10.1-02). | Partially implemented | `src/components/checkout/RazorpayPaymentModal.tsx` (L46–57), `src/app/api/v1/orders/[id]/pay/route.ts`, `src/modules/orders/service.ts` (L624–685), `src/app/api/v1/webhooks/razorpay/route.ts`, `BATCH-10.1-INDEPENDENT-AUDIT-REPORT.md`. |
+| **EV-13** | **Refund Concurrency Gap (COND-10.1-01):** `RefundService.createRefund` checks active refund sum without a PostgreSQL `SELECT FOR UPDATE` row lock on `payments`. | Partially implemented | `src/modules/payments/refund-service.ts`, `BATCH-10.1-INDEPENDENT-AUDIT-REPORT.md`. |
+| **EV-14** | **CMS Unauthenticated Admin Fallback:** `/api/v1/cms/pages/route.ts` (line 22) and sibling CMS routes evaluate `const role = session?.role || 'SUPER_ADMIN'`, exposing in-memory `CmsService` mutations without authentication. | Partially implemented (Security defect) | `src/app/api/v1/cms/pages/route.ts#L22`, commit `2e109e4` (removed admin sidebar links only). |
+| **EV-15** | **Order Transition Guard Gap:** `OrderService.updateOrderStatus` accepts any `OrderStatus` enum value from authorized staff without validating a transition state-machine graph. | Partially implemented | `src/modules/orders/service.ts#L739-L784`, `src/app/api/v1/admin/orders/[id]/status/route.ts`. |
+| **EV-16** | **Pravdhan Money Wallet Reality:** Checkout creates `Payment(WALLET, PAID)`; Admin `/customers/[id]/wallet` writes `AuditLog(entity: 'USER_WALLET')`; frontend `StoreContext` caches balance in `localStorage`. No DB `Wallet` table exists on `HEAD`. | Partially implemented | `prisma/schema.prisma`, `src/app/api/v1/admin/customers/[id]/wallet/route.ts`, `src/modules/orders/service.ts`. |
+| **EV-17** | **External Adapter Stubs:** `FcmService` stores device tokens in an in-memory `Map` and simulates push; `ProcurementAnalyticsService` outputs `NOT_CONFIGURED`; `Sentry` logs to console; `StorageService` & `SmsService` fail closed in production without credentials; `vercel.json` 1-min cron requires Vercel Pro. | Stubs / Pending operational configuration | `src/lib/services/fcm.ts`, `src/modules/analytics/procurement-analytics-service.ts`, `src/lib/monitoring/sentry.ts`, `src/lib/services/storage.ts`, `vercel.json`, `.env.example`, `src/lib/validation/env.ts`. |
+| **EV-18** | **Verification & Report Reconciliation:** `npx prisma validate` (0), `npx tsc --noEmit` (0), `npm test` (18/18 PASS), 9 pure Node `tsx` scripts (all PASS locally), `npm run lint` exits 0 **with warnings** (contradicting `"0 warnings"` prose). Final Report table sums 23 rows to **198** (not 199) and omits 24th file `tests/batch-11-11-durable-delivery.test.ts`. Zero Playwright/Cypress browser E2E suite in repo. | Implemented and test-verified (local scripts) / Report inaccuracy reconciled | Direct workspace CLI runs; `tests/` (24 files, 7,142 LOC), `scripts/*.py` (3 files, 303 LOC), `FINAL-COMPREHENSIVE-TESTING-AND-RELEASE-READINESS-REPORT.md` (reconciled in commit `a28736f`). |
+
+---
+
+## 3. Verification Execution Log Recorded During Documentation Preparation
+
+- **`npx prisma validate`:** Exit code `0` — schema valid.
+- **`npx tsc --noEmit`:** Exit code `0` — zero TypeScript compiler errors.
+- **`npm test`:** Exit code `0` — 4 `.mjs` scripts (`18/18` assertions passed).
+- **`npx tsx` on 9 standalone Node/mock test suites (`batch-9-6`, `batch-9-8`, `batch-10`, `batch-11-functional-integration`, `batch-11-1`, `batch-11-2`, `batch-11-3`, `batch-11-4`, `batch-11-16`):** Exit code `0` across all 9 scripts (`71` assertions/checks passed locally without database).
+- **`npm run lint`:** Exit code `0` (0 fatal errors; emitted `@typescript-eslint/no-unused-vars` and `react-hooks/exhaustive-deps` warnings).
+- **11 PostgreSQL integration suites (`tests/batch-11-5`..`batch-11-14`, `batch-11-17`):** Not executed locally due to absence of a provisioned runtime PostgreSQL 16 instance; cited in Batch 11.15–11.17 historical acceptance reports as previously executed (`Reported but not independently verified`).

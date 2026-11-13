@@ -106,7 +106,7 @@ export function CartDrawer() {
                 <h3 className="font-extrabold text-sm sm:text-base text-white">My Cart</h3>
                 <p className="text-[11px] text-emerald-100 font-medium flex items-center gap-1">
                   <Clock className="w-3 h-3 text-amber-300" />
-                  <span>Delivery in 12-15 Mins • {storeSettings.serviceArea}</span>
+                  <span>Delivery in 1 Hour or Scheduled • {storeSettings.serviceArea}</span>
                 </p>
               </div>
             </div>
