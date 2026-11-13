@@ -5,10 +5,12 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Phone, ArrowRight, CheckCircle2, UserCheck, Lock } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
+import { auth } from '@/lib/firebase';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, loginWithPhoneOtp } = useAuth();
+  const { user, loginWithPhoneOtp, loginWithFirebaseSession } = useAuth();
 
   // If user is accessing back-office /admin, let adminLayout handle staff auth
   const isAdminRoute = pathname?.startsWith('/admin');
@@ -21,6 +23,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -39,6 +42,29 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  const getOrCreateRecaptcha = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      if ((window as any).recaptchaVerifier) {
+        return (window as any).recaptchaVerifier as RecaptchaVerifier;
+      }
+      const verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {
+          // reCAPTCHA solved
+        },
+        'expired-callback': () => {
+          // Recaptcha expired
+        },
+      });
+      (window as any).recaptchaVerifier = verifier;
+      return verifier;
+    } catch (err) {
+      console.warn('Recaptcha init warning:', err);
+      return null;
+    }
+  };
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanDigits = phone.replace(/\D/g, '');
@@ -54,6 +80,59 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     setError('');
     setLoading(true);
 
+    try {
+      // 1. Primary: Send real SMS via Firebase Phone Auth
+      const verifier = getOrCreateRecaptcha();
+      if (verifier) {
+        const fullPhone = `+91${cleanDigits}`;
+        const confirmation = await signInWithPhoneNumber(auth, fullPhone, verifier);
+        setConfirmationResult(confirmation);
+        setStep('OTP');
+        setResendCooldown(60);
+        setLoading(false);
+        return;
+      }
+    } catch (fbErr: any) {
+      console.warn('Firebase Phone Auth attempt:', fbErr?.code || fbErr?.message);
+      
+      // If Firebase encounters an issue, fallback to server OTP route
+      try {
+        const res = await fetch('/api/v1/auth/otp/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: cleanDigits }),
+        });
+        const data = await res.json();
+        setLoading(false);
+
+        if (res.ok && data.success) {
+          setStep('OTP');
+          setResendCooldown(60);
+          if (data.data?.devCode) {
+            setOtp(data.data.devCode);
+          } else {
+            setOtp('');
+          }
+          return;
+        }
+      } catch {
+        // continue to error reporting
+      }
+
+      setLoading(false);
+      const friendlyMessage =
+        fbErr?.code === 'auth/invalid-phone-number'
+          ? 'Invalid phone number format.'
+          : fbErr?.code === 'auth/quota-exceeded'
+          ? 'SMS quota exceeded for today. Please contact store support.'
+          : fbErr?.code === 'auth/too-many-requests'
+          ? 'Too many attempts. Please try again in a few minutes.'
+          : fbErr?.message || 'Failed to send OTP. Please try again.';
+      setError(friendlyMessage);
+      return;
+    }
+
+    // Fallback if verifier was null
     try {
       const res = await fetch('/api/v1/auth/otp/request', {
         method: 'POST',
@@ -89,6 +168,26 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     setError('');
     setLoading(true);
 
+    // 1. Try Firebase confirmation first if available and not demo bypass
+    if (confirmationResult && otp !== '123456') {
+      try {
+        await confirmationResult.confirm(otp);
+        const res = await loginWithFirebaseSession(phone, name.trim());
+        setLoading(false);
+
+        if (res.success) {
+          return;
+        } else {
+          setError(res.message || 'Verification succeeded but failed to establish session.');
+          return;
+        }
+      } catch (confirmErr: any) {
+        console.warn('Firebase confirmation failed, trying fallback verify:', confirmErr);
+        // Fall through to server verify for test codes or edge cases
+      }
+    }
+
+    // 2. Server verify (handles demo bypass code 123456 and server OTPs)
     const res = await loginWithPhoneOtp(phone, otp, name.trim());
     setLoading(false);
 
@@ -104,6 +203,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
       <div className="relative w-full sm:max-w-md min-h-screen sm:min-h-0 bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border sm:border-slate-100 overflow-hidden my-auto flex flex-col justify-center animate-in fade-in zoom-in-95 duration-200">
         {/* Header: Transparent Logo and Centered Title */}
+        <div id="recaptcha-container"></div>
         <div className="pt-6 sm:pt-8 pb-1.5 px-6 text-center flex flex-col items-center">
           <div className="relative w-36 h-12 sm:w-44 sm:h-14 mb-2 sm:mb-2.5 flex items-center justify-center">
             <Image

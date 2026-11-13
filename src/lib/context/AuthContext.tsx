@@ -9,6 +9,7 @@ interface AuthContextType {
   role: Role;
   isAuthenticated: boolean;
   loginWithPhoneOtp: (phone: string, otp: string, name?: string) => Promise<{ success: boolean; message?: string }>;
+  loginWithFirebaseSession: (phone: string, name?: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   switchRole: (role: Role) => Promise<void> | void;
   addAddress: (address: Omit<Address, 'id' | 'userId'>) => void;
@@ -141,6 +142,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithFirebaseSession = async (phone: string, name?: string) => {
+    try {
+      const res = await fetch('/api/v1/auth/firebase-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, name }),
+      });
+      const data = await res.json();
+      if (res.ok && data.data && data.data.user) {
+        const liveUser = data.data.user;
+        const mappedUser: User = {
+          id: liveUser.id,
+          name: liveUser.name || name || `Customer ${phone.slice(-4)}`,
+          phone: liveUser.phone,
+          email: liveUser.email || undefined,
+          role: liveUser.role || 'CUSTOMER',
+          addresses: liveUser.addresses || [],
+          createdAt: liveUser.createdAt || new Date().toISOString(),
+        };
+        saveUser(mappedUser);
+        return { success: true };
+      }
+      return { success: false, message: data.error?.message || 'Failed to establish session.' };
+    } catch {
+      return { success: false, message: 'Network connectivity error. Could not establish session.' };
+    }
+  };
+
   const logout = () => {
     try {
       fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => null);
@@ -262,6 +291,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: mounted && user ? user.role : 'CUSTOMER',
         isAuthenticated: !!user,
         loginWithPhoneOtp,
+        loginWithFirebaseSession,
         logout,
         switchRole,
         addAddress,

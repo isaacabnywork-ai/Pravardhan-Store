@@ -94,6 +94,61 @@ export class CustomerService {
   }
 
   /**
+   * Establish authenticated customer session (e.g. after Firebase Phone Auth verification)
+   */
+  async establishCustomerSession(rawPhone: string, name?: string) {
+    const cleanDigits = rawPhone.replace(/\D/g, '');
+    const phone = cleanDigits.length === 10 ? cleanDigits : cleanDigits.slice(-10);
+
+    let user = await prisma.user.findFirst({
+      where: { phone },
+    });
+
+    let isNewCustomer = false;
+
+    if (!user) {
+      isNewCustomer = true;
+      user = await prisma.user.create({
+        data: {
+          phone,
+          name: name?.trim() || `Customer ${phone.slice(-4)}`,
+          role: Role.CUSTOMER,
+          isActive: true,
+        },
+      });
+    } else if (name && name.trim()) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { name: name.trim() },
+      });
+    }
+
+    if (!user.isActive) {
+      throw new ForbiddenError('Your account has been deactivated. Please contact support.');
+    }
+
+    const token = await createSessionToken({
+      userId: user.id,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+    });
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+      isNewCustomer,
+    };
+  }
+
+  /**
    * Get customer profile
    */
   async getProfile(userId: string) {
