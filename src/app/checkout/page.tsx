@@ -301,12 +301,17 @@ export default function CheckoutPage() {
         body: JSON.stringify(orderPayload),
       });
 
-      const data = await res.json();
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        // Response was not JSON (e.g. HTML 500 from Vercel)
+      }
 
-      if (!res.ok || !data.success || !data.data) {
+      if (!res.ok || !data || !data.success || !data.data) {
         const errorMsg =
-          data.error?.message ||
-          (data.error?.details ? JSON.stringify(data.error.details) : 'Could not place order. Please try again.');
+          data?.error?.message ||
+          (data?.error?.details ? JSON.stringify(data.error.details) : `Server returned an error (${res.status}). Please check system configuration.`);
         setIsPlacingOrder(false);
         setOrderError(errorMsg);
         return;
