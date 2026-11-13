@@ -1579,10 +1579,11 @@ export default function CheckoutPage() {
                 <label className="block text-[11px] font-bold text-slate-700 mb-1.5">
                   Mobile Number (India)
                 </label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-3.5 text-xs font-bold text-slate-500 select-none">
-                    🇮🇳 +91
-                  </span>
+                <div className="flex items-center border border-slate-200 rounded-2xl focus-within:border-emerald-600 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all bg-white overflow-hidden">
+                  <div className="pl-3.5 pr-2.5 py-3 flex items-center gap-1.5 bg-slate-50 border-r border-slate-200 select-none shrink-0">
+                    <span className="text-base leading-none">🇮🇳</span>
+                    <span className="text-xs font-bold text-slate-600">+91</span>
+                  </div>
                   <input
                     type="tel"
                     maxLength={10}
@@ -1591,7 +1592,7 @@ export default function CheckoutPage() {
                     placeholder="98765 43210"
                     autoFocus
                     required
-                    className="w-full pl-18 pr-4 py-3 rounded-2xl border border-slate-200 text-sm font-bold text-slate-900 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-300"
+                    className="w-full px-3 py-3 text-sm font-bold text-slate-900 bg-transparent outline-none placeholder:text-slate-300"
                   />
                 </div>
               </div>
