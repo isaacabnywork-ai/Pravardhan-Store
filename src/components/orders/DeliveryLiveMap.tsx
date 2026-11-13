@@ -5,7 +5,10 @@ import {
   ArrowLeft,
   Maximize2,
   Minimize2,
-  Crosshair,
+  MapPin,
+  Store,
+  ExternalLink,
+  Navigation,
 } from 'lucide-react';
 import { Order } from '@/types';
 
@@ -16,277 +19,180 @@ interface DeliveryLiveMapProps {
 
 export function DeliveryLiveMap({ order, onGoBack }: DeliveryLiveMapProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isRecentering, setIsRecentering] = useState(false);
+  const [mapType, setMapType] = useState<'google' | 'route'>('google');
 
-  const handleRecenter = () => {
-    setIsRecentering(true);
-    setTimeout(() => setIsRecentering(false), 1200);
+  // Exact Coordinates for Lucknow Vrindavan Store & Customer Location
+  const STORE_LAT = 26.7824;
+  const STORE_LNG = 80.9388;
+  const STORE_NAME = 'Pravdhan Store (Vrindavan Colony Hub)';
+  const STORE_ADDRESS = 'Vrindavan Colony, Sector 4, Lucknow, UP';
+
+  // Customer Coordinates (extracted from mapsLink or calculated)
+  let customerLat = 26.7885;
+  let customerLng = 80.9442;
+  const mapsLink = order.deliveryAddress?.mapsLink || '';
+
+  if (mapsLink) {
+    const match = mapsLink.match(/q=([-+]?\d*\.?\d+),([-+]?\d*\.?\d+)/);
+    if (match && match[1] && match[2]) {
+      customerLat = parseFloat(match[1]);
+      customerLng = parseFloat(match[2]);
+    }
+  }
+
+  // Calculate real Great-Circle distance (Haversine)
+  const calculateDistanceKm = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ) => {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.max(0.4, Math.round(R * c * 10) / 10);
   };
 
-  const localityName = (order.deliveryAddress?.area || 'Sector 14, Model Town').toUpperCase();
-  const addressLabel = order.deliveryAddress?.label || 'Home';
-  const isOutForDelivery = order.orderStatus === 'OUT_FOR_DELIVERY';
+  const distanceKm = calculateDistanceKm(
+    STORE_LAT,
+    STORE_LNG,
+    customerLat,
+    customerLng
+  );
+  const estMinutes = Math.max(10, Math.round(5 + distanceKm * 3.5));
+
+  const destinationQuery = encodeURIComponent(
+    order.deliveryAddress?.completeAddress
+      ? `${order.deliveryAddress.completeAddress}, Vrindavan Colony, Lucknow`
+      : `${customerLat},${customerLng}`
+  );
+
+  const googleEmbedUrl = `https://www.google.com/maps?saddr=${STORE_LAT},${STORE_LNG}&daddr=${destinationQuery}&output=embed`;
+  const externalGoogleDirectionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${STORE_LAT},${STORE_LNG}&destination=${destinationQuery}&travelmode=driving`;
+
+  const customerAddressText =
+    order.deliveryAddress?.completeAddress ||
+    order.deliveryAddress?.street ||
+    order.deliveryAddress?.area ||
+    'Vrindavan Colony, Sector 4, Lucknow';
 
   return (
-    <div className="w-full relative overflow-hidden rounded-3xl shadow-sm border border-slate-200/90 bg-slate-50 transition-all duration-300">
-      {/* ================= LIVE INTERACTIVE VECTOR MAP ================= */}
+    <div className="w-full relative overflow-hidden rounded-3xl shadow-sm border border-slate-200/90 bg-white transition-all duration-300">
+      {/* ================= MAP CONTAINER ================= */}
       <div
         className={`w-full relative overflow-hidden transition-all duration-500 ease-in-out ${
-          isExpanded ? 'h-[440px] sm:h-[500px]' : 'h-72 sm:h-84 md:h-96'
+          isExpanded ? 'h-[440px] sm:h-[520px]' : 'h-72 sm:h-84 md:h-96'
         }`}
       >
-        {/* SVG Realistic Road & Neighborhood Vector Map */}
-        <svg
-          viewBox="0 0 800 500"
-          className="w-full h-full object-cover select-none pointer-events-none transform scale-105"
-          preserveAspectRatio="xMidYMid slice"
-        >
-          <defs>
-            {/* Route Gradient */}
-            <linearGradient id="routeGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#047857" />
-              <stop offset="60%" stopColor="#2563eb" />
-              <stop offset="100%" stopColor="#1e293b" />
-            </linearGradient>
-
-            {/* River Water Gradient */}
-            <linearGradient id="waterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#c7e8fa" />
-              <stop offset="100%" stopColor="#9cd7f7" />
-            </linearGradient>
-
-            {/* Drop Shadow for Pins */}
-            <filter id="pinShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0f172a" floodOpacity="0.25" />
-            </filter>
-          </defs>
-
-          {/* Base Land Fill */}
-          <rect width="800" height="500" fill="#f4f6f8" />
-
-          {/* Parks & Greenery Patches */}
-          <path
-            d="M 520 40 C 620 20, 750 60, 720 160 C 690 230, 580 200, 530 140 Z"
-            fill="#dcfce7"
-            opacity="0.9"
+        {mapType === 'google' ? (
+          /* Real Google Map Embed showing Store, Customer location, and Directions */
+          <iframe
+            src={googleEmbedUrl}
+            title="Real Google Map Route: Store to Customer"
+            className="w-full h-full border-0 select-none"
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
           />
-          <path
-            d="M 60 320 C 140 290, 220 340, 190 430 C 160 480, 80 470, 50 400 Z"
-            fill="#dcfce7"
-            opacity="0.9"
-          />
-          <path
-            d="M 390 370 C 460 340, 530 380, 510 450 C 470 490, 370 480, 360 420 Z"
-            fill="#e2f9eb"
-            opacity="0.8"
-          />
-          <path
-            d="M 20 80 C 70 50, 150 70, 140 130 C 120 180, 40 160, 20 120 Z"
-            fill="#e2f9eb"
-            opacity="0.75"
-          />
+        ) : (
+          /* Connected Schematic Route View */
+          <div className="w-full h-full bg-slate-50 relative flex flex-col justify-between p-6">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Store-to-Doorstep Dispatch Line
+              </span>
+              <span className="text-xs font-extrabold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full">
+                {distanceKm} km • {estMinutes} mins
+              </span>
+            </div>
 
-          {/* Water Channel / River (diagonal realistic flow) */}
-          <path
-            d="M -40 220 Q 220 270, 470 170 T 840 130"
-            fill="none"
-            stroke="url(#waterGrad)"
-            strokeWidth="36"
-            strokeLinecap="round"
-          />
-          <path
-            d="M -40 220 Q 220 270, 470 170 T 840 130"
-            fill="none"
-            stroke="#7dd3fc"
-            strokeWidth="18"
-            strokeLinecap="round"
-            opacity="0.6"
-          />
+            <div className="flex items-center justify-between my-auto relative px-4">
+              {/* Connecting Dashed Line */}
+              <div className="absolute left-10 right-10 top-1/2 -translate-y-1/2 border-t-4 border-dashed border-emerald-500 z-0" />
 
-          {/* Urban Building Blocks / Plots Pattern */}
-          <g opacity="0.35" stroke="#e2e8f0" strokeWidth="1" fill="#ffffff">
-            <rect x="180" y="70" width="40" height="30" rx="3" />
-            <rect x="230" y="70" width="50" height="30" rx="3" />
-            <rect x="180" y="110" width="45" height="35" rx="3" />
-            <rect x="235" y="110" width="45" height="35" rx="3" />
-            <rect x="350" y="80" width="55" height="30" rx="3" />
-            <rect x="350" y="120" width="55" height="30" rx="3" />
-            <rect x="580" y="240" width="45" height="35" rx="3" />
-            <rect x="635" y="240" width="45" height="35" rx="3" />
-            <rect x="580" y="285" width="45" height="35" rx="3" />
-            <rect x="635" y="285" width="45" height="35" rx="3" />
-            <rect x="120" y="230" width="50" height="40" rx="3" />
-            <rect x="220" y="380" width="60" height="35" rx="3" />
-          </g>
+              {/* Store Point */}
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="w-12 h-12 rounded-2xl bg-[#0F5132] text-white flex items-center justify-center shadow-lg border-2 border-white">
+                  <Store className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-extrabold text-slate-900 mt-2">
+                  Pravdhan Store
+                </span>
+                <span className="text-[10px] text-slate-500">Vrindavan Hub</span>
+              </div>
 
-          {/* Local Secondary Streets Grid */}
-          <g stroke="#ffffff" strokeWidth="6" strokeLinecap="round" opacity="0.95">
-            <line x1="80" y1="0" x2="80" y2="500" />
-            <line x1="280" y1="0" x2="280" y2="500" />
-            <line x1="420" y1="0" x2="420" y2="500" />
-            <line x1="560" y1="0" x2="560" y2="500" />
-            <line x1="700" y1="0" x2="700" y2="500" />
-            <line x1="0" y1="90" x2="800" y2="90" />
-            <line x1="0" y1="180" x2="800" y2="180" />
-            <line x1="0" y1="310" x2="800" y2="310" />
-            <line x1="0" y1="410" x2="800" y2="410" />
-          </g>
+              {/* Distance Pill */}
+              <div className="relative z-10 bg-white border border-emerald-300 rounded-full px-3 py-1 shadow-md text-center">
+                <span className="text-xs font-black text-emerald-700 block">
+                  {distanceKm} km
+                </span>
+                <span className="text-[9px] text-slate-400 font-bold block uppercase">
+                  Connected
+                </span>
+              </div>
 
-          {/* Arterial Highways & Main Expressways */}
-          <g strokeLinecap="round">
-            {/* Highway 1: Diagonal expressway */}
-            <path d="M -50 360 L 850 220" stroke="#cbd5e1" strokeWidth="20" />
-            <path d="M -50 360 L 850 220" stroke="#f8fafc" strokeWidth="14" />
-            <path d="M -50 360 L 850 220" stroke="#94a3b8" strokeWidth="2" strokeDasharray="12 12" />
+              {/* Customer Home Point */}
+              <div className="relative z-10 flex flex-col items-center">
+                <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg border-2 border-white">
+                  <MapPin className="w-6 h-6 text-emerald-400" />
+                </div>
+                <span className="text-xs font-extrabold text-slate-900 mt-2">
+                  Customer Doorstep
+                </span>
+                <span className="text-[10px] text-slate-500">
+                  {order.deliveryAddress?.label || 'Home'}
+                </span>
+              </div>
+            </div>
 
-            {/* Highway 2: Vertical boulevard */}
-            <path d="M 330 -50 L 330 550" stroke="#cbd5e1" strokeWidth="18" />
-            <path d="M 330 -50 L 330 550" stroke="#f8fafc" strokeWidth="12" />
+            <p className="text-center text-xs text-slate-500 font-medium truncate">
+              {customerAddressText}
+            </p>
+          </div>
+        )}
 
-            {/* Highway 3: Cross link */}
-            <path d="M -50 140 L 850 160" stroke="#cbd5e1" strokeWidth="14" />
-            <path d="M -50 140 L 850 160" stroke="#ffffff" strokeWidth="10" />
-          </g>
-
-          {/* Locality & Neighborhood Street Text Labels */}
-          <g fill="#64748b" fontSize="11" fontWeight="700" letterSpacing="0.8">
-            <text x="210" y="340" fill="#475569">SECTOR 14</text>
-            <text x="440" y="110" fill="#475569">MODEL TOWN</text>
-            <text x="140" y="150" fill="#64748b">CIVIL LINES</text>
-            <text x="610" y="170" fill="#64748b">SUKHJIT NAGAR</text>
-            <text x="590" y="370" fill="#64748b">OLD RAILWAY RD</text>
-            <text x="100" y="440" fill="#94a3b8">MEHRAULI ROAD</text>
-            {localityName && (
-              <text x="440" y="240" fill="#0f172a" fontSize="12" fontWeight="800">
-                {localityName}
-              </text>
-            )}
-          </g>
-
-          {/* Active Navigation Route Line (Store -> Customer Home) */}
-          <g>
-            {/* Route soft glow */}
-            <path
-              d="M 280 290 C 330 280, 360 260, 390 225 S 435 195, 480 170"
-              fill="none"
-              stroke="#60a5fa"
-              strokeWidth="14"
-              strokeLinecap="round"
-              opacity="0.45"
-            />
-            {/* Route main line */}
-            <path
-              d="M 280 290 C 330 280, 360 260, 390 225 S 435 195, 480 170"
-              fill="none"
-              stroke="url(#routeGradient)"
-              strokeWidth="6"
-              strokeLinecap="round"
-            />
-            {/* Animated directional dashed beads */}
-            <path
-              d="M 280 290 C 330 280, 360 260, 390 225 S 435 195, 480 170"
-              fill="none"
-              stroke="#ffffff"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeDasharray="6 10"
-              className="animate-[dash_1.5s_linear_infinite]"
-            />
-          </g>
-
-          {/* ================= PINS ON MAP ================= */}
-          {/* Origin Pin: Dark Store #01 */}
-          <g filter="url(#pinShadow)">
-            {/* Ground shadow base */}
-            <ellipse cx="280" cy="292" rx="14" ry="5" fill="#0f172a" opacity="0.3" />
-
-            {/* Store Marker Teardrop Pin */}
-            <path
-              d="M 280 290 C 265 290, 260 270, 260 258 C 260 244, 270 236, 280 236 C 290 236, 300 244, 300 258 C 300 270, 295 290, 280 290 Z"
-              fill="#105132"
-            />
-            <circle cx="280" cy="256" r="14" fill="#ffffff" />
-            <circle cx="280" cy="256" r="11" fill="#105132" />
-            {/* Store icon text */}
-            <text x="280" y="260" textAnchor="middle" fill="#ffffff" fontSize="11" fontWeight="900">
-              P
-            </text>
-          </g>
-
-          {/* Store Pin Label Banner */}
-          <g>
-            <rect x="235" y="296" width="90" height="18" rx="9" fill="#0f172a" opacity="0.85" />
-            <text x="280" y="309" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="800">
-              Dark Store #01
-            </text>
-          </g>
-
-          {/* Active Rider Marker (Positioned along the route) */}
-          {(isOutForDelivery || order.orderStatus === 'READY_FOR_DELIVERY') && (
-            <g transform="translate(385, 225)" filter="url(#pinShadow)">
-              {/* Radar pulse ring */}
-              <circle cx="0" cy="0" r="18" fill="#3b82f6" opacity="0.35" className="animate-ping" />
-              <circle cx="0" cy="0" r="16" fill="#2563eb" />
-              <circle cx="0" cy="0" r="14" fill="#ffffff" />
-              <circle cx="0" cy="0" r="12" fill="#2563eb" />
-              <text x="0" y="4" textAnchor="middle" fill="#ffffff" fontSize="10">
-                🛵
-              </text>
-            </g>
-          )}
-
-          {/* Destination Pin: Customer Home (Matching Reference Screenshot) */}
-          <g filter="url(#pinShadow)">
-            {/* Ground shadow base */}
-            <ellipse cx="480" cy="172" rx="16" ry="6" fill="#0f172a" opacity="0.35" />
-
-            {/* Recenter Radar Pulse Animation */}
-            {isRecentering && (
-              <circle cx="480" cy="140" r="38" fill="#e11d48" opacity="0.25" className="animate-ping" />
-            )}
-
-            {/* Navy/Charcoal Teardrop Pin */}
-            <path
-              d="M 480 170 C 462 170, 456 148, 456 135 C 456 118, 468 110, 480 110 C 492 110, 504 118, 504 135 C 504 148, 498 170, 480 170 Z"
-              fill="#1e293b"
-            />
-            {/* Inner Squircle Badge with House Icon */}
-            <rect x="466" y="122" width="28" height="24" rx="6" fill="#334155" />
-            <text x="480" y="139" textAnchor="middle" fill="#ffffff" fontSize="13">
-              🏠
-            </text>
-          </g>
-
-          {/* Home Destination Pin Label Banner */}
-          <g>
-            <rect x="430" y="82" width="100" height="22" rx="11" fill="#0f172a" opacity="0.9" />
-            <text x="480" y="97" textAnchor="middle" fill="#ffffff" fontSize="10" fontWeight="800">
-              {addressLabel} Address
-            </text>
-          </g>
-        </svg>
-
-        {/* ================= FLOATING OVERLAY MAP BUTTONS ================= */}
+        {/* ================= FLOATING OVERLAY CONTROLS ================= */}
         {/* Top-Left: Back Button */}
         <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
           <button
             type="button"
             onClick={onGoBack}
             aria-label="Back to order list"
-            className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-slate-800 backdrop-blur-md shadow-md border border-slate-200/90 flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+            className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-slate-800 backdrop-blur-md shadow-md border border-slate-200/90 flex items-center justify-center transition-all active:scale-95 cursor-pointer hover:shadow-lg"
           >
             <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
 
-        {/* Top-Right: Fullscreen & Re-center Buttons */}
-        <div className="absolute top-4 right-4 z-20 flex flex-col items-center gap-2.5">
+        {/* Top-Right: Fullscreen & External Google Maps Button */}
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+          {/* External Google Maps Button */}
+          <a
+            href={externalGoogleDirectionsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open in Google Maps app"
+            className="h-10 px-3 rounded-full bg-white/95 hover:bg-white text-emerald-800 backdrop-blur-md shadow-md border border-slate-200/90 flex items-center gap-1.5 transition-all active:scale-95 text-xs font-bold hover:shadow-lg"
+            title="Open directions in Google Maps app"
+          >
+            <Navigation className="w-3.5 h-3.5 text-emerald-700" />
+            <span className="hidden sm:inline">Directions</span>
+            <ExternalLink className="w-3 h-3 text-slate-400" />
+          </a>
+
           {/* Expand/Collapse Map Toggle */}
           <button
             type="button"
             onClick={() => setIsExpanded((prev) => !prev)}
             aria-label={isExpanded ? 'Collapse map' : 'Expand map'}
-            className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-rose-500 backdrop-blur-md shadow-md border border-slate-200/90 flex items-center justify-center transition-all active:scale-95 cursor-pointer hover:shadow-lg"
+            className="w-10 h-10 rounded-full bg-white/95 hover:bg-white text-slate-700 backdrop-blur-md shadow-md border border-slate-200/90 flex items-center justify-center transition-all active:scale-95 cursor-pointer hover:shadow-lg"
             title={isExpanded ? 'Collapse map' : 'Expand map'}
           >
             {isExpanded ? (
@@ -295,18 +201,36 @@ export function DeliveryLiveMap({ order, onGoBack }: DeliveryLiveMapProps) {
               <Maximize2 className="w-4.5 h-4.5 stroke-[2.2]" />
             )}
           </button>
+        </div>
 
-          {/* Recenter / GPS Target Button */}
+        {/* Bottom Banner: Connected Store to Doorstep Distance Metric */}
+        <div className="absolute bottom-3 left-3 right-3 z-20 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-2.5 sm:p-3 shadow-lg flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Store className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-black text-slate-900 truncate">
+                  Pravdhan Hub ➔ {order.deliveryAddress?.label || 'Home'}
+                </span>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 shrink-0">
+                  {distanceKm} km
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 truncate">
+                {customerAddressText}
+              </p>
+            </div>
+          </div>
+
+          {/* Toggle between Google Map view & Schematic Line view */}
           <button
             type="button"
-            onClick={handleRecenter}
-            aria-label="Re-center on delivery address"
-            className={`w-10 h-10 rounded-full bg-white/95 hover:bg-white text-rose-500 backdrop-blur-md shadow-md border border-slate-200/90 flex items-center justify-center transition-all active:scale-95 cursor-pointer hover:shadow-lg ${
-              isRecentering ? 'ring-4 ring-rose-500/30 text-rose-600 scale-105' : ''
-            }`}
-            title="Locate my address"
+            onClick={() => setMapType((prev) => (prev === 'google' ? 'route' : 'google'))}
+            className="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[11px] font-bold text-slate-700 transition-colors shrink-0"
           >
-            <Crosshair className={`w-5 h-5 stroke-[2.2] ${isRecentering ? 'animate-spin' : ''}`} />
+            {mapType === 'google' ? 'Schematic' : 'Google Map'}
           </button>
         </div>
       </div>

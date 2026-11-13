@@ -1449,7 +1449,7 @@ export const INITIAL_DELIVERY_SLOTS: DeliverySlot[] = [
   {
     id: 'slot-express-now',
     dateType: 'TODAY',
-    dateLabel: '⚡ Instant Express (Sector 14 Hub)',
+    dateLabel: '⚡ Instant Express (Vrindavan Hub)',
     dateString: new Date().toISOString().split('T')[0],
     timeSlot: '⚡ 12–15 Mins Express Delivery',
     isAvailable: true,

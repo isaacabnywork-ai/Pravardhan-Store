@@ -603,7 +603,7 @@ export default function MyOrdersPage() {
               <p className="font-semibold text-gray-800">Product Information</p>
               <p className="leading-relaxed line-clamp-3">
                 {selectedProduct.product?.description ||
-                  'High quality, triple-sorted and fresh pantry essential delivered express to your doorstep in Sector 14, Model Town, Gurugram.'}
+                  'High quality, triple-sorted and fresh pantry essentials delivered express to your doorstep in Vrindavan Colony, Lucknow.'}
               </p>
               <div className="pt-1 flex items-center gap-2 text-emerald-700 font-medium text-[11px]">
                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -750,7 +750,7 @@ export default function MyOrdersPage() {
               >
                 <div>
                   <p className="font-bold text-gray-900">Call Store Hotline</p>
-                  <p className="text-[11px] text-gray-500">+91 124 456 7890 (Sector 14)</p>
+                  <p className="text-[11px] text-gray-500">+91 708 090 7954 (Vrindavan Hub)</p>
                 </div>
                 <span className="text-emerald-700 font-bold">Call</span>
               </a>

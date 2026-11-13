@@ -596,7 +596,7 @@ export default function OrderTrackingPage({
                 12-Minute Express Grocery & Daily Essentials
               </p>
               <p className="text-slate-500 text-[10px] mt-1 max-w-sm">
-                Fulfillment Dark Store Hub #01, Sector 14, Model Town, Gurugram, Haryana - 122001
+                Fulfillment Dark Store Hub #01, Vrindavan Colony, Lucknow, UP - 226029
               </p>
               <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[10px] text-slate-600 mt-2 font-mono">
                 <span><strong>GSTIN:</strong> 06AAACP1234F1Z5</span>
@@ -650,7 +650,7 @@ export default function OrderTrackingPage({
             <p className="text-slate-700 text-[11px] mt-1.5 leading-relaxed">
               {order.deliveryAddress
                 ? `${order.deliveryAddress.houseNumber ? `${order.deliveryAddress.houseNumber}, ` : ''}${order.deliveryAddress.street ? `${order.deliveryAddress.street}, ` : ''}${order.deliveryAddress.area ? `${order.deliveryAddress.area}, ` : ''}${order.deliveryAddress.city ? `${order.deliveryAddress.city} - ` : ''}${order.deliveryAddress.pincode || ''}`
-                : 'Sector 14, Model Town, Gurugram, Haryana'}
+                : 'Vrindavan Colony, Lucknow, UP'}
             </p>
           </div>
 
@@ -661,7 +661,7 @@ export default function OrderTrackingPage({
             <div className="space-y-1 text-[11px]">
               <div>
                 <span className="text-slate-500">Dispatch Hub: </span>
-                <span className="font-medium text-slate-800">Pravdhan Dark Store #01 (Sector 14)</span>
+                <span className="font-medium text-slate-800">Pravdhan Dark Store #01 (Vrindavan Hub)</span>
               </div>
               <div>
                 <span className="text-slate-500">Delivery Slot: </span>

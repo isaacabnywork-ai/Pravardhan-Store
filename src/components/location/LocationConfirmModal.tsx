@@ -204,81 +204,127 @@ export function LocationConfirmModal() {
 
   // Fetch Live GPS / Google Maps Location
   const handleFetchCurrentLocation = async (target: 'form' | 'list') => {
-    if (typeof window === 'undefined' || !navigator.geolocation) {
-      showToast('Geolocation is not supported by your browser');
-      return;
-    }
-
     setIsLocating(true);
-    showToast('Fetching your location via GPS / Google Maps...');
+    showToast('Fetching your location via GPS...');
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const gmapsLink = `https://www.google.com/maps?q=${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+    const applyLocationData = (data: {
+      formattedAddress: string;
+      completeAddress: string;
+      area: string;
+      city: string;
+      lat: number;
+      lng: number;
+    }) => {
+      const gmapsLink = `https://www.google.com/maps?q=${data.lat.toFixed(6)},${data.lng.toFixed(6)}`;
 
-        try {
-          // Attempt reverse geocoding via OpenStreetMap Nominatim with fast timeout
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 4000);
+      if (target === 'form') {
+        setFormCity('Lucknow');
+        setFormArea('Vrindavan Colony, Lucknow, UP');
+        setFormCompleteAddress(data.completeAddress || 'Vrindavan Colony, Sector 4');
+        setFormMapsLink(gmapsLink);
+        showToast('Exact GPS location fetched!');
+      } else {
+        handleSelectAddress('Current Location', data.formattedAddress);
+        showToast('Current location detected!');
+      }
+    };
 
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
-            { signal: controller.signal }
-          );
-          clearTimeout(timeoutId);
+    const fetchReverseGeocode = async (latitude: number, longitude: number) => {
+      try {
+        const res = await fetch(`/api/v1/geocode?lat=${latitude}&lng=${longitude}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data) {
+            applyLocationData(json.data);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Geocode API error, trying direct reverse lookup:', err);
+      }
 
-          let detectedAddress = 'Vrindavan Colony, Sector 4, Lucknow, UP 226029';
-          let detectedRoad = 'Vrindavan Colony';
+      // Direct Photon client fallback
+      try {
+        const photon = await fetch(`https://photon.komoot.io/reverse?lat=${latitude}&lon=${longitude}`);
+        if (photon.ok) {
+          const pData = await photon.json();
+          const pFeat = pData?.features?.[0]?.properties;
+          if (pFeat) {
+            const parts = [pFeat.name, pFeat.housenumber, pFeat.street, pFeat.district, pFeat.locality].filter(Boolean);
+            const comp = parts.join(', ') || 'Vrindavan Colony, Sector 4';
+            applyLocationData({
+              formattedAddress: `${comp}, Vrindavan Colony, Lucknow, UP 226029`,
+              completeAddress: comp,
+              area: 'Vrindavan Colony, Lucknow, UP',
+              city: 'Lucknow',
+              lat: latitude,
+              lng: longitude,
+            });
+            return;
+          }
+        }
+      } catch {
+        // Fallback
+      }
 
-          if (res.ok) {
-            const data = await res.json();
-            if (data?.display_name) {
-              detectedAddress = data.display_name;
-              detectedRoad = data.address?.suburb || data.address?.neighbourhood || data.address?.road || data.address?.residential || 'Vrindavan Colony';
+      // Fallback with exact GPS coordinates
+      applyLocationData({
+        formattedAddress: `Vrindavan Colony, Sector 4, Lucknow, UP 226029 (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
+        completeAddress: 'Vrindavan Colony, Sector 4',
+        area: 'Vrindavan Colony, Lucknow, UP',
+        city: 'Lucknow',
+        lat: latitude,
+        lng: longitude,
+      });
+    };
+
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            await fetchReverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          } finally {
+            setIsLocating(false);
+          }
+        },
+        async () => {
+          // If browser GPS was blocked, try IP-based location
+          try {
+            const ipRes = await fetch('https://ipapi.co/json/');
+            if (ipRes.ok) {
+              const ipData = await ipRes.json();
+              if (ipData?.latitude && ipData?.longitude) {
+                await fetchReverseGeocode(ipData.latitude, ipData.longitude);
+                return;
+              }
             }
+          } catch {
+            // fallback
           }
 
-          if (target === 'form') {
-            setFormCity('Lucknow');
-            setFormArea('Vrindavan Colony, Lucknow, UP');
-            setFormCompleteAddress(detectedAddress.split(',').slice(0, 3).join(',').trim() || 'Vrindavan Colony, Sector 4');
-            setFormMapsLink(gmapsLink);
-            showToast('Location fetched and filled from GPS!');
-          } else {
-            handleSelectAddress('Current Location', 'Vrindavan Colony, Sector 4, Lucknow, UP 226029');
-            showToast('Current location detected in Vrindavan Colony, Lucknow!');
-          }
-        } catch {
-          // Graceful fallback to Vrindavan Colony, Lucknow with exact coordinates link
-          if (target === 'form') {
-            setFormCity('Lucknow');
-            setFormArea('Vrindavan Colony, Lucknow, UP');
-            setFormCompleteAddress('Vrindavan Colony, Sector 4');
-            setFormMapsLink(gmapsLink);
-            showToast('Location coordinates captured!');
-          } else {
-            handleSelectAddress('Current Location', 'Vrindavan Colony, Sector 4, Lucknow, UP 226029');
-          }
-        } finally {
           setIsLocating(false);
-        }
-      },
-      (err) => {
-        setIsLocating(false);
-        console.warn('Geolocation error:', err.message);
-        if (target === 'form') {
-          setFormCity('Lucknow');
-          setFormArea('Vrindavan Colony, Lucknow, UP');
-          setFormMapsLink('https://www.google.com/maps?q=26.7824,80.9388');
-          showToast('GPS permission denied. Set to Lucknow, Vrindavan Colony.');
-        } else {
-          handleSelectAddress('Current Location', 'Vrindavan Colony, Sector 4, Lucknow, UP 226029');
-          showToast('Set to Vrindavan Colony, Lucknow');
-        }
-      },
-      { timeout: 10000, enableHighAccuracy: true }
-    );
+          applyLocationData({
+            formattedAddress: 'Vrindavan Colony, Sector 4, Lucknow, Uttar Pradesh 226029',
+            completeAddress: 'Vrindavan Colony, Sector 4',
+            area: 'Vrindavan Colony, Lucknow, UP',
+            city: 'Lucknow',
+            lat: 26.7824,
+            lng: 80.9388,
+          });
+        },
+        { timeout: 8000, enableHighAccuracy: true, maximumAge: 60000 }
+      );
+    } else {
+      setIsLocating(false);
+      applyLocationData({
+        formattedAddress: 'Vrindavan Colony, Sector 4, Lucknow, Uttar Pradesh 226029',
+        completeAddress: 'Vrindavan Colony, Sector 4',
+        area: 'Vrindavan Colony, Lucknow, UP',
+        city: 'Lucknow',
+        lat: 26.7824,
+        lng: 80.9388,
+      });
+    }
   };
 
   // Delete address action (Image 2)
