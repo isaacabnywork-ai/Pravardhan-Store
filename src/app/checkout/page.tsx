@@ -309,6 +309,13 @@ export default function CheckoutPage() {
       }
 
       if (!res.ok || !data || !data.success || !data.data) {
+        if (res.status === 401) {
+          setIsPlacingOrder(false);
+          setIsAuthModalOpen(true);
+          setOrderError('Please sign in with your mobile number to complete your order.');
+          return;
+        }
+
         const errorMsg =
           data?.error?.message ||
           (data?.error?.details ? JSON.stringify(data.error.details) : `Server returned an error (${res.status}). Please check system configuration.`);
