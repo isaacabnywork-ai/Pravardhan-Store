@@ -102,9 +102,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       {/* Background Decorative Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative w-full sm:max-w-md min-h-screen sm:min-h-0 bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border sm:border-slate-100 overflow-hidden my-auto flex flex-col justify-start pt-16 sm:pt-0 sm:justify-center animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full sm:max-w-md min-h-screen sm:min-h-0 bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border sm:border-slate-100 overflow-hidden my-auto flex flex-col justify-center animate-in fade-in zoom-in-95 duration-200">
         {/* Header: Transparent Logo and Centered Title */}
-        <div className="pt-2 sm:pt-8 pb-1.5 px-6 text-center flex flex-col items-center">
+        <div className="pt-6 sm:pt-8 pb-1.5 px-6 text-center flex flex-col items-center">
           <div className="relative w-36 h-12 sm:w-44 sm:h-14 mb-2 sm:mb-2.5 flex items-center justify-center">
             <Image
               src="/images/logo.png"
