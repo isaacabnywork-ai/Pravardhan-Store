@@ -28,7 +28,8 @@ export class CustomerService {
   async requestOtp(rawPhone: string) {
     const res = await smsService.requestOtp(rawPhone);
     const isProduction = process.env.NODE_ENV === 'production';
-    if (isProduction && res.devCode) {
+    // Only strip devCode in production if live MSG91 is actually configured
+    if (isProduction && res.devCode && process.env.MSG91_AUTH_KEY && process.env.MSG91_AUTH_KEY.length > 5) {
       delete res.devCode;
     }
     return res;

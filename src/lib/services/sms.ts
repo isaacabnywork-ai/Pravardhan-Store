@@ -312,9 +312,10 @@ export class SmsService {
    */
   async requestOtp(rawPhone: string): Promise<OtpRequestResult> {
     const isDev = process.env.NODE_ENV !== 'production';
+    const isDemoAllowed = !this.isConfigured || process.env.ENABLE_DEMO_OTP === 'true';
 
-    // Fast Fail-Closed Guard: In production, reject immediately if SMS gateway is not configured
-    if (!this.isConfigured && !isDev) {
+    // Fast Fail-Closed Guard: In production with live MSG91 configured, require gateway
+    if (!this.isConfigured && !isDev && !isDemoAllowed) {
       throw new ValidationError('SMS service is currently unavailable. Please contact customer support.');
     }
 
@@ -379,7 +380,7 @@ export class SmsService {
       let codeHash = 'MSG91_MANAGED';
       let encryptedCode: string | null = null;
 
-      if (!this.isConfigured || isDev) {
+      if (!this.isConfigured || isDev || isDemoAllowed) {
         const generatedCode = clean10.endsWith('000000') || clean10.endsWith('43210')
           ? '123456'
           : Math.floor(100000 + Math.random() * 900000).toString();
@@ -387,7 +388,7 @@ export class SmsService {
         const salt = await bcrypt.genSalt(10);
         codeHash = await bcrypt.hash(generatedCode, salt);
         encryptedCode = encryptPayload(generatedCode);
-        if (isDev) {
+        if (isDev || isDemoAllowed) {
           devCode = generatedCode;
         }
       }
