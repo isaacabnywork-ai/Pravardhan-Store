@@ -179,13 +179,82 @@ export class CartService {
    * Add variant to cart with real-time stock ceiling check
    */
   async addItem(cartId: string, variantId: string, quantity = 1, storeId?: string) {
-    // Resolve variant by ID or by SKU / normalized identifier fallback
+    // Exact mapping for mock variants to authoritative database SKUs
+    const MOCK_VARIANT_TO_SKU: Record<string, string> = {
+      'var-atta-1kg': 'ASH-ATTA-1KG',
+      'var-atta-5kg': 'ASH-ATTA-5KG',
+      'var-atta-10kg': 'ASH-ATTA-10KG',
+      'var-rice-1kg': 'DWT-ROZ-1KG',
+      'var-rice-5kg': 'DWT-ROZ-5KG',
+      'var-toor-500g': 'TAT-TOOR-500G',
+      'var-toor-1kg': 'TAT-TOOR-1KG',
+      'var-oil-1l': 'FOR-SUN-1L',
+      'var-oil-5l': 'FOR-SUN-5L',
+      'var-orange-500g': 'FRT-ORG-500G',
+      'var-orange-1kg': 'FRT-ORG-1KG',
+      'var-ber-250g': 'FRT-BER-250G',
+      'var-ber-500g': 'FRT-BER-500G',
+      'var-guava-400g': 'FRT-GVA-400G',
+      'var-pom-175g': 'FRT-POM-175G',
+      'var-tom-500g': 'VEG-TOM-500G',
+      'var-tom-1kg': 'VEG-TOM-1KG',
+      'var-oni-1kg': 'VEG-ONI-1KG',
+      'var-oni-3kg': 'VEG-ONI-3KG',
+      'var-app-500g': 'FRU-APP-500G',
+      'var-app-1kg': 'FRU-APP-1KG',
+      'var-pot-1kg': 'VEG-POT-1KG',
+      'var-pot-3kg': 'VEG-POT-3KG',
+      'var-cap-250g': 'VEG-CAP-250G',
+      'var-cap-500g': 'VEG-CAP-500G',
+      'var-ban-500g': 'FRU-BAN-500G',
+      'var-ban-1kg': 'FRU-BAN-1KG',
+      'var-spn-250g': 'VEG-SPN-250G',
+      'var-milk-500ml': 'AML-TAZ-500ML',
+      'var-milk-1l': 'AML-TAZ-1L',
+      'var-pan-200g': 'AML-PAN-200G',
+      'var-pan-500g': 'AML-PAN-500G',
+      'var-bhuj-200g': 'HLD-BHU-200G',
+      'var-bhuj-400g': 'HLD-BHU-400G',
+      'var-tea-250g': 'TAT-TEA-250G',
+      'var-tea-500g': 'TAT-TEA-500G',
+      'var-surf-1kg': 'SRF-MAT-1KG',
+      'var-surf-2kg': 'SRF-MAT-2KG',
+      'var-bourbon-99g': 'SF-BOUR-99G',
+      'var-bourbon-450g': 'SF-BOUR-450G',
+      'var-chocofill-69g': 'SF-CHOCO-69G',
+      'var-jimjam-138g': 'BR-JIM-138G',
+      'var-chocosand-79g': 'SF-CSAND-79G',
+      'var-vansand-79g': 'SF-VSAND-79G',
+      'var-oreo-125g': 'OR-VAN-125G',
+      'var-oreo-300g': 'OR-VAN-300G',
+      'var-happilo-252g': 'HAP-GIFT-252G',
+      'var-happilo-500g': 'HAP-GIFT-500G',
+      'var-happilo-1kg': 'HAP-GIFT-1KG',
+      'var-datebites-200g': 'FRM-DATE-200G',
+      'var-orika-76g': 'ORK-GRL-76G',
+      'var-sweets-400g': 'HLD-ROY-400G',
+      'var-decor-diya-set': 'PRV-BRS-DIYA',
+      'var-frag-candle-set': 'PHL-FRG-SET',
+    };
+
+    const targetSku = MOCK_VARIANT_TO_SKU[variantId];
+
+    // Resolve variant by ID or by SKU
     let variant = await prisma.productVariant.findUnique({
       where: { id: variantId },
       include: {
         inventory: storeId ? { where: { storeId } } : true,
       },
     });
+
+    if (!variant && targetSku) {
+      variant = await prisma.productVariant.findUnique({
+        where: { sku: targetSku },
+        include: {
+          inventory: storeId ? { where: { storeId } } : true,
+        },
+      });
+    }
 
     if (!variant) {
       variant = await prisma.productVariant.findUnique({
