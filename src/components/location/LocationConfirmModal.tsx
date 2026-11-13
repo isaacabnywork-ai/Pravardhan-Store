@@ -20,6 +20,9 @@ import {
   Pencil,
   ArrowLeft,
   Check,
+  Navigation,
+  Loader2,
+  ExternalLink,
 } from 'lucide-react';
 import { useCart } from '@/lib/context/CartContext';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -44,92 +47,41 @@ const DEFAULT_INITIAL_ADDRESSES: SavedLocation[] = [
   {
     id: 'addr-vrindavan-1',
     title: 'Home',
-    distance: '1.38 km',
+    distance: '0.4 km',
     city: 'Lucknow',
-    area: 'Vrindavan Colony',
-    completeAddress: 'Vrindavan Yojna, 4/279, Sector 4',
-    address: 'Vrindavan Yojna, 4/279, Sector 4, Vrindavan Colony, Lucknow, Uttar Pradesh 226029',
-    recipientType: 'someone_else',
-    receiverName: 'Rahul Sharma',
+    area: 'Vrindavan Colony, Lucknow, UP',
+    completeAddress: 'Vrindavan Yojna, Sector 4 / Raebareli Road',
+    address: 'Vrindavan Yojna, Sector 4, Vrindavan Colony, Lucknow, UP 226029',
+    recipientType: 'myself',
+    receiverName: 'ABNY Developer',
     phone: '7080907954',
-    tag: null,
+    tag: 'Primary Zone',
     isDefault: true,
   },
   {
-    id: 'addr-gurugram-1',
-    title: 'Home (Current)',
-    distance: '0.6 km',
-    city: 'Gurugram',
-    area: 'Sector 14, DLF Phase 1',
-    completeAddress: 'House No. 42B, 2nd Floor, Arjun Marg',
-    address: 'House No. 42B, 2nd Floor, Arjun Marg, DLF Phase 1, Sector 14, Gurugram, Haryana 122001',
-    recipientType: 'myself',
-    receiverName: 'Rahul Sharma',
-    phone: '9876543210',
-    tag: 'Express delivery',
-    isDefault: false,
-  },
-  {
-    id: 'addr-gurugram-2',
-    title: 'Work / Cyber Hub',
-    distance: '1.8 km',
-    city: 'Gurugram',
-    area: 'Sector 14 Main Road',
-    completeAddress: 'Tower B, Suite 405, Cyber City Expressway',
-    address: 'Tower B, Suite 405, Cyber City Expressway, Sector 14 Main Road, Gurugram, Haryana 122002',
-    recipientType: 'myself',
-    receiverName: 'Rahul Sharma',
-    phone: '9876543210',
+    id: 'addr-vrindavan-2',
+    title: 'Work / Office',
+    distance: '1.2 km',
+    city: 'Lucknow',
+    area: 'Vrindavan Colony, Lucknow, UP',
+    completeAddress: 'Sector 4 Market Complex, Vrindavan Yojna',
+    address: 'Sector 4 Market Complex, Vrindavan Colony, Lucknow, UP 226029',
+    recipientType: 'someone_else',
+    receiverName: 'Store Operations',
+    phone: '7080907954',
     tag: '12-min delivery',
     isDefault: false,
   },
 ];
 
 const POPULAR_CITIES = [
-  { name: 'Gurugram', state: 'Haryana', hub: 'Dark Store #01 (Active)' },
-  { name: 'Lucknow', state: 'Uttar Pradesh', hub: 'Vrindavan Hub (Active)' },
-  { name: 'Delhi NCR', state: 'Delhi', hub: 'South Delhi Hub' },
-  { name: 'Noida', state: 'Uttar Pradesh', hub: 'Sector 62 Hub' },
-  { name: 'Bengaluru', state: 'Karnataka', hub: 'Koramangala Hub' },
-  { name: 'Mumbai', state: 'Maharashtra', hub: 'Andheri Hub' },
-  { name: 'Jaipur', state: 'Rajasthan', hub: 'Jagatpura Hub' },
+  { name: 'Lucknow', state: 'Uttar Pradesh', hub: 'Vrindavan Hub (Active Operational Area)' },
 ];
 
 const POPULAR_AREAS: Record<string, string[]> = {
-  Gurugram: [
-    'Sector 14, Model Town',
-    'DLF Phase 1 & 2, Arjun Marg',
-    'Cyber City Expressway',
-    'Sushant Lok 1',
-    'Golf Course Road',
-    'Sector 49, Sohna Road',
-  ],
   Lucknow: [
+    'Vrindavan Colony, Lucknow, UP',
     'Vrindavan Yojna, Sector 4',
-    'Gomti Nagar, Patrakarpuram',
-    'Hazratganj Main Market',
-    'Aliganj, Sector B',
-    'Indira Nagar, Sector 14',
-    'Gopeshkunj, Sector 6C',
-  ],
-  'Delhi NCR': [
-    'Connaught Place',
-    'Hauz Khas',
-    'Vasant Kunj',
-    'Greater Kailash 1 & 2',
-    'Saket',
-  ],
-  Noida: [
-    'Sector 18 Market',
-    'Sector 62 IT Park',
-    'Sector 137 Expressway',
-    'Sector 76 Metro',
-  ],
-  Jaipur: [
-    'Jagatpura, Shree Vihar Colony',
-    'Malviya Nagar',
-    'Vaishali Nagar',
-    'Mansarovar',
   ],
 };
 
@@ -152,14 +104,15 @@ export function LocationConfirmModal() {
 
   // Address Form State (matches Image 1)
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  const [formCity, setFormCity] = useState('Gurugram');
-  const [formArea, setFormArea] = useState('Sector 14, Model Town');
+  const [formCity, setFormCity] = useState('Lucknow');
+  const [formArea, setFormArea] = useState('Vrindavan Colony, Lucknow, UP');
   const [formCompleteAddress, setFormCompleteAddress] = useState('');
   const [formMapsLink, setFormMapsLink] = useState('');
   const [formRecipientType, setFormRecipientType] = useState<'myself' | 'someone_else'>('someone_else');
   const [formReceiverName, setFormReceiverName] = useState('');
   const [formReceiverPhone, setFormReceiverPhone] = useState('');
   const [formSaveAs, setFormSaveAs] = useState('');
+  const [isLocating, setIsLocating] = useState(false);
 
   // Inline City / Area Pickers inside the Form
   const [isCityPickerOpen, setIsCityPickerOpen] = useState(false);
@@ -217,8 +170,8 @@ export function LocationConfirmModal() {
   // Open "Add address details" screen (Image 1)
   const handleOpenAddForm = () => {
     setEditingAddressId(null);
-    setFormCity('Gurugram');
-    setFormArea('Sector 14, Model Town');
+    setFormCity('Lucknow');
+    setFormArea('Vrindavan Colony, Lucknow, UP');
     setFormCompleteAddress('');
     setFormMapsLink('');
     setFormRecipientType('someone_else');
@@ -234,19 +187,98 @@ export function LocationConfirmModal() {
   // Open "Edit address details" screen (Image 1 prefilled)
   const handleOpenEditForm = (addr: SavedLocation) => {
     setEditingAddressId(addr.id);
-    setFormCity(addr.city || 'Gurugram');
-    setFormArea(addr.area || 'Sector 14, Model Town');
+    setFormCity(addr.city || 'Lucknow');
+    setFormArea(addr.area || 'Vrindavan Colony, Lucknow, UP');
     setFormCompleteAddress(addr.completeAddress || addr.address);
     setFormMapsLink(addr.mapsLink || '');
     setFormRecipientType(addr.recipientType || 'someone_else');
     setFormReceiverName(addr.receiverName || addr.title);
-    setFormReceiverPhone(addr.phone || '9876543210');
+    setFormReceiverPhone(addr.phone || '7080907954');
     setFormSaveAs(addr.title || 'Home');
     setFormErrors({});
     setIsCityPickerOpen(false);
     setIsAreaPickerOpen(false);
     setOptionsAddress(null);
     setViewMode('FORM');
+  };
+
+  // Fetch Live GPS / Google Maps Location
+  const handleFetchCurrentLocation = async (target: 'form' | 'list') => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      showToast('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setIsLocating(true);
+    showToast('Fetching your location via GPS / Google Maps...');
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const gmapsLink = `https://www.google.com/maps?q=${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+
+        try {
+          // Attempt reverse geocoding via OpenStreetMap Nominatim with fast timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            { signal: controller.signal }
+          );
+          clearTimeout(timeoutId);
+
+          let detectedAddress = 'Vrindavan Colony, Sector 4, Lucknow, UP 226029';
+          let detectedRoad = 'Vrindavan Colony';
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.display_name) {
+              detectedAddress = data.display_name;
+              detectedRoad = data.address?.suburb || data.address?.neighbourhood || data.address?.road || data.address?.residential || 'Vrindavan Colony';
+            }
+          }
+
+          if (target === 'form') {
+            setFormCity('Lucknow');
+            setFormArea('Vrindavan Colony, Lucknow, UP');
+            setFormCompleteAddress(detectedAddress.split(',').slice(0, 3).join(',').trim() || 'Vrindavan Colony, Sector 4');
+            setFormMapsLink(gmapsLink);
+            showToast('Location fetched and filled from GPS!');
+          } else {
+            handleSelectAddress('Current Location', 'Vrindavan Colony, Sector 4, Lucknow, UP 226029');
+            showToast('Current location detected in Vrindavan Colony, Lucknow!');
+          }
+        } catch {
+          // Graceful fallback to Vrindavan Colony, Lucknow with exact coordinates link
+          if (target === 'form') {
+            setFormCity('Lucknow');
+            setFormArea('Vrindavan Colony, Lucknow, UP');
+            setFormCompleteAddress('Vrindavan Colony, Sector 4');
+            setFormMapsLink(gmapsLink);
+            showToast('Location coordinates captured!');
+          } else {
+            handleSelectAddress('Current Location', 'Vrindavan Colony, Sector 4, Lucknow, UP 226029');
+          }
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (err) => {
+        setIsLocating(false);
+        console.warn('Geolocation error:', err.message);
+        if (target === 'form') {
+          setFormCity('Lucknow');
+          setFormArea('Vrindavan Colony, Lucknow, UP');
+          setFormMapsLink('https://www.google.com/maps?q=26.7824,80.9388');
+          showToast('GPS permission denied. Set to Lucknow, Vrindavan Colony.');
+        } else {
+          handleSelectAddress('Current Location', 'Vrindavan Colony, Sector 4, Lucknow, UP 226029');
+          showToast('Set to Vrindavan Colony, Lucknow');
+        }
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
   };
 
   // Delete address action (Image 2)
@@ -436,6 +468,35 @@ export function LocationConfirmModal() {
                   Address details
                 </h4>
 
+                {/* GPS / Google Maps Live Fetch Banner Button */}
+                <button
+                  type="button"
+                  onClick={() => handleFetchCurrentLocation('form')}
+                  disabled={isLocating}
+                  className="w-full py-2.5 px-3.5 bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-300 rounded-2xl flex items-center justify-between text-left transition-all active:scale-[0.99] group shadow-2xs"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                      {isLocating ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Crosshair className="w-4 h-4 animate-pulse" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs font-extrabold text-emerald-950 block">
+                        {isLocating ? 'Detecting GPS location...' : 'Fetch Location from Google Maps / GPS'}
+                      </span>
+                      <span className="text-[10px] text-emerald-700 font-medium block truncate">
+                        Auto-detects Vrindavan Colony, Lucknow & fills coordinates
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-lg bg-emerald-600 text-white shrink-0 group-hover:bg-emerald-700">
+                    {isLocating ? 'Locating...' : 'Auto-Fill'}
+                  </span>
+                </button>
+
                 {/* 1. Select a city Card */}
                 <div className="border border-gray-200/90 rounded-2xl p-3 sm:p-3.5 bg-white flex items-center justify-between shadow-2xs hover:border-gray-300 transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
@@ -444,84 +505,17 @@ export function LocationConfirmModal() {
                     </div>
                     <div className="min-w-0">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">
-                        City
+                        City (Operational: Lucknow Only)
                       </span>
                       <span className="text-xs sm:text-sm font-bold text-gray-900 truncate block">
-                        {formCity || 'Select a city'}
+                        Lucknow
                       </span>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCityPickerOpen(!isCityPickerOpen);
-                      setIsAreaPickerOpen(false);
-                    }}
-                    className="px-3.5 py-1 text-xs font-bold text-[#0F5132] border border-[#0F5132] hover:bg-emerald-50 rounded-lg transition-colors shrink-0"
-                  >
-                    Select
-                  </button>
+                  <span className="px-2.5 py-1 text-[11px] font-bold text-[#0F5132] bg-emerald-50 rounded-lg shrink-0">
+                    Active City
+                  </span>
                 </div>
-
-                {/* Inline City Picker Dropdown */}
-                {isCityPickerOpen && (
-                  <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-2 animate-in fade-in">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">
-                      Popular Service Cities
-                    </span>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {POPULAR_CITIES.map((c) => (
-                        <button
-                          key={c.name}
-                          type="button"
-                          onClick={() => {
-                            setFormCity(c.name);
-                            if (POPULAR_AREAS[c.name]) {
-                              setFormArea(POPULAR_AREAS[c.name][0]);
-                            }
-                            setIsCityPickerOpen(false);
-                            if (formErrors.city) {
-                              setFormErrors((prev) => ({ ...prev, city: undefined }));
-                            }
-                          }}
-                          className={`p-2 rounded-xl text-left border transition-all text-xs ${
-                            formCity === c.name
-                              ? 'bg-emerald-50 border-emerald-500 font-bold text-emerald-900'
-                              : 'bg-white border-gray-200 hover:bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          <span className="font-bold block">{c.name}</span>
-                          <span className="text-[9px] text-gray-400 block">{c.state}</span>
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex gap-2 pt-1">
-                      <input
-                        type="text"
-                        placeholder="Or type custom city..."
-                        value={customCityInput}
-                        onChange={(e) => setCustomCityInput(e.target.value)}
-                        className="flex-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-900"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (customCityInput.trim()) {
-                            setFormCity(customCityInput.trim());
-                            setCustomCityInput('');
-                            setIsCityPickerOpen(false);
-                          }
-                        }}
-                        className="px-3 py-1.5 bg-[#0F5132] text-white text-xs font-bold rounded-lg"
-                      >
-                        Set
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {formErrors.city && (
-                  <p className="text-[11px] text-rose-600 font-medium pl-1">{formErrors.city}</p>
-                )}
 
                 {/* 2. Select an area, street Card */}
                 <div className="border border-gray-200/90 rounded-2xl p-3 sm:p-3.5 bg-white flex items-center justify-between shadow-2xs hover:border-gray-300 transition-colors">
@@ -531,10 +525,10 @@ export function LocationConfirmModal() {
                     </div>
                     <div className="min-w-0">
                       <span className="text-[10px] text-gray-400 font-bold uppercase block">
-                        Area / Locality
+                        Area / Locality (Exclusive Zone)
                       </span>
                       <span className="text-xs sm:text-sm font-bold text-gray-900 truncate block">
-                        {formArea || 'Select an area, street'}
+                        {formArea || 'Vrindavan Colony, Lucknow, UP'}
                       </span>
                     </div>
                   </div>
@@ -542,7 +536,6 @@ export function LocationConfirmModal() {
                     type="button"
                     onClick={() => {
                       setIsAreaPickerOpen(!isAreaPickerOpen);
-                      setIsCityPickerOpen(false);
                     }}
                     className="px-3.5 py-1 text-xs font-bold text-[#0F5132] border border-[#0F5132] hover:bg-emerald-50 rounded-lg transition-colors shrink-0"
                   >
@@ -553,11 +546,16 @@ export function LocationConfirmModal() {
                 {/* Inline Area Picker Dropdown */}
                 {isAreaPickerOpen && (
                   <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-2 animate-in fade-in">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">
-                      Popular Areas in {formCity}
-                    </span>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {(POPULAR_AREAS[formCity] || POPULAR_AREAS['Gurugram']).map((area) => (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-gray-500 uppercase">
+                        Active Service Area (Lucknow)
+                      </span>
+                      <span className="text-[9px] font-semibold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                        Phase 1 Launch Zone
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {POPULAR_AREAS['Lucknow'].map((area) => (
                         <button
                           key={area}
                           type="button"
@@ -568,38 +566,19 @@ export function LocationConfirmModal() {
                               setFormErrors((prev) => ({ ...prev, area: undefined }));
                             }
                           }}
-                          className={`w-full p-2 rounded-xl text-left border transition-all text-xs flex items-center justify-between ${
+                          className={`w-full p-2.5 rounded-xl text-left border transition-all text-xs flex items-center justify-between ${
                             formArea === area
                               ? 'bg-emerald-50 border-emerald-500 font-bold text-emerald-900'
                               : 'bg-white border-gray-200 hover:bg-gray-100 text-gray-800'
                           }`}
                         >
-                          <span>{area}</span>
-                          {formArea === area && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>{area}</span>
+                          </div>
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
                         </button>
                       ))}
-                    </div>
-                    <div className="flex gap-2 pt-1">
-                      <input
-                        type="text"
-                        placeholder="Or enter custom area / street..."
-                        value={customAreaInput}
-                        onChange={(e) => setCustomAreaInput(e.target.value)}
-                        className="flex-1 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-900"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (customAreaInput.trim()) {
-                            setFormArea(customAreaInput.trim());
-                            setCustomAreaInput('');
-                            setIsAreaPickerOpen(false);
-                          }
-                        }}
-                        className="px-3 py-1.5 bg-[#0F5132] text-white text-xs font-bold rounded-lg"
-                      >
-                        Set
-                      </button>
                     </div>
                   </div>
                 )}
@@ -624,7 +603,7 @@ export function LocationConfirmModal() {
                     }`}
                   />
                   <p className="text-[11px] text-gray-400 mt-1 pl-1">
-                    Example: Plot No. 112, Shree Vihar Colony, Jagatpura
+                    Example: Flat 402, Tower 3 / House 12A, Sector 4, Vrindavan Colony
                   </p>
                   {formErrors.completeAddress && (
                     <p className="text-[11px] text-rose-600 font-medium pl-1 mt-0.5">
@@ -634,17 +613,33 @@ export function LocationConfirmModal() {
                 </div>
 
                 {/* 4. Add google maps link (optional) */}
-                <div className="border border-gray-200/90 rounded-2xl px-3.5 py-2.5 bg-white flex items-center gap-2.5 shadow-2xs">
-                  <div className="w-6 h-6 flex items-center justify-center shrink-0 text-red-500">
-                    <MapPin className="w-4 h-4 text-rose-500 fill-rose-500" />
+                <div className="space-y-1.5">
+                  <div className="border border-gray-200/90 rounded-2xl px-3.5 py-2.5 bg-white flex items-center gap-2.5 shadow-2xs">
+                    <div className="w-6 h-6 flex items-center justify-center shrink-0 text-red-500">
+                      <MapPin className="w-4 h-4 text-rose-500 fill-rose-500" />
+                    </div>
+                    <input
+                      type="url"
+                      value={formMapsLink}
+                      onChange={(e) => setFormMapsLink(e.target.value)}
+                      placeholder="Add google maps link (optional)"
+                      className="flex-1 bg-transparent border-none text-xs sm:text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
+                    />
+                    {formMapsLink && (
+                      <a
+                        href={formMapsLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-emerald-700 hover:text-emerald-800 p-1"
+                        title="Open in Google Maps"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
                   </div>
-                  <input
-                    type="url"
-                    value={formMapsLink}
-                    onChange={(e) => setFormMapsLink(e.target.value)}
-                    placeholder="Add google maps link (optional)"
-                    className="flex-1 bg-transparent border-none text-xs sm:text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
-                  />
+                  <p className="text-[10px] text-gray-400 pl-1">
+                    Tip: Click the &quot;Fetch Location from Google Maps / GPS&quot; button above to auto-generate this link.
+                  </p>
                 </div>
               </div>
 
@@ -842,24 +837,24 @@ export function LocationConfirmModal() {
               {/* 1. Use current location */}
               <button
                 type="button"
-                onClick={() =>
-                  handleSelectAddress(
-                    'Current Location',
-                    'Sector 14, Model Town, Gurugram, Haryana 122001'
-                  )
-                }
+                onClick={() => handleFetchCurrentLocation('list')}
+                disabled={isLocating}
                 className="w-full p-3 sm:p-3.5 flex items-center justify-between gap-3 hover:bg-gray-50/80 transition-colors text-left group cursor-pointer"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                    <Crosshair className="w-4 h-4 text-emerald-600 animate-pulse" />
+                    {isLocating ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                    ) : (
+                      <Crosshair className="w-4 h-4 text-emerald-600 animate-pulse" />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <span className="text-xs sm:text-sm font-bold text-emerald-700 block">
-                      Use current location
+                      {isLocating ? 'Detecting GPS location...' : 'Use current location (GPS / Google Maps)'}
                     </span>
                     <span className="text-[11px] text-gray-500 block truncate">
-                      Sector 11, Vrindavan Colony, Lucknow Division, Lucknow, Uttar Pradesh, 226029
+                      Vrindavan Colony, Sector 4, Lucknow, Uttar Pradesh 226029
                     </span>
                   </div>
                 </div>

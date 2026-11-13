@@ -36,18 +36,21 @@ export interface RouteEstimate {
   polyline?: string;
 }
 
-export const GURUGRAM_DARK_STORE_COORDINATES = {
-  id: 'STR-GGM-01',
-  name: 'Dark Store Hub #01',
-  code: 'STR-GGM-01',
-  address: 'Sector 14, Model Town, Gurugram, Haryana 122001',
-  city: 'Gurugram',
-  pincode: '122001',
-  lat: 28.4722,
-  lng: 77.0453,
+export const LUCKNOW_DARK_STORE_COORDINATES = {
+  id: 'STR-LKO-01',
+  name: 'Pravdhan Hub #01 (Lucknow)',
+  code: 'STR-LKO-01',
+  address: 'Vrindavan Colony, Sector 4 / Raebareli Road, Lucknow, Uttar Pradesh 226029',
+  city: 'Lucknow',
+  pincode: '226029',
+  lat: 26.7824,
+  lng: 80.9388,
 };
 
-export const INITIAL_SERVICEABLE_PINCODES = ['122001', '122002', '122003', '122018'];
+// Aliased for backward compatibility
+export const GURUGRAM_DARK_STORE_COORDINATES = LUCKNOW_DARK_STORE_COORDINATES;
+
+export const INITIAL_SERVICEABLE_PINCODES = ['226029', '226025', '226002', '226012'];
 
 /**
  * Clean Google Maps / Location Integration Service

@@ -55,7 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [donationAmount, setDonationAmountState] = useState<number>(0);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [selectedZone, setSelectedZoneState] = useState('Sector 14, Model Town, Gurugram');
+  const [selectedZone, setSelectedZoneState] = useState('Vrindavan Colony, Lucknow, UP');
   const [onLocationConfirmAction, setOnLocationConfirmAction] = useState<(() => void) | null>(null);
   const [mounted, setMounted] = useState(false);
 

@@ -13,13 +13,13 @@ import {
 export const INITIAL_STORE_SETTINGS: StoreSettings = {
   storeName: 'Pravdhan Store',
   tagline: 'Your Trusted Neighborhood Grocery & Essentials',
-  serviceArea: 'Sector 14, Model Town, Gurugram',
-  city: 'Gurugram',
+  serviceArea: 'Vrindavan Colony, Lucknow, UP',
+  city: 'Lucknow',
   minimumOrderValue: 100, // ₹100 as per spec Section 8
   defaultDeliveryCharge: 0, // ₹0 as per spec Section 7
   freeDeliveryThreshold: 0,
   operatingHours: '7:00 AM - 10:00 PM',
-  supportPhone: '+91 124 456 7890',
+  supportPhone: '+91 708 090 7954',
   supportEmail: 'care@pravdhanstore.in',
   currency: 'INR',
 };
