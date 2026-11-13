@@ -10,6 +10,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loginWithPhoneOtp: (phone: string, otp: string, name?: string) => Promise<{ success: boolean; message?: string }>;
   loginWithFirebaseSession: (phone: string, name?: string) => Promise<{ success: boolean; message?: string }>;
+  loginWithGoogleCustomer: (email: string, name?: string) => Promise<{ success: boolean; message?: string }>;
+  loginWithGoogleAdmin: (email: string, name?: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   switchRole: (role: Role) => Promise<void> | void;
   addAddress: (address: Omit<Address, 'id' | 'userId'>) => void;
@@ -170,6 +172,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithGoogleCustomer = async (email: string, name?: string) => {
+    try {
+      const res = await fetch('/api/v1/auth/google-customer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name }),
+      });
+      const data = await res.json();
+      if (res.ok && data.data && data.data.user) {
+        const liveUser = data.data.user;
+        const mappedUser: User = {
+          id: liveUser.id,
+          name: liveUser.name || name || email.split('@')[0],
+          phone: liveUser.phone || '',
+          email: liveUser.email || email,
+          role: liveUser.role || 'CUSTOMER',
+          addresses: liveUser.addresses || [],
+          createdAt: liveUser.createdAt || new Date().toISOString(),
+        };
+        saveUser(mappedUser);
+        return { success: true };
+      }
+      return { success: false, message: data.error?.message || 'Failed to sign in with Google.' };
+    } catch {
+      return { success: false, message: 'Network connectivity error. Could not sign in with Google.' };
+    }
+  };
+
+  const loginWithGoogleAdmin = async (email: string, name?: string) => {
+    try {
+      const res = await fetch('/api/v1/auth/google-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name }),
+      });
+      const data = await res.json();
+      if (res.ok && data.data && data.data.user) {
+        const liveUser = data.data.user;
+        const mappedUser: User = {
+          id: liveUser.id,
+          name: liveUser.name || name || 'Administrator',
+          phone: liveUser.phone || '',
+          email: liveUser.email || email,
+          role: liveUser.role || 'SUPER_ADMIN',
+          addresses: liveUser.addresses || [],
+          createdAt: liveUser.createdAt || new Date().toISOString(),
+        };
+        saveUser(mappedUser);
+        return { success: true };
+      }
+      return {
+        success: false,
+        message: data.error?.message || `Access Denied: ${email} is not authorized for Admin access.`,
+      };
+    } catch {
+      return { success: false, message: 'Network connectivity error. Could not verify admin access.' };
+    }
+  };
+
   const logout = () => {
     try {
       fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => null);
@@ -292,6 +353,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         loginWithPhoneOtp,
         loginWithFirebaseSession,
+        loginWithGoogleCustomer,
+        loginWithGoogleAdmin,
         logout,
         switchRole,
         addAddress,

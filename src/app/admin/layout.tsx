@@ -29,6 +29,8 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { useStore } from '@/lib/context/StoreContext';
 import { RoleSwitcherModal } from '@/components/layout/RoleSwitcherModal';
 import { Role } from '@/types';
+import { auth, googleProvider } from '@/lib/firebase';
+import { signInWithPopup } from 'firebase/auth';
 
 interface AdminOrderNotif {
   id: string;
@@ -54,15 +56,12 @@ function formatTimeAgo(timestamp: number): string {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { role, switchRole } = useAuth();
+  const { user, role, switchRole, loginWithGoogleAdmin, logout } = useAuth();
   const { storeSettings, orders, products, customers } = useStore();
 
-  // If entering admin pages with CUSTOMER role, automatically elevate session to SUPER_ADMIN
-  useEffect(() => {
-    if (role === 'CUSTOMER') {
-      switchRole('SUPER_ADMIN');
-    }
-  }, [role, switchRole]);
+  const [mounted, setMounted] = useState(false);
+  const [adminAuthLoading, setAdminAuthLoading] = useState(false);
+  const [adminAuthError, setAdminAuthError] = useState('');
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [deskFilter, setDeskFilter] = useState<'ALL' | Role>('ALL');
@@ -71,6 +70,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [activeOrderToast, setActiveOrderToast] = useState<AdminOrderNotif | null>(null);
   const notifDropdownRef = useRef<HTMLDivElement>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleGoogleAdminLogin = async () => {
+    try {
+      setAdminAuthLoading(true);
+      setAdminAuthError('');
+      const result = await signInWithPopup(auth, googleProvider);
+      const email = result.user.email;
+      const name = result.user.displayName || undefined;
+
+      if (!email) {
+        setAdminAuthError('Could not retrieve an email address from Google account.');
+        setAdminAuthLoading(false);
+        return;
+      }
+
+      const res = await loginWithGoogleAdmin(email, name);
+      if (!res.success) {
+        setAdminAuthError(res.message || 'Access Denied: Your Google account is not on the admin whitelist.');
+      }
+    } catch (err: any) {
+      if (err.code === 'auth/popup-closed-by-user') {
+        // User dismissed popup
+      } else {
+        setAdminAuthError(err.message || 'Failed to authenticate with Google.');
+      }
+    } finally {
+      setAdminAuthLoading(false);
+    }
+  };
+
+  // Determine if current user has authorized staff credentials
+  const isStaffAuthenticated = mounted && user && role !== 'CUSTOMER';
 
   // Initialize notifications from localStorage or from recent orders
   useEffect(() => {
@@ -200,6 +235,115 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // If client is mounting or user is not an authenticated staff member, show Admin Login Gate
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isStaffAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col items-center justify-center p-4 sm:p-6 font-sans">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-slate-100">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-950/20 mb-3">
+              <Store className="w-7 h-7" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              Pravdhan Admin Portal
+            </h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              Authorized Dark Store &amp; Warehouse Operations
+            </p>
+          </div>
+
+          {adminAuthError && (
+            <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800">
+              <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Authentication Error</p>
+                <p className="text-rose-700 mt-0.5 leading-relaxed">{adminAuthError}</p>
+              </div>
+            </div>
+          )}
+
+          {user && role === 'CUSTOMER' && !adminAuthError && (
+            <div className="mb-5 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900">
+              <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Customer Account Detected</p>
+                <p className="text-amber-800 mt-0.5 leading-relaxed">
+                  You are signed in as customer ({user.phone || user.email || user.name}). Sign in with an authorized Google Admin email to enter the management desk.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-600 space-y-1.5">
+              <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Locked to Whitelisted Emails Only
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                Access is restricted to verified store managers and super administrators. Only authorized Google accounts can log in.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleAdminLogin}
+              disabled={adminAuthLoading}
+              className="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold text-sm shadow-xl shadow-slate-950/20 flex items-center justify-center gap-3 transition-all cursor-pointer active:scale-[0.98] disabled:opacity-60"
+            >
+              <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span>{adminAuthLoading ? 'Verifying with Google...' : 'Sign in with Google Admin'}</span>
+            </button>
+
+            <div className="pt-3 text-center border-t border-slate-100 flex items-center justify-between text-xs">
+              <Link
+                href="/"
+                className="font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Return to Storefront
+              </Link>
+              {user && (
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="font-bold text-rose-600 hover:text-rose-700 cursor-pointer"
+                >
+                  Sign Out
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const markAllAsRead = () => {
     setNotifications((prev) => {
@@ -570,6 +714,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 : 'Customer'}
             </span>
           </button>
+
+          {/* Admin Sign Out */}
+          <button
+            onClick={logout}
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-950/40 hover:text-rose-400 hover:border-rose-800 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
+            title="Log out of Admin Operations"
+          >
+            <span>Exit</span>
+          </button>
         </div>
       </header>
 
@@ -829,26 +982,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Content Area - Full Width */}
         <main className="flex-1 min-w-0 p-3.5 sm:p-6 lg:p-8 xl:p-10 overflow-y-auto">
-          {role === 'CUSTOMER' && (
-            <div className="mb-5 p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-300 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-start gap-2.5 sm:gap-3">
-                <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold">Customer Persona Active</p>
-                  <p className="text-[11px] text-amber-800">
-                    Switch to a staff role (Store Manager, Product Manager, Order Manager, or Rider) to test operations.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsRoleModalOpen(true)}
-                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-xs whitespace-nowrap self-start sm:self-auto transition-colors cursor-pointer"
-              >
-                Switch to Staff Role
-              </button>
-            </div>
-          )}
           {children}
         </main>
       </div>
