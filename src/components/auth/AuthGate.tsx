@@ -102,10 +102,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       {/* Background Decorative Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative w-full sm:max-w-md min-h-screen sm:min-h-0 bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border sm:border-slate-100 overflow-hidden my-auto flex flex-col justify-center animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full sm:max-w-md min-h-screen sm:min-h-0 bg-white rounded-none sm:rounded-3xl shadow-2xl border-0 sm:border sm:border-slate-100 overflow-hidden my-auto flex flex-col justify-start pt-16 sm:pt-0 sm:justify-center animate-in fade-in zoom-in-95 duration-200">
         {/* Header: Transparent Logo and Centered Title */}
-        <div className="pt-8 sm:pt-9 pb-2 px-6 text-center flex flex-col items-center">
-          <div className="relative w-40 h-14 sm:w-48 sm:h-16 mb-3 flex items-center justify-center">
+        <div className="pt-2 sm:pt-8 pb-1.5 px-6 text-center flex flex-col items-center">
+          <div className="relative w-36 h-12 sm:w-44 sm:h-14 mb-2 sm:mb-2.5 flex items-center justify-center">
             <Image
               src="/images/logo.png"
               alt="Pravdhan Store Logo"
@@ -115,13 +115,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
               priority
             />
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-lg sm:text-base font-bold text-slate-800 tracking-tight">
             Login or Sign up
           </h2>
         </div>
 
         {/* Form Body */}
-        <div className="px-6 pb-8 pt-4 sm:px-8 sm:pb-8 flex flex-col justify-center">
+        <div className="px-6 pb-8 pt-3 sm:px-8 sm:pb-8 flex flex-col justify-center">
           {error && (
             <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-2xl font-semibold flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
