@@ -96,11 +96,17 @@ export function ProductCard({
                   src={imageUrl}
                   alt={product.name}
                   onError={() => setImageError(true)}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className={`w-full h-full object-cover transition-transform duration-500 ${
+                    isOutOfStock
+                      ? 'grayscale contrast-125 brightness-75'
+                      : 'group-hover:scale-105'
+                  }`}
                   loading="lazy"
                 />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100/80 p-2 text-center text-gray-400">
+                <div className={`w-full h-full flex flex-col items-center justify-center bg-gray-100/80 p-2 text-center text-gray-400 ${
+                  isOutOfStock ? 'grayscale opacity-70' : ''
+                }`}>
                   <Package className="w-8 h-8 text-[#0F5132]/60 mb-1" />
                   <span className="text-[10px] font-bold text-gray-600 line-clamp-1">{product.brand}</span>
                   <span className="text-[9px] text-gray-400 font-medium">{selectedVariant.title}</span>
@@ -120,10 +126,10 @@ export function ProductCard({
             </span>
 
             {/* Right: Blinkit/Zepto-style ADD Button / Stepper */}
-            <div className="w-[74px] sm:w-[84px] h-8 sm:h-8.5 flex-shrink-0 flex items-center justify-end">
+            <div className="min-w-[74px] sm:min-w-[84px] h-8 sm:h-8.5 flex-shrink-0 flex items-center justify-end">
               {isOutOfStock ? (
-                <span className="w-full text-center text-[10px] font-bold text-gray-400 bg-gray-100 py-1.5 rounded-lg border border-gray-200">
-                  Out
+                <span className="w-full text-center text-[10px] sm:text-[11px] font-black text-rose-700 bg-rose-50 px-2.5 py-1.5 rounded-lg border border-rose-200 uppercase tracking-wide select-none">
+                  Out Of Stock
                 </span>
               ) : quantityInCart > 0 ? (
                 /* Active Stepper (solid green) */

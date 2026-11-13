@@ -661,7 +661,11 @@ function ShopContent() {
                             <img
                               src={product.images[0]}
                               alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              className={`w-full h-full object-cover transition-transform duration-300 ${
+                                variant?.stock <= 0
+                                  ? 'grayscale contrast-125 brightness-75'
+                                  : 'group-hover:scale-105'
+                              }`}
                               loading="lazy"
                             />
                           </Link>
@@ -688,12 +692,16 @@ function ShopContent() {
                         </div>
 
                         {/* Weight / Pack Pill + ADD Button Strip */}
-                        <div className="flex items-center justify-between px-2.5 py-1.5 border-t border-gray-100 bg-white">
+                        <div className="flex items-center justify-between px-2.5 py-1.5 border-t border-gray-100 bg-white min-h-[38px]">
                           <span className="text-[11px] font-semibold text-gray-700 truncate max-w-[80px]">
                             {variant?.unit || variant?.title || '1 Pack'}
                           </span>
 
-                          {qty === 0 ? (
+                          {variant?.stock <= 0 ? (
+                            <span className="px-2 py-1 rounded-xl text-[10px] font-black text-rose-700 bg-rose-50 border border-rose-200 uppercase tracking-wide select-none">
+                              Out Of Stock
+                            </span>
+                          ) : qty === 0 ? (
                             <button
                               type="button"
                               onClick={() => addToCart(product, variant, 1)}

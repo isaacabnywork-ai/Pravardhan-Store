@@ -203,7 +203,11 @@ export default function ProductDetailPage({
               src={selectedVariant.image || selectedImage}
               alt={product.name}
               onError={() => setMainImageError(true)}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover ${
+                selectedVariant.stock <= 0
+                  ? 'grayscale contrast-125 brightness-75'
+                  : ''
+              }`}
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-400 bg-gray-50">
@@ -467,8 +471,8 @@ export default function ProductDetailPage({
           {/* Right Action: Add to Cart Button or Stepper */}
           <div className="flex items-center gap-2 flex-shrink-0">
             {selectedVariant.stock <= 0 ? (
-              <span className="px-6 py-2.5 bg-gray-100 text-gray-400 text-xs font-bold rounded-xl border border-gray-200">
-                Out of Stock
+              <span className="px-5 py-2.5 bg-rose-50 text-rose-700 text-xs sm:text-sm font-black rounded-xl border border-rose-200 uppercase tracking-wide select-none">
+                Out Of Stock
               </span>
             ) : quantityInCart > 0 ? (
               <div className="h-10 sm:h-11 w-32 flex items-center justify-between bg-[#0F5132] text-white rounded-xl shadow-xs overflow-hidden border border-[#0F5132]">

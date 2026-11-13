@@ -129,7 +129,7 @@ export const CATEGORY_DIRECTORY_SECTIONS: CategoryDirectorySection[] = [
       {
         id: 'beauty-bath',
         name: 'Bath & Body',
-        image: 'https://images.unsplash.com/photo-1608248597359-5975549e31d0?auto=format&fit=crop&w=400&q=80',
+        image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=400&q=80',
         categorySlug: 'personal-care',
         subSlug: 'bath-soaps',
         pastelBg: 'bg-[#E8F5FA]',
@@ -223,7 +223,7 @@ export const CATEGORY_DIRECTORY_SECTIONS: CategoryDirectorySection[] = [
       {
         id: 'house-stationery',
         name: 'Stationery & Games',
-        image: 'https://images.unsplash.com/photo-1585336261026-7f41f12952bf?auto=format&fit=crop&w=400&q=80',
+        image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=400&q=80',
         categorySlug: 'cleaning-household',
         subSlug: 'stationery',
         pastelBg: 'bg-[#EBF7EE]',
