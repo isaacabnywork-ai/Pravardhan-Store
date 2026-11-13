@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShieldCheck, Phone, ArrowRight, Sparkles, CheckCircle2, UserCheck, Lock } from 'lucide-react';
+import { Phone, ArrowRight, CheckCircle2, UserCheck, Lock } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
@@ -103,16 +104,18 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
       <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
         {/* Top Banner */}
-        <div className="p-6 bg-gradient-to-r from-emerald-800 to-teal-700 text-white text-center relative">
-          <div className="w-14 h-14 mx-auto mb-3 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
-            <Sparkles className="w-7 h-7 text-emerald-300" />
+        <div className="p-6 bg-gradient-to-r from-emerald-800 to-teal-700 text-white text-center relative flex flex-col items-center">
+          <div className="w-16 h-16 mb-3 bg-white rounded-2xl flex items-center justify-center shadow-md p-2">
+            <Image
+              src="/images/logo.png"
+              alt="Pravdhan Store Logo"
+              width={56}
+              height={56}
+              className="object-contain"
+              priority
+            />
           </div>
-          <h2 className="text-xl font-black tracking-tight">Welcome to Pravdhan Store</h2>
-          <p className="text-xs text-emerald-100 mt-1">
-            {step === 'PHONE'
-              ? 'Enter your details to start shopping for fresh daily essentials'
-              : `Enter the 6-digit OTP sent to +91 ${phone}`}
-          </p>
+          <h2 className="text-xl font-black tracking-tight">Login or Sign up</h2>
         </div>
 
         {/* Form Body */}
@@ -147,8 +150,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Mobile Number <span className="text-rose-500">*</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute left-3.5 top-3 text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                <div className="relative flex items-center">
+                  <div className="absolute left-3.5 pointer-events-none z-10 text-xs font-bold text-slate-700 flex items-center gap-1.5 select-none">
                     <span>🇮🇳 +91</span>
                     <span className="text-slate-300">|</span>
                   </div>
@@ -159,14 +162,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                     placeholder="Enter 10-digit number"
                     required
-                    className="w-full pl-22 pr-4 py-3 rounded-2xl border border-slate-200 text-sm font-semibold tracking-wider focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-400"
+                    style={{ paddingLeft: '5.25rem' }}
+                    className="w-full pr-10 py-3 rounded-2xl border border-slate-200 text-sm font-semibold tracking-wider focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-400 placeholder:font-normal placeholder:tracking-normal"
                   />
-                  <Phone className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5" />
+                  <Phone className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5 pointer-events-none" />
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  We will send a secure 6-digit OTP to your number
-                </p>
               </div>
 
               <button
