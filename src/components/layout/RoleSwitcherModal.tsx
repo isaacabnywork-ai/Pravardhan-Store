@@ -107,8 +107,8 @@ export function RoleSwitcherModal({ isOpen, onClose }: RoleSwitcherModalProps) {
     },
   ];
 
-  const handleSelectRole = (r: Role) => {
-    switchRole(r);
+  const handleSelectRole = async (r: Role) => {
+    await switchRole(r);
     onClose();
     if (r === 'CUSTOMER') {
       router.push('/');

@@ -10,7 +10,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loginWithPhoneOtp: (phone: string, otp: string, name?: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
-  switchRole: (role: Role) => void;
+  switchRole: (role: Role) => Promise<void> | void;
   addAddress: (address: Omit<Address, 'id' | 'userId'>) => void;
   updateAddress: (id: string, address: Partial<Address>) => void;
   deleteAddress: (id: string) => void;
@@ -150,7 +150,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     saveUser(null);
   };
 
-  const switchRole = (newRole: Role) => {
+  const switchRole = async (newRole: Role) => {
+    try {
+      const res = await fetch('/api/v1/auth/switch-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && data.data && data.data.user) {
+          saveUser(data.data.user);
+          return;
+        }
+      }
+    } catch {
+      // fallback to mock switch
+    }
+
     const roleUser = INITIAL_USERS.find((u) => u.role === newRole);
     if (roleUser) {
       saveUser(roleUser);
