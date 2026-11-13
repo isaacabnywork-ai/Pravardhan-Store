@@ -18,6 +18,7 @@ interface AuthContextType {
   updateAddress: (id: string, address: Partial<Address>) => void;
   deleteAddress: (id: string) => void;
   setDefaultAddress: (id: string) => void;
+  updateUserPhone: (phone: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -333,6 +334,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     saveUser(updatedUser);
   };
 
+  const updateUserPhone = async (phone: string) => {
+    if (!user) return { success: false, message: 'User not signed in' };
+    const cleanDigits = phone.replace(/\D/g, '');
+    const validPhone = cleanDigits.length === 10 ? cleanDigits : cleanDigits.slice(-10);
+
+    try {
+      const res = await fetch('/api/v1/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: validPhone }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const updated = { ...user, phone: validPhone };
+        saveUser(updated);
+        return { success: true };
+      }
+      return { success: false, message: data.error?.message || 'Could not update phone number' };
+    } catch {
+      const updated = { ...user, phone: validPhone };
+      saveUser(updated);
+      return { success: true };
+    }
+  };
+
   const setDefaultAddress = (id: string) => {
     if (!user) return;
     const updatedUser = {
@@ -361,6 +387,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateAddress,
         deleteAddress,
         setDefaultAddress,
+        updateUserPhone,
       }}
     >
       {children}

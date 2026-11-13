@@ -24,6 +24,7 @@ import {
   Check,
   X,
   AlertCircle,
+  Phone,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -36,7 +37,7 @@ import { RazorpayPaymentModal } from '@/components/checkout/RazorpayPaymentModal
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, updateUserPhone } = useAuth();
   const {
     items,
     subtotal,
@@ -102,6 +103,12 @@ export default function CheckoutPage() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [orderError, setOrderError] = useState('');
   const [pendingOrder, setPendingOrder] = useState<{ liveOrder: any; frontendOrder: Order } | null>(null);
+
+  // Phone modal for Google authenticated users without a phone number
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+  const [missingPhoneNumber, setMissingPhoneNumber] = useState('');
+  const [phoneModalError, setPhoneModalError] = useState('');
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
 
   // Active Customer & Pravdhan Money Wallet Balance
   const currentCustomer = useMemo(() => {
@@ -214,9 +221,16 @@ export default function CheckoutPage() {
   };
 
   // Place Order handler
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (overridePhone?: string) => {
     if (!isAuthenticated || !user) {
       setIsAuthModalOpen(true);
+      return;
+    }
+
+    // Check if customer has a registered phone number (e.g. if they logged in via Google without phone)
+    const activePhoneNumber = (overridePhone || user.phone || '').replace(/\D/g, '');
+    if (activePhoneNumber.length < 10) {
+      setIsPhoneModalOpen(true);
       return;
     }
 
@@ -252,7 +266,7 @@ export default function CheckoutPage() {
           body: JSON.stringify({
             label: (selectedAddress.label as any) || 'Home',
             name: selectedAddress.name || user.name || 'Customer',
-            phone: selectedAddress.phone || user.phone || '9876543210',
+            phone: activePhoneNumber || selectedAddress.phone || user.phone || '9876543210',
             houseNumber: selectedAddress.houseNumber || 'Flat 101',
             street: selectedAddress.street || 'Main Road',
             landmark: selectedAddress.landmark || '',
@@ -445,6 +459,36 @@ export default function CheckoutPage() {
     } catch (err: any) {
       setIsPlacingOrder(false);
       setOrderError(err?.message || 'A network error occurred while placing your order. Please try again.');
+    }
+  };
+
+  const handleSavePhoneAndProceed = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanDigits = missingPhoneNumber.replace(/\D/g, '');
+    if (cleanDigits.length !== 10) {
+      setPhoneModalError('Please enter a valid 10-digit Indian mobile number');
+      return;
+    }
+
+    setPhoneModalError('');
+    setIsSavingPhone(true);
+
+    try {
+      const res = await updateUserPhone(cleanDigits);
+      if (!res.success) {
+        setPhoneModalError(res.message || 'Could not save phone number.');
+        setIsSavingPhone(false);
+        return;
+      }
+
+      setIsPhoneModalOpen(false);
+      setIsSavingPhone(false);
+      // Proceed directly to place order with the newly validated phone
+      handlePlaceOrder(cleanDigits);
+    } catch {
+      setIsSavingPhone(false);
+      setIsPhoneModalOpen(false);
+      handlePlaceOrder(cleanDigits);
     }
   };
 
@@ -1337,7 +1381,7 @@ export default function CheckoutPage() {
           </div>
 
           <button
-            onClick={handlePlaceOrder}
+            onClick={() => handlePlaceOrder()}
             disabled={
               isPlacingOrder ||
               !isMinimumOrderMet ||
@@ -1505,6 +1549,71 @@ export default function CheckoutPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Missing Mobile Number Modal (For Google Sign-in Users without Phone) */}
+      {isPhoneModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
+              <Phone className="w-6 h-6" />
+            </div>
+
+            <h3 className="font-extrabold text-lg text-slate-900 tracking-tight">
+              Add Mobile Number
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 mb-4 leading-relaxed">
+              Required for live delivery SMS notifications, rider coordination, and order updates.
+            </p>
+
+            {phoneModalError && (
+              <div className="mb-4 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold text-left">
+                {phoneModalError}
+              </div>
+            )}
+
+            <form onSubmit={handleSavePhoneAndProceed} className="space-y-4">
+              <div className="relative text-left">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1.5">
+                  Mobile Number (India)
+                </label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3.5 text-xs font-bold text-slate-500 select-none">
+                    🇮🇳 +91
+                  </span>
+                  <input
+                    type="tel"
+                    maxLength={10}
+                    value={missingPhoneNumber}
+                    onChange={(e) => setMissingPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                    placeholder="98765 43210"
+                    autoFocus
+                    required
+                    className="w-full pl-18 pr-4 py-3 rounded-2xl border border-slate-200 text-sm font-bold text-slate-900 focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-300"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPhoneModalOpen(false)}
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold text-xs transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingPhone || missingPhoneNumber.replace(/\D/g, '').length !== 10}
+                  className="flex-1 py-3 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white rounded-2xl font-bold text-xs transition-colors shadow-md shadow-emerald-700/25 flex items-center justify-center gap-1.5"
+                >
+                  {isSavingPhone ? 'Saving...' : 'Confirm & Order'}
+                  <CheckCircle2 className="w-4 h-4" />
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
