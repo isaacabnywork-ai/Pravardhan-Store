@@ -1,39 +1,67 @@
 import { NextRequest } from 'next/server';
 import { apiSuccess, apiError } from '@/lib/api-response';
-import fs from 'fs';
-import path from 'path';
 
-// Shared persistence file for cross-device real-time sync (PC Admin <-> Mobile Phone)
-const SYNC_FILE_PATH = path.join(process.cwd(), '.runtime_orders_sync.json');
+const BUS_TOPIC = 'pravdhan_orders_sync_live_bus_v1';
+const BUS_URL = `https://ntfy.sh/${BUS_TOPIC}`;
 
-function readSyncOrders(): any[] {
-  try {
-    if (fs.existsSync(SYNC_FILE_PATH)) {
-      const content = fs.readFileSync(SYNC_FILE_PATH, 'utf-8');
-      const data = JSON.parse(content);
-      if (Array.isArray(data)) return data;
-    }
-  } catch (err) {
-    console.error('Failed reading sync orders file:', err);
-  }
-  return [];
-}
+// In-memory server cache as fast fallback
+let memoryOrders: any[] = [];
 
-function writeSyncOrders(orders: any[]) {
-  try {
-    fs.writeFileSync(SYNC_FILE_PATH, JSON.stringify(orders, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Failed writing sync orders file:', err);
-  }
-}
-
-// GET: Returns all live synchronized orders
+// GET: Poll latest synchronized orders across PC and Phone
 export async function GET() {
   try {
-    const orders = readSyncOrders();
+    // 1. Fetch recent messages from the cloud event bus
+    const busRes = await fetch(`${BUS_URL}/json?poll=1&since=24h`, {
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    });
+
+    if (busRes.ok) {
+      const text = await busRes.text();
+      const lines = text.trim().split('\n').filter(Boolean);
+
+      const orderMap = new Map<string, any>();
+      // Seed with memory cache
+      memoryOrders.forEach((o) => orderMap.set(o.id, o));
+
+      for (const line of lines) {
+        try {
+          const entry = JSON.parse(line);
+          if (entry.message) {
+            const parsed = JSON.parse(entry.message);
+            if (parsed.type === 'ORDER_UPSERT' && parsed.order?.id) {
+              const existing = orderMap.get(parsed.order.id);
+              orderMap.set(parsed.order.id, { ...(existing || {}), ...parsed.order });
+            } else if (parsed.type === 'STATUS_UPDATE' && parsed.orderId) {
+              const existing = orderMap.get(parsed.orderId);
+              if (existing) {
+                existing.orderStatus = parsed.status;
+                existing.updatedAt = new Date().toISOString();
+                if (parsed.note) {
+                  existing.statusHistory = existing.statusHistory || [];
+                  existing.statusHistory.push({
+                    status: parsed.status,
+                    label: parsed.status,
+                    note: parsed.note,
+                    completed: true,
+                    timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                  });
+                }
+              }
+            }
+          }
+        } catch {
+          // ignore unparsable entry
+        }
+      }
+
+      memoryOrders = Array.from(orderMap.values()).sort(
+        (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      );
+    }
+
     return apiSuccess({
-      orders,
-      updatedAt: new Date().toISOString(),
+      orders: memoryOrders,
       timestamp: Date.now(),
     });
   } catch (error) {
@@ -41,59 +69,55 @@ export async function GET() {
   }
 }
 
-// POST: Upsert an order or batch of orders
+// POST: Broadcast order create / status change to cloud event bus
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const existing = readSyncOrders();
 
     if (body.order) {
       const target = body.order;
-      const index = existing.findIndex((o) => o.id === target.id);
-      if (index >= 0) {
-        existing[index] = { ...existing[index], ...target, updatedAt: new Date().toISOString() };
-      } else {
-        existing.unshift(target);
-      }
-      writeSyncOrders(existing);
+      // Update memory cache
+      const idx = memoryOrders.findIndex((o) => o.id === target.id);
+      if (idx >= 0) memoryOrders[idx] = { ...memoryOrders[idx], ...target };
+      else memoryOrders.unshift(target);
+
+      // Publish to cloud bus
+      await fetch(BUS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'ORDER_UPSERT',
+          order: target,
+          timestamp: Date.now(),
+        }),
+      }).catch(() => null);
+
       return apiSuccess({ success: true, order: target });
     }
 
-    if (Array.isArray(body.orders)) {
-      const map = new Map<string, any>();
-      // Keep existing first
-      existing.forEach((o) => map.set(o.id, o));
-      // Overwrite/insert incoming
-      body.orders.forEach((o: any) => map.set(o.id, { ...(map.get(o.id) || {}), ...o }));
-      const merged = Array.from(map.values()).sort(
-        (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-      );
-      writeSyncOrders(merged);
-      return apiSuccess({ success: true, count: merged.length });
-    }
-
-    // Single status update helper
     if (body.orderId && body.status) {
-      const order = existing.find((o) => o.id === body.orderId);
-      if (order) {
-        order.orderStatus = body.status;
-        order.updatedAt = new Date().toISOString();
-        if (body.note) {
-          order.statusHistory = order.statusHistory || [];
-          order.statusHistory.push({
-            status: body.status,
-            label: body.status,
-            note: body.note,
-            completed: true,
-            timestamp: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-          });
-        }
-        writeSyncOrders(existing);
-        return apiSuccess({ success: true, order });
+      const existing = memoryOrders.find((o) => o.id === body.orderId);
+      if (existing) {
+        existing.orderStatus = body.status;
+        existing.updatedAt = new Date().toISOString();
       }
+
+      await fetch(BUS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'STATUS_UPDATE',
+          orderId: body.orderId,
+          status: body.status,
+          note: body.note,
+          timestamp: Date.now(),
+        }),
+      }).catch(() => null);
+
+      return apiSuccess({ success: true, orderId: body.orderId, status: body.status });
     }
 
-    return apiSuccess({ success: true, orders: existing });
+    return apiSuccess({ success: true, count: memoryOrders.length });
   } catch (error) {
     return apiError(error);
   }
