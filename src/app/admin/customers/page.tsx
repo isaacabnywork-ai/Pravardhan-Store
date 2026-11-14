@@ -46,13 +46,97 @@ export default function AdminCustomersPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Metrics
-  const totalWalletCirculation = customers.reduce((sum, c) => sum + c.walletBalance, 0);
-  const totalCustomerSpend = customers.reduce((sum, c) => sum + c.totalSpent, 0);
-  const avgWalletBalance = customers.length > 0 ? Math.round(totalWalletCirculation / customers.length) : 0;
-  const vipCustomersCount = customers.filter((c) => c.totalSpent >= 5000).length;
+  // Automatically synthesize / merge all customers who placed orders so they ALWAYS show up here
+  const mergedCustomers: CustomerProfile[] = React.useMemo(() => {
+    const map = new Map<string, CustomerProfile>();
 
-  const filteredCustomers = customers.filter((c) => {
+    // 1. Existing registered / CRM customers
+    customers.forEach((c) => {
+      const key = (c.phone ? c.phone.replace(/\D/g, '').slice(-10) : '') || c.email?.toLowerCase().trim() || c.id;
+      map.set(key, c);
+    });
+
+    // 2. Synthesize customers from all placed orders
+    orders.forEach((o) => {
+      const cleanPhone = (o.customerPhone || '').replace(/\D/g, '').slice(-10);
+      const key = cleanPhone || o.userId || o.customerName.toLowerCase().trim();
+
+      const existing = map.get(key);
+      const orderAmount = Number(o.grandTotal) || 0;
+
+      if (!existing) {
+        const orderCustomer: CustomerProfile = {
+          id: o.userId || `cust-${cleanPhone || Date.now()}`,
+          name: o.customerName || `Customer ${cleanPhone.slice(-4) || ''}`,
+          phone: cleanPhone || '9876543210',
+          email: undefined,
+          role: 'CUSTOMER',
+          walletBalance: 0,
+          totalSpent: orderAmount,
+          orderCount: 1,
+          lastOrderDate: o.createdAt,
+          status: 'ACTIVE',
+          addresses: o.deliveryAddress
+            ? [
+                {
+                  id: o.deliveryAddress.id || `addr-${Date.now()}`,
+                  userId: o.userId || 'user-cust-01',
+                  label: o.deliveryAddress.label || 'Home',
+                  name: o.customerName || 'Customer',
+                  phone: cleanPhone || o.deliveryAddress.phone || '9876543210',
+                  houseNumber: o.deliveryAddress.houseNumber || 'House',
+                  street: o.deliveryAddress.street || 'Vrindavan Colony',
+                  landmark: o.deliveryAddress.landmark,
+                  area: o.deliveryAddress.area || 'Vrindavan Colony',
+                  city: o.deliveryAddress.city || 'Lucknow',
+                  pincode: o.deliveryAddress.pincode || '226029',
+                  isDefault: true,
+                },
+              ]
+            : [],
+          walletHistory: [],
+          createdAt: o.createdAt || new Date().toISOString(),
+        };
+        map.set(key, orderCustomer);
+      } else {
+        // Update stats from placed orders if they reflect more activity
+        const ordersForCust = orders.filter(
+          (ord) =>
+            (ord.customerPhone && ord.customerPhone.replace(/\D/g, '').slice(-10) === cleanPhone) ||
+            ord.userId === existing.id
+        );
+        const totalCalculatedSpend = ordersForCust.reduce((sum, ord) => sum + (Number(ord.grandTotal) || 0), 0);
+        const orderCount = Math.max(existing.orderCount, ordersForCust.length);
+
+        // Update address if order has address and customer doesn't have it
+        const addresses = [...(existing.addresses || [])];
+        if (o.deliveryAddress && !addresses.some((a) => a.street === o.deliveryAddress?.street)) {
+          addresses.push(o.deliveryAddress);
+        }
+
+        map.set(key, {
+          ...existing,
+          name: existing.name.startsWith('Customer ') && o.customerName ? o.customerName : existing.name,
+          phone: existing.phone || cleanPhone,
+          totalSpent: Math.max(existing.totalSpent, totalCalculatedSpend),
+          orderCount,
+          addresses,
+        });
+      }
+    });
+
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    );
+  }, [customers, orders]);
+
+  // Metrics
+  const totalWalletCirculation = mergedCustomers.reduce((sum, c) => sum + (c.walletBalance || 0), 0);
+  const totalCustomerSpend = mergedCustomers.reduce((sum, c) => sum + (c.totalSpent || 0), 0);
+  const avgWalletBalance = mergedCustomers.length > 0 ? Math.round(totalWalletCirculation / mergedCustomers.length) : 0;
+  const vipCustomersCount = mergedCustomers.filter((c) => (c.totalSpent || 0) >= 5000).length;
+
+  const filteredCustomers = mergedCustomers.filter((c) => {
     if (filterTier === 'WITH_BALANCE' && c.walletBalance <= 0) return false;
     if (filterTier === 'ZERO_BALANCE' && c.walletBalance > 0) return false;
     if (filterTier === 'VIP' && c.totalSpent < 5000) return false;
@@ -62,7 +146,9 @@ export default function AdminCustomersPage() {
     const matchName = c.name.toLowerCase().includes(q);
     const matchPhone = c.phone.includes(q);
     const matchEmail = c.email?.toLowerCase().includes(q) || false;
-    const matchArea = c.addresses.some((a) => a.area.toLowerCase().includes(q) || a.city.toLowerCase().includes(q));
+    const matchArea = (c.addresses || []).some(
+      (a) => (a.area && a.area.toLowerCase().includes(q)) || (a.city && a.city.toLowerCase().includes(q))
+    );
     return matchName || matchPhone || matchEmail || matchArea;
   });
 
