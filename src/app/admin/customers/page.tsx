@@ -57,9 +57,11 @@ export default function AdminCustomersPage() {
     });
 
     // 2. Synthesize customers from all placed orders
-    orders.forEach((o) => {
+    (orders || []).forEach((o) => {
+      if (!o) return;
       const cleanPhone = (o.customerPhone || '').replace(/\D/g, '').slice(-10);
-      const key = cleanPhone || o.userId || o.customerName.toLowerCase().trim();
+      const custName = o.customerName || (cleanPhone ? `Customer ${cleanPhone.slice(-4)}` : 'Customer');
+      const key = cleanPhone || o.userId || custName.toLowerCase().trim();
 
       const existing = map.get(key);
       const orderAmount = Number(o.grandTotal) || 0;
@@ -67,7 +69,7 @@ export default function AdminCustomersPage() {
       if (!existing) {
         const orderCustomer: CustomerProfile = {
           id: o.userId || `cust-${cleanPhone || Date.now()}`,
-          name: o.customerName || `Customer ${cleanPhone.slice(-4) || ''}`,
+          name: custName,
           phone: cleanPhone || '9876543210',
           email: undefined,
           role: 'CUSTOMER',
@@ -82,7 +84,7 @@ export default function AdminCustomersPage() {
                   id: o.deliveryAddress.id || `addr-${Date.now()}`,
                   userId: o.userId || 'user-cust-01',
                   label: o.deliveryAddress.label || 'Home',
-                  name: o.customerName || 'Customer',
+                  name: custName,
                   phone: cleanPhone || o.deliveryAddress.phone || '9876543210',
                   houseNumber: o.deliveryAddress.houseNumber || 'House',
                   street: o.deliveryAddress.street || 'Vrindavan Colony',
@@ -100,13 +102,14 @@ export default function AdminCustomersPage() {
         map.set(key, orderCustomer);
       } else {
         // Update stats from placed orders if they reflect more activity
-        const ordersForCust = orders.filter(
+        const ordersForCust = (orders || []).filter(
           (ord) =>
-            (ord.customerPhone && ord.customerPhone.replace(/\D/g, '').slice(-10) === cleanPhone) ||
-            ord.userId === existing.id
+            ord &&
+            ((ord.customerPhone && ord.customerPhone.replace(/\D/g, '').slice(-10) === cleanPhone) ||
+              ord.userId === existing.id)
         );
         const totalCalculatedSpend = ordersForCust.reduce((sum, ord) => sum + (Number(ord.grandTotal) || 0), 0);
-        const orderCount = Math.max(existing.orderCount, ordersForCust.length);
+        const orderCount = Math.max(existing.orderCount || 1, ordersForCust.length);
 
         // Update address if order has address and customer doesn't have it
         const addresses = [...(existing.addresses || [])];
@@ -116,9 +119,9 @@ export default function AdminCustomersPage() {
 
         map.set(key, {
           ...existing,
-          name: existing.name.startsWith('Customer ') && o.customerName ? o.customerName : existing.name,
+          name: existing.name && existing.name.startsWith('Customer ') && custName ? custName : (existing.name || custName),
           phone: existing.phone || cleanPhone,
-          totalSpent: Math.max(existing.totalSpent, totalCalculatedSpend),
+          totalSpent: Math.max(existing.totalSpent || 0, totalCalculatedSpend),
           orderCount,
           addresses,
         });
@@ -397,11 +400,11 @@ export default function AdminCustomersPage() {
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-slate-900 to-slate-700 text-white font-black flex items-center justify-center text-xs shadow-xs">
-                            {cust.name.charAt(0)}
+                            {(cust.name || 'C').charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <span className="font-bold text-slate-900 text-sm block">
-                              {cust.name}
+                              {cust.name || 'Customer'}
                             </span>
                             <span className="text-[10px] text-slate-400 font-mono">
                               ID: {cust.id}
@@ -864,13 +867,13 @@ export default function AdminCustomersPage() {
                 </div>
 
                 <div className="space-y-2">
-                  {orders.filter((o) => o.customerPhone === selectedCustomer.phone).length === 0 ? (
+                  {(orders || []).filter((o) => o && (o.customerPhone === selectedCustomer.phone || (o.customerPhone && selectedCustomer.phone && o.customerPhone.replace(/\D/g, '').slice(-10) === selectedCustomer.phone.replace(/\D/g, '').slice(-10)) || o.userId === selectedCustomer.id)).length === 0 ? (
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center text-slate-400">
                       No orders on record with phone +91 {selectedCustomer.phone}.
                     </div>
                   ) : (
-                    orders
-                      .filter((o) => o.customerPhone === selectedCustomer.phone)
+                    (orders || [])
+                      .filter((o) => o && (o.customerPhone === selectedCustomer.phone || (o.customerPhone && selectedCustomer.phone && o.customerPhone.replace(/\D/g, '').slice(-10) === selectedCustomer.phone.replace(/\D/g, '').slice(-10)) || o.userId === selectedCustomer.id))
                       .map((ord) => (
                         <div
                           key={ord.id}
@@ -884,7 +887,7 @@ export default function AdminCustomersPage() {
                               {formatDateTime(ord.createdAt)}
                             </span>
                             <p className="text-[11px] text-slate-500 mt-0.5">
-                              {ord.items.length} items • Slot: {ord.deliverySlot.timeSlot}
+                              {ord.items?.length || 0} items • Slot: {ord.deliverySlot?.timeSlot || 'Instant / Standard'}
                             </p>
                           </div>
                           <div className="text-right">
@@ -892,7 +895,7 @@ export default function AdminCustomersPage() {
                               {formatPrice(ord.grandTotal)}
                             </span>
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
-                              {ord.orderStatus.replace(/_/g, ' ')}
+                              {(ord.orderStatus || 'PENDING').replace(/_/g, ' ')}
                             </span>
                           </div>
                         </div>
