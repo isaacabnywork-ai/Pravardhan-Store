@@ -53,10 +53,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: liveUser.email || curr?.email,
               role: liveUser.role || 'CUSTOMER',
               addresses: curr?.addresses || [],
+              walletBalance: curr?.walletBalance || 0,
               createdAt: curr?.createdAt || new Date().toISOString(),
             };
             try {
               localStorage.setItem(STORAGE_KEY, JSON.stringify(mappedUser));
+              // Announce user to cloud customer sync bus on session load
+              if (mappedUser.role === 'CUSTOMER') {
+                fetch('/api/v1/sync/customers', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    customer: {
+                      id: mappedUser.id,
+                      name: mappedUser.name,
+                      phone: mappedUser.phone,
+                      email: mappedUser.email,
+                      role: 'CUSTOMER',
+                      walletBalance: mappedUser.walletBalance || 0,
+                      totalSpent: 0,
+                      orderCount: 0,
+                      status: 'ACTIVE',
+                      addresses: mappedUser.addresses || [],
+                      createdAt: mappedUser.createdAt,
+                    },
+                  }),
+                }).catch(() => null);
+              }
             } catch {}
             return mappedUser;
           });
@@ -105,6 +128,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (u) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+        // Broadcast customer profile to shared cloud store so Admin CRM shows them live
+        if (u.role === 'CUSTOMER') {
+          fetch('/api/v1/sync/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer: {
+                id: u.id,
+                name: u.name,
+                phone: u.phone,
+                email: u.email,
+                role: 'CUSTOMER',
+                walletBalance: u.walletBalance || 0,
+                totalSpent: 0,
+                orderCount: 0,
+                status: 'ACTIVE',
+                addresses: u.addresses || [],
+                createdAt: u.createdAt || new Date().toISOString(),
+              },
+            }),
+          }).catch(() => null);
+        }
       } else {
         localStorage.removeItem(STORAGE_KEY);
       }

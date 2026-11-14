@@ -221,9 +221,77 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     syncWithServer();
     const pollInterval = setInterval(syncWithServer, 2000);
 
+    // Background sync with server for customer accounts (so customers registered via phone/gmail show in Admin CRM live)
+    const syncCustomersWithServer = async () => {
+      try {
+        const res = await fetch('/api/v1/sync/customers');
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data?.customers && Array.isArray(json.data.customers) && json.data.customers.length > 0) {
+            const serverCusts: CustomerProfile[] = json.data.customers;
+            setCustomers((prev) => {
+              const map = new Map<string, CustomerProfile>();
+              prev.forEach((c) => {
+                const key = c.phone || c.email || c.id;
+                map.set(key, c);
+              });
+
+              let hasChanges = false;
+              serverCusts.forEach((sc) => {
+                const key = sc.phone || sc.email || sc.id;
+                const existing = map.get(key);
+                if (!existing) {
+                  const completeCust: CustomerProfile = {
+                    id: sc.id || `cust-${Date.now()}`,
+                    name: sc.name || 'New Customer',
+                    phone: sc.phone || '',
+                    email: sc.email,
+                    role: 'CUSTOMER',
+                    walletBalance: typeof sc.walletBalance === 'number' ? sc.walletBalance : 0,
+                    totalSpent: typeof sc.totalSpent === 'number' ? sc.totalSpent : 0,
+                    orderCount: typeof sc.orderCount === 'number' ? sc.orderCount : 0,
+                    status: sc.status || 'ACTIVE',
+                    addresses: Array.isArray(sc.addresses) ? sc.addresses : [],
+                    walletHistory: Array.isArray(sc.walletHistory) ? sc.walletHistory : [],
+                    createdAt: sc.createdAt || new Date().toISOString(),
+                  };
+                  map.set(key, completeCust);
+                  hasChanges = true;
+                } else if (
+                  existing.walletBalance !== sc.walletBalance ||
+                  existing.status !== sc.status ||
+                  (sc.phone && !existing.phone)
+                ) {
+                  map.set(key, {
+                    ...existing,
+                    ...sc,
+                    walletBalance: typeof sc.walletBalance === 'number' ? sc.walletBalance : existing.walletBalance,
+                  });
+                  hasChanges = true;
+                }
+              });
+
+              if (hasChanges) {
+                const updated = Array.from(map.values());
+                try {
+                  localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updated));
+                } catch {}
+                return updated;
+              }
+              return prev;
+            });
+          }
+        }
+      } catch {}
+    };
+
+    syncCustomersWithServer();
+    const customerPollInterval = setInterval(syncCustomersWithServer, 2500);
+
     return () => {
       window.removeEventListener('storage', handleStorageSync);
       clearInterval(pollInterval);
+      clearInterval(customerPollInterval);
     };
   }, []);
 
@@ -735,6 +803,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
       try {
         localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updated));
+        // Broadcast wallet update to cloud sync bus so customer phone immediately reflects new balance
+        const updatedCust = updated.find((c) => c.id === customerId);
+        if (updatedCust) {
+          fetch('/api/v1/sync/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customerId,
+              walletBalance: updatedCust.walletBalance,
+              transaction: updatedCust.walletHistory?.[0],
+            }),
+          }).catch(() => null);
+        }
       } catch {}
       return updated;
     });
@@ -770,6 +851,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
       try {
         localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updated));
+        const updatedCust = updated.find((c) => c.id === customerId);
+        if (updatedCust) {
+          fetch('/api/v1/sync/customers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customerId,
+              walletBalance: updatedCust.walletBalance,
+              transaction: updatedCust.walletHistory?.[0],
+            }),
+          }).catch(() => null);
+        }
       } catch {}
       return updated;
     });
