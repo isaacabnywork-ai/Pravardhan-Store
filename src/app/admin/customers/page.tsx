@@ -52,8 +52,10 @@ export default function AdminCustomersPage() {
 
     // 1. Existing registered / CRM customers
     customers.forEach((c) => {
-      const key = (c.phone ? c.phone.replace(/\D/g, '').slice(-10) : '') || c.email?.toLowerCase().trim() || c.id;
-      map.set(key, c);
+      const cleanPhone = c.phone ? c.phone.replace(/\D/g, '').slice(-10) : '';
+      if (cleanPhone) map.set(cleanPhone, c);
+      if (c.email) map.set(c.email.toLowerCase().trim(), c);
+      if (c.id) map.set(c.id, c);
     });
 
     // 2. Synthesize customers from all placed orders
@@ -63,7 +65,7 @@ export default function AdminCustomersPage() {
       const custName = o.customerName || (cleanPhone ? `Customer ${cleanPhone.slice(-4)}` : 'Customer');
       const key = cleanPhone || o.userId || custName.toLowerCase().trim();
 
-      const existing = map.get(key);
+      const existing = map.get(key) || (cleanPhone ? map.get(cleanPhone) : undefined) || (o.userId ? map.get(o.userId) : undefined);
       const orderAmount = Number(o.grandTotal) || 0;
 
       if (!existing) {
@@ -100,6 +102,8 @@ export default function AdminCustomersPage() {
           createdAt: o.createdAt || new Date().toISOString(),
         };
         map.set(key, orderCustomer);
+        if (cleanPhone) map.set(cleanPhone, orderCustomer);
+        if (o.userId) map.set(o.userId, orderCustomer);
       } else {
         // Update stats from placed orders if they reflect more activity
         const ordersForCust = (orders || []).filter(
@@ -117,18 +121,38 @@ export default function AdminCustomersPage() {
           addresses.push(o.deliveryAddress);
         }
 
-        map.set(key, {
+        const merged: CustomerProfile = {
           ...existing,
           name: existing.name && existing.name.startsWith('Customer ') && custName ? custName : (existing.name || custName),
           phone: existing.phone || cleanPhone,
           totalSpent: Math.max(existing.totalSpent || 0, totalCalculatedSpend),
           orderCount,
           addresses,
-        });
+        };
+
+        map.set(key, merged);
+        if (cleanPhone) map.set(cleanPhone, merged);
+        if (existing.id) map.set(existing.id, merged);
+        if (o.userId) map.set(o.userId, merged);
       }
     });
 
-    return Array.from(map.values()).sort(
+    // Deduplicate by ID and phone
+    const seenIds = new Set<string>();
+    const seenPhones = new Set<string>();
+    const uniqueList: CustomerProfile[] = [];
+
+    for (const cust of map.values()) {
+      const cleanP = cust.phone ? cust.phone.replace(/\D/g, '').slice(-10) : '';
+      if (seenIds.has(cust.id) || (cleanP && seenPhones.has(cleanP))) {
+        continue;
+      }
+      seenIds.add(cust.id);
+      if (cleanP) seenPhones.add(cleanP);
+      uniqueList.push(cust);
+    }
+
+    return uniqueList.sort(
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     );
   }, [customers, orders]);

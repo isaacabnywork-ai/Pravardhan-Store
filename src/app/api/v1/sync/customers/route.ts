@@ -35,18 +35,47 @@ export async function GET() {
               const key = cust.phone || cust.email || cust.id;
               const existing = customerMap.get(key);
               customerMap.set(key, { ...(existing || {}), ...cust });
-            } else if (parsed.type === 'WALLET_UPDATE' && parsed.customerId) {
+            } else if (parsed.type === 'WALLET_UPDATE') {
+              const targetPhoneClean = (parsed.customerPhone || parsed.customerId || '').replace(/\D/g, '').slice(-10);
+              const targetId = parsed.customerId;
+
+              let found = false;
               // Find matching customer by id or phone
               for (const [k, cust] of customerMap.entries()) {
-                if (cust.id === parsed.customerId || cust.phone === parsed.customerId) {
+                const custPhoneClean = (cust.phone || '').replace(/\D/g, '').slice(-10);
+                if (
+                  cust.id === targetId ||
+                  (targetPhoneClean.length >= 10 && custPhoneClean === targetPhoneClean) ||
+                  cust.phone === targetId
+                ) {
                   cust.walletBalance = parsed.walletBalance;
                   if (parsed.transaction) {
                     cust.walletHistory = [parsed.transaction, ...(cust.walletHistory || [])];
                   }
                   cust.updatedAt = new Date().toISOString();
                   customerMap.set(k, cust);
-                  break;
+                  found = true;
                 }
+              }
+
+              // If customer wasn't registered yet, record it with their balance!
+              if (!found && (targetId || targetPhoneClean)) {
+                const newProfile = {
+                  id: targetId || `cust-${targetPhoneClean}`,
+                  name: parsed.customerName || (targetPhoneClean ? `Customer ${targetPhoneClean.slice(-4)}` : 'Customer'),
+                  phone: targetPhoneClean || parsed.customerPhone || '',
+                  role: 'CUSTOMER',
+                  walletBalance: parsed.walletBalance || 0,
+                  totalSpent: 0,
+                  orderCount: 1,
+                  status: 'ACTIVE',
+                  addresses: [],
+                  walletHistory: parsed.transaction ? [parsed.transaction] : [],
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                };
+                const newKey = targetPhoneClean || targetId;
+                customerMap.set(newKey, newProfile);
               }
             }
           }
@@ -95,12 +124,53 @@ export async function POST(request: NextRequest) {
     }
 
     if (body.customerId && typeof body.walletBalance === 'number') {
+      const targetPhoneClean = (body.customerPhone || body.customerId || '').replace(/\D/g, '').slice(-10);
+      const targetId = body.customerId;
+
+      let found = false;
+      for (let i = 0; i < memoryCustomers.length; i++) {
+        const c = memoryCustomers[i];
+        const custPhoneClean = (c.phone || '').replace(/\D/g, '').slice(-10);
+        if (
+          c.id === targetId ||
+          (targetPhoneClean.length >= 10 && custPhoneClean === targetPhoneClean) ||
+          c.phone === targetId
+        ) {
+          c.walletBalance = body.walletBalance;
+          if (body.transaction) {
+            c.walletHistory = [body.transaction, ...(c.walletHistory || [])];
+          }
+          c.updatedAt = new Date().toISOString();
+          memoryCustomers[i] = c;
+          found = true;
+          break;
+        }
+      }
+
+      if (!found && (targetId || targetPhoneClean)) {
+        memoryCustomers.unshift({
+          id: targetId || `cust-${targetPhoneClean}`,
+          name: body.customerName || (targetPhoneClean ? `Customer ${targetPhoneClean.slice(-4)}` : 'Customer'),
+          phone: targetPhoneClean || body.customerPhone || '',
+          role: 'CUSTOMER',
+          walletBalance: body.walletBalance,
+          totalSpent: 0,
+          orderCount: 1,
+          status: 'ACTIVE',
+          addresses: [],
+          walletHistory: body.transaction ? [body.transaction] : [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
       await fetch(BUS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'WALLET_UPDATE',
           customerId: body.customerId,
+          customerPhone: body.customerPhone,
           walletBalance: body.walletBalance,
           transaction: body.transaction,
           timestamp: Date.now(),
