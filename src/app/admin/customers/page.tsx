@@ -186,10 +186,10 @@ export default function AdminCustomersPage() {
     const adminName = user ? `${user.name} (${user.role})` : 'Super Admin';
 
     if (walletActionType === 'CREDIT') {
-      creditCustomerWallet(walletModalCust.id, walletAmount, walletReason, walletNotes, adminName);
+      creditCustomerWallet(walletModalCust, walletAmount, walletReason, walletNotes, adminName);
       showToast(`Successfully credited ₹${walletAmount} free cash to ${walletModalCust.name}!`);
     } else {
-      debitCustomerWallet(walletModalCust.id, walletAmount, walletReason, walletNotes, adminName);
+      debitCustomerWallet(walletModalCust, walletAmount, walletReason, walletNotes, adminName);
       showToast(`Deducted ₹${walletAmount} from ${walletModalCust.name}'s wallet.`);
     }
 

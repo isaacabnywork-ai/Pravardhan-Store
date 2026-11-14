@@ -44,8 +44,20 @@ interface StoreContextType {
   updateStoreSettings: (settings: Partial<StoreSettings>) => void;
   addPromotion: (promo: Omit<Promotion, 'id' | 'usageCount'>) => void;
   togglePromotionStatus: (id: string) => void;
-  creditCustomerWallet: (customerId: string, amount: number, reason: string, notes?: string, adminBy?: string) => void;
-  debitCustomerWallet: (customerId: string, amount: number, reason: string, notes?: string, adminBy?: string) => void;
+  creditCustomerWallet: (
+    customer: CustomerProfile | string,
+    amount: number,
+    reason: string,
+    notes?: string,
+    adminBy?: string
+  ) => void;
+  debitCustomerWallet: (
+    customer: CustomerProfile | string,
+    amount: number,
+    reason: string,
+    notes?: string,
+    adminBy?: string
+  ) => void;
   updateCustomerStatus: (customerId: string, status: 'ACTIVE' | 'SUSPENDED') => void;
   getCustomerById: (customerId: string) => CustomerProfile | undefined;
   getProductById: (id: string) => Product | undefined;
@@ -789,31 +801,34 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const creditCustomerWallet = (
-    customerId: string,
+    customerTarget: CustomerProfile | string,
     amount: number,
     reason: string,
     notes?: string,
     adminBy?: string
   ) => {
+    const isObject = typeof customerTarget === 'object' && customerTarget !== null;
+    const customerId = isObject ? customerTarget.id : customerTarget;
+    const profilePhone = isObject && customerTarget.phone ? customerTarget.phone.replace(/\D/g, '').slice(-10) : '';
+    const profileName = isObject && customerTarget.name ? customerTarget.name : '';
+
     setCustomers((prev) => {
-      // Clean target phone if customerId is a phone or ID
-      const targetPhoneClean = customerId.replace(/\D/g, '').slice(-10);
+      // Find index by id or by clean phone
+      const targetPhoneClean = profilePhone || customerId.replace(/\D/g, '').slice(-10);
 
-      // Check if customer exists in prev
-      const exists = prev.some(
-        (c) =>
+      const matchIndex = prev.findIndex((c) => {
+        const custPhoneClean = c.phone ? c.phone.replace(/\D/g, '').slice(-10) : '';
+        return (
           c.id === customerId ||
-          (targetPhoneClean.length >= 10 &&
-            c.phone &&
-            c.phone.replace(/\D/g, '').slice(-10) === targetPhoneClean)
-      );
+          (targetPhoneClean.length >= 10 && custPhoneClean === targetPhoneClean)
+        );
+      });
 
-      let targetCustName = 'Customer';
-      let targetCustPhone = targetPhoneClean.length >= 10 ? targetPhoneClean : '';
-
+      let updatedCust: CustomerProfile;
       let updated: CustomerProfile[];
-      if (!exists) {
-        // Customer was synthesized from an order and not yet in customers list: create it!
+
+      if (matchIndex === -1) {
+        // Customer was synthesized from order or external: add them directly
         const newBalance = amount;
         const newTx: WalletTransaction = {
           id: `wtx-${Date.now()}`,
@@ -827,101 +842,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           balanceAfter: newBalance,
         };
 
-        const newProfile: CustomerProfile = {
+        updatedCust = {
           id: customerId,
-          name: targetCustName,
-          phone: targetCustPhone || '9876543210',
+          name: profileName || (targetPhoneClean.length >= 10 ? `Customer ${targetPhoneClean.slice(-4)}` : 'Customer'),
+          phone: targetPhoneClean || (isObject && customerTarget.phone) || '9876543210',
+          email: isObject ? customerTarget.email : undefined,
           role: 'CUSTOMER',
           walletBalance: newBalance,
-          totalSpent: 0,
-          orderCount: 1,
+          totalSpent: isObject ? customerTarget.totalSpent || 0 : 0,
+          orderCount: isObject ? customerTarget.orderCount || 1 : 1,
           status: 'ACTIVE',
-          addresses: [],
+          addresses: isObject && Array.isArray(customerTarget.addresses) ? customerTarget.addresses : [],
           walletHistory: [newTx],
-          createdAt: new Date().toISOString(),
+          createdAt: isObject && customerTarget.createdAt ? customerTarget.createdAt : new Date().toISOString(),
         };
-        updated = [newProfile, ...prev];
+
+        updated = [updatedCust, ...prev];
       } else {
-        updated = prev.map((cust) => {
-          const custPhoneClean = cust.phone ? cust.phone.replace(/\D/g, '').slice(-10) : '';
-          const isMatch =
-            cust.id === customerId ||
-            (targetPhoneClean.length >= 10 && custPhoneClean === targetPhoneClean);
-
-          if (!isMatch) return cust;
-
-          targetCustName = cust.name;
-          targetCustPhone = cust.phone;
-          const newBalance = (cust.walletBalance || 0) + amount;
-          const newTx: WalletTransaction = {
-            id: `wtx-${Date.now()}`,
-            customerId: cust.id,
-            type: 'CREDIT',
-            amount,
-            reason,
-            notes,
-            adminBy: adminBy || 'Vikram Mehta (Super Admin)',
-            createdAt: new Date().toISOString(),
-            balanceAfter: newBalance,
-          };
-          return {
-            ...cust,
-            walletBalance: newBalance,
-            walletHistory: [newTx, ...(cust.walletHistory || [])],
-          };
-        });
-      }
-
-      try {
-        localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updated));
-        // Broadcast wallet update to cloud sync bus so customer phone immediately reflects new balance
-        const updatedCust = updated.find(
-          (c) =>
-            c.id === customerId ||
-            (targetPhoneClean.length >= 10 &&
-              c.phone &&
-              c.phone.replace(/\D/g, '').slice(-10) === targetPhoneClean)
-        );
-        if (updatedCust) {
-          fetch('/api/v1/sync/customers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customerId: updatedCust.id,
-              customerPhone: updatedCust.phone,
-              walletBalance: updatedCust.walletBalance,
-              transaction: updatedCust.walletHistory?.[0],
-            }),
-          }).catch(() => null);
-        }
-      } catch {}
-      return updated;
-    });
-  };
-
-  const debitCustomerWallet = (
-    customerId: string,
-    amount: number,
-    reason: string,
-    notes?: string,
-    adminBy?: string
-  ) => {
-    setCustomers((prev) => {
-      const targetPhoneClean = customerId.replace(/\D/g, '').slice(-10);
-
-      const updated = prev.map((cust) => {
-        const custPhoneClean = cust.phone ? cust.phone.replace(/\D/g, '').slice(-10) : '';
-        const isMatch =
-          cust.id === customerId ||
-          (targetPhoneClean.length >= 10 && custPhoneClean === targetPhoneClean);
-
-        if (!isMatch) return cust;
-
-        const newBalance = Math.max(0, (cust.walletBalance || 0) - amount);
+        const existing = prev[matchIndex];
+        const newBalance = (existing.walletBalance || 0) + amount;
         const newTx: WalletTransaction = {
           id: `wtx-${Date.now()}`,
-          customerId: cust.id,
-          type: 'DEBIT',
+          customerId: existing.id,
+          type: 'CREDIT',
           amount,
           reason,
           notes,
@@ -929,35 +872,104 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           createdAt: new Date().toISOString(),
           balanceAfter: newBalance,
         };
-        return {
-          ...cust,
+
+        updatedCust = {
+          ...existing,
+          name: profileName && !profileName.startsWith('Customer ') ? profileName : (existing.name || profileName),
+          phone: existing.phone || targetPhoneClean || (isObject ? customerTarget.phone : ''),
+          totalSpent: isObject ? Math.max(existing.totalSpent || 0, customerTarget.totalSpent || 0) : existing.totalSpent,
+          orderCount: isObject ? Math.max(existing.orderCount || 1, customerTarget.orderCount || 1) : existing.orderCount,
+          addresses: isObject && Array.isArray(customerTarget.addresses) && customerTarget.addresses.length > 0 ? customerTarget.addresses : existing.addresses,
           walletBalance: newBalance,
-          walletHistory: [newTx, ...(cust.walletHistory || [])],
+          walletHistory: [newTx, ...(existing.walletHistory || [])],
         };
-      });
+
+        updated = [...prev];
+        updated[matchIndex] = updatedCust;
+      }
 
       try {
         localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updated));
-        const updatedCust = updated.find(
-          (c) =>
-            c.id === customerId ||
-            (targetPhoneClean.length >= 10 &&
-              c.phone &&
-              c.phone.replace(/\D/g, '').slice(-10) === targetPhoneClean)
-        );
-        if (updatedCust) {
-          fetch('/api/v1/sync/customers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customerId: updatedCust.id,
-              customerPhone: updatedCust.phone,
-              walletBalance: updatedCust.walletBalance,
-              transaction: updatedCust.walletHistory?.[0],
-            }),
-          }).catch(() => null);
-        }
+        // Broadcast wallet update to cloud sync bus
+        fetch('/api/v1/sync/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId: updatedCust.id,
+            customerPhone: updatedCust.phone,
+            customerName: updatedCust.name,
+            walletBalance: updatedCust.walletBalance,
+            transaction: updatedCust.walletHistory?.[0],
+          }),
+        }).catch(() => null);
       } catch {}
+
+      return updated;
+    });
+  };
+
+  const debitCustomerWallet = (
+    customerTarget: CustomerProfile | string,
+    amount: number,
+    reason: string,
+    notes?: string,
+    adminBy?: string
+  ) => {
+    const isObject = typeof customerTarget === 'object' && customerTarget !== null;
+    const customerId = isObject ? customerTarget.id : customerTarget;
+    const profilePhone = isObject && customerTarget.phone ? customerTarget.phone.replace(/\D/g, '').slice(-10) : '';
+
+    setCustomers((prev) => {
+      const targetPhoneClean = profilePhone || customerId.replace(/\D/g, '').slice(-10);
+
+      const matchIndex = prev.findIndex((c) => {
+        const custPhoneClean = c.phone ? c.phone.replace(/\D/g, '').slice(-10) : '';
+        return (
+          c.id === customerId ||
+          (targetPhoneClean.length >= 10 && custPhoneClean === targetPhoneClean)
+        );
+      });
+
+      if (matchIndex === -1) return prev;
+
+      const existing = prev[matchIndex];
+      const newBalance = Math.max(0, (existing.walletBalance || 0) - amount);
+      const newTx: WalletTransaction = {
+        id: `wtx-${Date.now()}`,
+        customerId: existing.id,
+        type: 'DEBIT',
+        amount,
+        reason,
+        notes,
+        adminBy: adminBy || 'Vikram Mehta (Super Admin)',
+        createdAt: new Date().toISOString(),
+        balanceAfter: newBalance,
+      };
+
+      const updatedCust: CustomerProfile = {
+        ...existing,
+        walletBalance: newBalance,
+        walletHistory: [newTx, ...(existing.walletHistory || [])],
+      };
+
+      const updated = [...prev];
+      updated[matchIndex] = updatedCust;
+
+      try {
+        localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(updated));
+        fetch('/api/v1/sync/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId: updatedCust.id,
+            customerPhone: updatedCust.phone,
+            customerName: updatedCust.name,
+            walletBalance: updatedCust.walletBalance,
+            transaction: updatedCust.walletHistory?.[0],
+          }),
+        }).catch(() => null);
+      } catch {}
+
       return updated;
     });
   };
