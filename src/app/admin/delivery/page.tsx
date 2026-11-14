@@ -429,7 +429,7 @@ export default function AdminDeliveryPage() {
                         {ord.orderStatus.replace(/_/g, ' ')}
                       </span>
                       <span className="text-[11px] text-slate-500 font-semibold bg-white px-2 py-0.5 rounded border border-slate-200">
-                        Slot: {ord.deliverySlot.timeSlot}
+                        Slot: {ord.deliverySlot?.timeSlot || '1-Hour Fast Delivery'}
                       </span>
                       {ord.deliveryStaffName && (
                         <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
@@ -439,24 +439,24 @@ export default function AdminDeliveryPage() {
                     </div>
 
                     <p className="font-bold text-slate-900 text-xs">
-                      {ord.customerName} ({ord.deliveryAddress.label})
+                      {ord.customerName} ({ord.deliveryAddress?.label || 'Home'})
                     </p>
                     <p className="text-slate-600 flex items-start gap-1">
                       <MapPin className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0 mt-0.5" />
                       <span>
-                        {ord.deliveryAddress.houseNumber}, {ord.deliveryAddress.street}, {ord.deliveryAddress.area}
+                        {ord.deliveryAddress?.houseNumber || ''}, {ord.deliveryAddress?.street || ''}, {ord.deliveryAddress?.area || 'Vrindavan Colony'}
                       </span>
                     </p>
-                    {ord.deliveryAddress.landmark && (
+                    {ord.deliveryAddress?.landmark && (
                       <p className="text-[11px] text-slate-400 pl-4">
-                        Landmark: {ord.deliveryAddress.landmark}
+                        Landmark: {ord.deliveryAddress?.landmark}
                       </p>
                     )}
 
                     {/* Items preview */}
                     <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                       <span className="text-[11px] font-bold text-slate-500">Items:</span>
-                      {ord.items.map((it, idx) => (
+                      {(ord.items || []).map((it, idx) => (
                         <span
                           key={idx}
                           className="bg-white border border-slate-200 text-slate-700 px-1.5 py-0.5 rounded text-[10px] font-medium"
@@ -504,7 +504,7 @@ export default function AdminDeliveryPage() {
                     {/* Google Maps Navigation Button */}
                     <a
                       href={`https://maps.google.com/?q=${encodeURIComponent(
-                        `${ord.deliveryAddress.houseNumber}, ${ord.deliveryAddress.street}, ${ord.deliveryAddress.area}, ${ord.deliveryAddress.city}`
+                        `${ord.deliveryAddress?.houseNumber || ''}, ${ord.deliveryAddress?.street || ''}, ${ord.deliveryAddress?.area || 'Vrindavan Colony'}, ${ord.deliveryAddress?.city || 'Lucknow'}`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -627,8 +627,8 @@ export default function AdminDeliveryPage() {
                 Delivery Location
               </span>
               <p className="font-bold text-slate-900 mt-0.5">
-                {podModalOrder.deliveryAddress.houseNumber}, {podModalOrder.deliveryAddress.street},{' '}
-                {podModalOrder.deliveryAddress.area}
+                {podModalOrder.deliveryAddress?.houseNumber || ''}, {podModalOrder.deliveryAddress?.street || ''},{' '}
+                {podModalOrder.deliveryAddress?.area || 'Vrindavan Colony'}
               </p>
             </div>
 

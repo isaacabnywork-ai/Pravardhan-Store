@@ -211,7 +211,7 @@ export default function OrderManagerPage() {
                     </p>
 
                     <div className="flex items-center gap-3 text-[11px] text-slate-400 pt-0.5">
-                      <span>{order.items.length} Items</span>
+                      <span>{order.items?.length || 0} Items</span>
                       <span>•</span>
                       <span>Total: <strong className="text-slate-800">{formatPrice(order.grandTotal)}</strong></span>
                       <span>•</span>

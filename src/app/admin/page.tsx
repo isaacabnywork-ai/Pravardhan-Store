@@ -492,11 +492,11 @@ export default function AdminDashboardPage() {
                     {ord.customerName} • <span className="text-slate-500 font-normal">{ord.customerPhone}</span>
                   </p>
                   <p className="text-[11px] text-slate-500 line-clamp-1">
-                    {ord.deliveryAddress.houseNumber}, {ord.deliveryAddress.street}, {ord.deliveryAddress.city}
+                    {ord.deliveryAddress?.houseNumber || ''}, {ord.deliveryAddress?.street || ''}, {ord.deliveryAddress?.city || 'Lucknow'}
                   </p>
                   <p className="text-[10px] text-slate-400 flex items-center gap-1 pt-0.5">
                     <Clock className="w-3 h-3 text-slate-400" />
-                    Slot: {ord.deliverySlot.dateLabel} ({ord.deliverySlot.timeSlot})
+                    Slot: {ord.deliverySlot?.dateLabel || 'Today'} ({ord.deliverySlot?.timeSlot || '1-Hour Slot'})
                   </p>
                 </div>
 
@@ -506,7 +506,7 @@ export default function AdminDashboardPage() {
                       {formatPrice(ord.grandTotal)}
                     </span>
                     <span className="text-[10px] text-slate-400 font-medium">
-                      {ord.items.length} {ord.items.length === 1 ? 'item' : 'items'}
+                      {ord.items?.length || 0} {ord.items?.length === 1 ? 'item' : 'items'}
                     </span>
                   </div>
 
